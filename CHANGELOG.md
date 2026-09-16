@@ -1,13 +1,24 @@
 # Changelog
 
-Enodia 各版本的重要变化记录于此。
+All notable changes to Enodia releases are recorded here.
 
 ## [Unreleased]
 
-### 新增
+## [0.1.0-beta.1] - 2026-09-16
 
-- 增加版本门禁发布流程和飞书仓库通知。
+### Added
 
-### 变更
+- Added automatic network-scene detection and switching based on Wi-Fi names, IP ranges, and DNS characteristics.
+- Added DNS configuration management, custom DNS scenes, and DNS performance testing.
+- Added multi-source IP information lookup with geographic details and map visualization.
+- Added proxy-risk, data-center, VPN, Tor, spam-source, and streaming-access detection.
+- Added Mihomo kernel version management, kernel replacement, and menu-bar icon configuration.
+- Added application launch and termination actions triggered by network-scene changes.
+- Added privileged Helper installation, version validation, and removal for DNS operations.
+- Added version-gated release automation and Feishu notifications for repository activity.
 
-- 所有 push 和 Pull Request 现在都会在发布判定前执行 CI。
+### Distribution
+
+- Supports macOS 15.0 or later on Apple Silicon (`arm64`).
+- Signed with an Apple Development certificate and distributed as a non-notarized DMG.
+- Runs CI for every push and pull request; only an explicit release request that passes main-branch CI can publish.

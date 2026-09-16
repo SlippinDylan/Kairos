@@ -49,6 +49,16 @@ test('builds push and merged pull request notifications', () => {
   assert.equal(pullRequest.color, 'green');
 });
 
+test('derives the product name from the repository', () => {
+  const notification = buildNotification('issues', {
+    repository: { full_name: 'owner/Kairos-Preview' },
+    sender,
+    action: 'opened',
+    issue: { number: 2, title: 'Issue' },
+  });
+  assert.equal(notification.title, 'Kairos-Preview Issue 已创建');
+});
+
 test('normalizes every configured collaboration event', () => {
   const cases = [
     ['issues', { repository, sender, action: 'opened', issue: { number: 2, title: 'Issue' } }],
@@ -98,11 +108,11 @@ test('reports main CI success and release workflow failure', () => {
   assert.equal(releaseFailure.color, 'red');
 });
 
-test('reports CI start and suppresses Release planning start', () => {
+test('reports a requested CI run and suppresses a requested Release run', () => {
   const sha = 'a'.repeat(40);
-  const ciStarted = buildNotification('workflow_run', {
+  const ciRequested = buildNotification('workflow_run', {
     repository,
-    action: 'in_progress',
+    action: 'requested',
     workflow_run: {
       name: 'CI',
       event: 'pull_request',
@@ -112,13 +122,13 @@ test('reports CI start and suppresses Release planning start', () => {
       html_url: 'https://github.com/owner/Kairos/actions/runs/12',
     },
   });
-  assert.equal(ciStarted.title, 'Kairos CI 已开始');
-  assert.equal(ciStarted.color, 'blue');
-  assert.ok(ciStarted.details.includes('提交：aaaaaaa'));
+  assert.equal(ciRequested.title, 'Kairos CI 已触发');
+  assert.equal(ciRequested.color, 'blue');
+  assert.ok(ciRequested.details.includes('提交：aaaaaaa'));
 
   assert.equal(buildNotification('workflow_run', {
     repository,
-    action: 'in_progress',
+    action: 'requested',
     workflow_run: { name: 'Release', head_branch: 'main' },
   }), null);
 });

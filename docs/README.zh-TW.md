@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="docs/images/readme/app-icon.png" width="160" height="160" alt="Enodia App 圖示">
+  <img src="images/readme/app-icon.png" width="160" height="160" alt="Enodia App 圖示">
   <h1>Enodia</h1>
   <p>原生 macOS 選單列工具，用來自動切換網路情境、管理 DNS、查詢 IP，並設定 Mihomo。</p>
   <p>
     <a href="README.zh-CN.md">简体中文</a> ·
     <strong>繁體中文</strong> ·
-    <a href="README.md">English</a> ·
+    <a href="../README.md">English</a> ·
     <a href="README.ja.md">日本語</a> ·
     <a href="README.ru.md">Русский</a>
   </p>
@@ -25,21 +25,21 @@ Enodia 把常用的網路操作集中到一個選單列 App 中。它可以根�
       <strong>網路自動化</strong><br><br>
       集中顯示目前的 Wi-Fi、閘道和 DNS。網路環境變更時，情境規則可以連動 App 控制與 DNS 切換。
     </td>
-    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Enodia 目前網路、App 控制與 DNS 情境介面"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="Enodia 目前網路、App 控制與 DNS 情境介面"></td>
   </tr>
   <tr>
     <td>
       <strong>網路工具</strong><br><br>
       在同一個頁面執行 DNS 深度清理、IP 查詢、DNS 測試和 IP 品質檢測。
     </td>
-    <td><img src="docs/images/readme/network-tools.png" alt="Enodia DNS 清理、IP 查詢、DNS 測試與 IP 品質工具"></td>
+    <td><img src="images/readme/network-tools.png" alt="Enodia DNS 清理、IP 查詢、DNS 測試與 IP 品質工具"></td>
   </tr>
   <tr>
     <td>
       <strong>Mihomo 管理</strong><br><br>
       查看關聯 App 和核心狀態，備份或還原目前的核心，也可以從 GitHub Releases 下載並替換核心。
     </td>
-    <td><img src="docs/images/readme/mihomo-management.png" alt="Enodia Mihomo 核心狀態、替換、還原與下載設定"></td>
+    <td><img src="images/readme/mihomo-management.png" alt="Enodia Mihomo 核心狀態、替換、還原與下載設定"></td>
   </tr>
 </table>
 
@@ -69,7 +69,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 需要管理系統 DNS 時，請在 Enodia 設定中安裝 Helper；安裝過程需要管理員授權。
 
-所有 push 和 Pull Request 都會執行 unsigned arm64 CI。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
+所有 push 和 Pull Request 都會執行 unsigned arm64 CI。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
 
 支援 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 後綴用於 tag、Release、DMG 和 Changelog；App 與 Helper 使用對應的純數字 `x.y.z` 行銷版本。
 
@@ -99,4 +99,4 @@ IP 查詢和隱私檢測會整合多個外部資料來源。基本功能不要�
 
 ## 授權條款
 
-Copyright © 2025–2026 SlippinDylan Studio。Enodia 採用 [Apache License 2.0](LICENSE) 開放原始碼授權條款。
+Copyright © 2025–2026 SlippinDylan Studio。Enodia 採用 [Apache License 2.0](../LICENSE) 開放原始碼授權條款。

@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="docs/images/readme/app-icon.png" width="160" height="160" alt="Значок приложения Enodia">
+  <img src="images/readme/app-icon.png" width="160" height="160" alt="Значок приложения Enodia">
   <h1>Enodia</h1>
   <p>Нативное приложение для строки меню macOS, которое автоматизирует сетевые сценарии, DNS, анализ IP и настройку Mihomo.</p>
   <p>
     <a href="README.zh-CN.md">简体中文</a> ·
     <a href="README.zh-TW.md">繁體中文</a> ·
-    <a href="README.md">English</a> ·
+    <a href="../README.md">English</a> ·
     <a href="README.ja.md">日本語</a> ·
     <strong>Русский</strong>
   </p>
@@ -25,21 +25,21 @@ Enodia объединяет повседневные сетевые операц
       <strong>Автоматизация сети</strong><br><br>
       Просматривайте текущие Wi-Fi, шлюз и DNS. При смене сети сценарии могут управлять приложениями и переключать DNS.
     </td>
-    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Текущая сеть, управление приложениями и сценарии DNS в Enodia"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="Текущая сеть, управление приложениями и сценарии DNS в Enodia"></td>
   </tr>
   <tr>
     <td>
       <strong>Сетевые инструменты</strong><br><br>
       Выполняйте глубокую очистку DNS, поиск IP, тест DNS и проверку качества IP на одной странице.
     </td>
-    <td><img src="docs/images/readme/network-tools.png" alt="Очистка DNS, поиск IP, тест DNS и проверка качества IP в Enodia"></td>
+    <td><img src="images/readme/network-tools.png" alt="Очистка DNS, поиск IP, тест DNS и проверка качества IP в Enodia"></td>
   </tr>
   <tr>
     <td>
       <strong>Управление Mihomo</strong><br><br>
       Проверяйте связанное приложение и состояние ядра, создавайте резервные копии, восстанавливайте ядро или заменяйте его версией из GitHub Releases.
     </td>
-    <td><img src="docs/images/readme/mihomo-management.png" alt="Состояние, замена, восстановление и загрузка ядра Mihomo в Enodia"></td>
+    <td><img src="images/readme/mihomo-management.png" alt="Состояние, замена, восстановление и загрузка ядра Mihomo в Enodia"></td>
   </tr>
 </table>
 
@@ -69,7 +69,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 Для управления системным DNS установите Helper в настройках Enodia. Установка требует авторизации администратора.
 
-Каждый push и Pull Request запускает unsigned arm64 CI. DMG публикуется только после успешного CI в main, при `release: true`, для ещё не опубликованной версии и при наличии единственного непустого раздела той же версии в [`CHANGELOG.md`](CHANGELOG.md).
+Каждый push и Pull Request запускает unsigned arm64 CI. DMG публикуется только после успешного CI в main, при `release: true`, для ещё не опубликованной версии и при наличии единственного непустого раздела той же версии в [`CHANGELOG.md`](../CHANGELOG.md).
 
 Поддерживаются версии `x.y.z`, `x.y.z-alpha.n` и `x.y.z-beta.n`. Суффиксы Alpha/Beta используются в tag, Release, DMG и Changelog; App и Helper получают соответствующую числовую маркетинговую версию `x.y.z`.
 
@@ -99,4 +99,4 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 ## Лицензия
 
-Copyright © 2025–2026 SlippinDylan Studio. Enodia распространяется по лицензии [Apache License 2.0](LICENSE).
+Copyright © 2025–2026 SlippinDylan Studio. Enodia распространяется по лицензии [Apache License 2.0](../LICENSE).

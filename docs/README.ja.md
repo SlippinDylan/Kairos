@@ -1,11 +1,11 @@
 <div align="center">
-  <img src="docs/images/readme/app-icon.png" width="160" height="160" alt="Enodia のアプリアイコン">
+  <img src="images/readme/app-icon.png" width="160" height="160" alt="Enodia のアプリアイコン">
   <h1>Enodia</h1>
   <p>ネットワーク環境、DNS、IP 情報、Mihomo 設定をまとめて扱う、macOS ネイティブのメニューバーアプリです。</p>
   <p>
     <a href="README.zh-CN.md">简体中文</a> ·
     <a href="README.zh-TW.md">繁體中文</a> ·
-    <a href="README.md">English</a> ·
+    <a href="../README.md">English</a> ·
     <strong>日本語</strong> ·
     <a href="README.ru.md">Русский</a>
   </p>
@@ -25,21 +25,21 @@ Enodia は、日常的なネットワーク操作を 1 つのメニューバー�
       <strong>ネットワーク自動化</strong><br><br>
       現在の Wi-Fi、ゲートウェイ、DNS をまとめて確認できます。環境が変わると、シーンルールに従ってアプリ操作と DNS 切り替えを実行します。
     </td>
-    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="現在のネットワーク、アプリ操作、DNS シーンを表示する Enodia"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="現在のネットワーク、アプリ操作、DNS シーンを表示する Enodia"></td>
   </tr>
   <tr>
     <td>
       <strong>ネットワークツール</strong><br><br>
       DNS のクリーンアップ、IP 検索、DNS テスト、IP 品質検査を 1 つの画面から実行できます。
     </td>
-    <td><img src="docs/images/readme/network-tools.png" alt="DNS クリーンアップ、IP 検索、DNS テスト、IP 品質検査を表示する Enodia"></td>
+    <td><img src="images/readme/network-tools.png" alt="DNS クリーンアップ、IP 検索、DNS テスト、IP 品質検査を表示する Enodia"></td>
   </tr>
   <tr>
     <td>
       <strong>Mihomo 管理</strong><br><br>
       連携アプリとカーネルの状態確認、現在のカーネルのバックアップや復元、GitHub Releases からの置き換えを行えます。
     </td>
-    <td><img src="docs/images/readme/mihomo-management.png" alt="Mihomo カーネルの状態、置き換え、復元、ダウンロード設定を表示する Enodia"></td>
+    <td><img src="images/readme/mihomo-management.png" alt="Mihomo カーネルの状態、置き換え、復元、ダウンロード設定を表示する Enodia"></td>
   </tr>
 </table>
 
@@ -69,7 +69,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 システム DNS を管理する場合は、Enodia の設定から Helper をインストールします。インストールには管理者認証が必要です。
 
-すべての push と Pull Request で unsigned arm64 CI が実行されます。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
+すべての push と Pull Request で unsigned arm64 CI が実行されます。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](../CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
 
 バージョン形式は `x.y.z`、`x.y.z-alpha.n`、`x.y.z-beta.n` に対応しています。Alpha/Beta 接尾辞は tag、Release、DMG、Changelog に使用され、App と Helper のマーケティングバージョンには対応する `x.y.z` が使われます。
 
@@ -99,4 +99,4 @@ IP 検索とプライバシー検査では複数の外部サービスを利用�
 
 ## ライセンス
 
-Copyright © 2025–2026 SlippinDylan Studio. Enodia は [Apache License 2.0](LICENSE) で公開されています。
+Copyright © 2025–2026 SlippinDylan Studio. Enodia は [Apache License 2.0](../LICENSE) で公開されています。

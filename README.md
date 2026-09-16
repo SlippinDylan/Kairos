@@ -3,11 +3,11 @@
   <h1>Enodia</h1>
   <p>A native macOS menu-bar utility that automates network scenes, DNS, IP intelligence, and Mihomo configuration.</p>
   <p>
-    <a href="README.zh-CN.md">简体中文</a> ·
-    <a href="README.zh-TW.md">繁體中文</a> ·
+    <a href="docs/README.zh-CN.md">简体中文</a> ·
+    <a href="docs/README.zh-TW.md">繁體中文</a> ·
     <strong>English</strong> ·
-    <a href="README.ja.md">日本語</a> ·
-    <a href="README.ru.md">Русский</a>
+    <a href="docs/README.ja.md">日本語</a> ·
+    <a href="docs/README.ru.md">Русский</a>
   </p>
 </div>
 

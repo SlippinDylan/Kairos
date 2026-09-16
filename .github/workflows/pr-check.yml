@@ -61,12 +61,16 @@ jobs:
         run: |
           app='build/DerivedData-Release/Build/Products/Release/Enodia.app'
           binary="$app/Contents/MacOS/Enodia"
-          helper="$app/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
+          helper="$app/Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper"
+          daemon_plist="$app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Enodia.helper.plist"
           test -d "$app"
           test -x "$binary"
           test -x "$helper"
+          test -f "$daemon_plist"
           test "$(lipo -archs "$binary")" = 'arm64'
           test "$(lipo -archs "$helper")" = 'arm64'
-          test "$(vtool -show-build "$binary" | grep -c 'minos 15.0')" -eq 1
-          test "$(vtool -show-build "$helper" | grep -c 'minos 15.0')" -eq 1
+          test "$(vtool -show-build "$binary" | grep -c 'minos 26.0')" -eq 1
+          test "$(vtool -show-build "$helper" | grep -c 'minos 26.0')" -eq 1
           test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
+          test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper'
+          test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Enodia\.helper' raw -o - "$daemon_plist")" = 'true'

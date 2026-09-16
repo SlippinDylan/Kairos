@@ -157,7 +157,7 @@ struct LogEntry: Identifiable, Sendable {
 
     /// 格式化时间戳（精确到毫秒）
     ///
-    /// 使用 macOS 15+ 的 `.formatted()` API 替代 DateFormatter
+    /// 使用 Foundation `FormatStyle`，避免共享可变的 DateFormatter
     private static func formatTimestamp(_ date: Date) -> String {
         // 使用 ISO 8601 格式的日期部分 + 自定义时间格式
         let dateStr = date.formatted(

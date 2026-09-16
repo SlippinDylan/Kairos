@@ -67,7 +67,7 @@ struct NetworkToolsView: View {
                                 Text("执行深度清理")
                             }
                         }
-                        .adaptiveGlassProminentButtonStyle()
+                        .buttonStyle(.glassProminent)
                         .controlSize(.large)
                         .disabled(viewModel.isExecuting)
                     }
@@ -127,7 +127,7 @@ struct NetworkToolsView: View {
                                     Text("查询")
                                 }
                             }
-                            .adaptiveGlassProminentButtonStyle()
+                            .buttonStyle(.glassProminent)
                             .disabled(ipQueryViewModel.isLoading || ipAddress.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
 

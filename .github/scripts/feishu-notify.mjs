@@ -229,7 +229,7 @@ function releaseDetails(event, release) {
     `类型：${release.prerelease ? 'Pre-release' : 'Stable'}`,
     release.dmgName ? `制品：${release.dmgName}` : '',
     '架构：arm64',
-    '系统：macOS 15+',
+    '系统：macOS 26+',
     '组件：Enodia.app + DNS Helper',
     '签名：Apple Development（未公证）',
     ...release.highlights,

@@ -4,9 +4,7 @@
 //
 //  Created by SlippinDylan on 2025/12/26.
 //
-//  ## 2026/01/09 修复
-//  - 移除 5 秒无连接自动退出逻辑，防止 launchd throttling
-//  - Helper 保持运行，等待 XPC 连接（参考 ClashX.Meta 架构）
+//  Registered as an SMAppService LaunchDaemon on macOS 26 and later.
 //
 
 import Foundation
@@ -17,19 +15,10 @@ import SystemConfiguration
 /// ## 设计说明
 /// - 作为 launchd MachService 运行，接收主应用的 XPC 连接
 /// - 使用 `disableSuddenTermination()` 防止系统在操作过程中强制终止
-/// - **保持运行**，不设置超时自动退出（避免 launchd throttling）
-///
-/// ## 为什么不能设置超时退出？
-/// SMJobBless 成功后，launchd 会自动启动 Helper 进行验证。
-/// 如果 Helper 在用户操作前就退出，launchd 会记录为"失败退出"。
-/// 多次退出后，launchd 会 throttle 该服务（指数退避 20-30秒），
-/// 导致后续 XPC 连接失败（Error 4099）。
-///
-/// ClashX.Meta 的 Helper 也是保持运行，不设置超时退出。
-///
-/// ## 参考实现
-/// - ClashX.Meta: ProxyConfigHelper/main.m
+/// - 仅接受满足 Enodia App 签名要求的 XPC 客户端
+/// - 保持运行并等待 launchd Mach service 连接
 class HelperToolMain: NSObject {
+    private let appCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Enodia\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var listener: NSXPCListener?
     private var connections = [NSXPCConnection]()
 
@@ -39,6 +28,7 @@ class HelperToolMain: NSObject {
 
         // 创建 XPC Listener
         listener = NSXPCListener(machServiceName: "studio.slippindylan.BrewKit.Enodia.helper")
+        listener?.setConnectionCodeSigningRequirement(appCodeSigningRequirement)
         listener?.delegate = self
 
         // 开始监听
@@ -87,7 +77,7 @@ extension HelperToolMain: NSXPCListenerDelegate {
 /// - ✅ getDNS：使用 `SCDynamicStore` 读取配置
 /// - ⚠️ flushDNSCache：使用 `dscacheutil` + `killall mDNSResponder`（无原生 API）
 class DNSHelper: NSObject, DNSHelperProtocol {
-    private let version = "1.0.0"
+    private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
 
     /// 设置 DNS 服务器（原生 API 实现）
     ///
@@ -258,30 +248,68 @@ class DNSHelper: NSObject, DNSHelperProtocol {
     ///
     /// 因此，必须使用 `dscacheutil` 和 `killall` 命令。这是少数**必须使用 Shell** 的场景之一。
     func flushDNSCache(reply: @escaping (Bool) -> Void) {
-        // 刷新 DNS 缓存（合理的 Shell 使用）
-        let task1 = Process()
-        task1.executableURL = URL(fileURLWithPath: "/usr/bin/dscacheutil")
-        task1.arguments = ["-flushcache"]
-
-        let task2 = Process()
-        task2.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
-        task2.arguments = ["-HUP", "mDNSResponder"]
-
         do {
-            try task1.run()
-            task1.waitUntilExit()
-
-            try task2.run()
-            task2.waitUntilExit()
-
+            try runCommand(at: "/usr/bin/dscacheutil", arguments: ["-flushcache"])
+            try runCommand(at: "/usr/bin/killall", arguments: ["-HUP", "mDNSResponder"])
             reply(true)
         } catch {
             reply(false)
         }
     }
 
+    func clearARPCache(reply: @escaping (Bool, String?) -> Void) {
+        do {
+            try runCommand(at: "/usr/sbin/arp", arguments: ["-d", "-a"])
+            reply(true, nil)
+        } catch {
+            reply(false, error.localizedDescription)
+        }
+    }
+
+    func purgeInactiveMemory(reply: @escaping (Bool, String?) -> Void) {
+        do {
+            try runCommand(at: "/usr/sbin/purge", arguments: [])
+            reply(true, nil)
+        } catch {
+            reply(false, error.localizedDescription)
+        }
+    }
+
     func getVersion(reply: @escaping (String) -> Void) {
         reply(version)
+    }
+
+    private func runCommand(at path: String, arguments: [String]) throws {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: path)
+        task.arguments = arguments
+
+        let errorPipe = Pipe()
+        task.standardError = errorPipe
+
+        try task.run()
+        task.waitUntilExit()
+
+        guard task.terminationStatus == 0 else {
+            let data = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            let message = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            throw HelperCommandError.failed(
+                path: path,
+                status: task.terminationStatus,
+                message: message ?? "Unknown error"
+            )
+        }
+    }
+}
+
+private enum HelperCommandError: LocalizedError {
+    case failed(path: String, status: Int32, message: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .failed(let path, let status, let message):
+            return "Command failed: \(path) (\(status)): \(message)"
+        }
     }
 }
 

@@ -12,7 +12,7 @@
 //
 //  ## 架构参考
 //  - 复用 QuitConfirmationOverlay 的设计模式
-//  - 使用 .ultraThinMaterial 毛玻璃效果
+//  - 使用 macOS 26 原生 Liquid Glass
 //
 
 import SwiftUI
@@ -21,7 +21,7 @@ import SwiftUI
 ///
 /// ## 设计规范
 /// - 符合 macOS 26 Liquid Glass 设计语言
-/// - 使用 `.ultraThinMaterial` 毛玻璃效果
+/// - 使用 `glassEffect` 呈现原生 Liquid Glass
 /// - 水平居中，顶部对齐显示（在 Toolbar 下方）
 /// - 优雅的进入/退出动画
 ///
@@ -75,33 +75,13 @@ struct ToastOverlay: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background {
-            toastBackground
-        }
-        .overlay {
-            toastBorder
-        }
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 10))
         .onTapGesture {
             // 点击可提前关闭
             toastManager.dismiss()
         }
     }
 
-    // MARK: - Background & Border
-
-    /// 毛玻璃背景
-    private var toastBackground: some View {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(.ultraThinMaterial)
-            .shadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 6)
-            .shadow(color: .black.opacity(0.04), radius: 1, x: 0, y: 1)
-    }
-
-    /// 边框
-    private var toastBorder: some View {
-        RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
-    }
 }
 
 // MARK: - Custom Transition

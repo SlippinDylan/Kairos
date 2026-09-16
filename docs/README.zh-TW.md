@@ -53,10 +53,10 @@ App 功能和 arm64 自動建置檢查已完成。在最終安裝、Helper、Gat
 
 | 項目 | 需求 |
 |---|---|
-| 最低系統 | macOS 15.0 Sequoia |
+| 最低系統 | macOS 26.0 Tahoe |
 | 處理器 | Apple Silicon（arm64） |
 | App 類型 | 選單列 LSUIElement App，不使用沙盒 |
-| 特權元件 | 用於系統 DNS 操作的內嵌 Helper |
+| 特權元件 | 用於系統 DNS 操作的 `SMAppService` LaunchDaemon |
 | 發佈方式 | GitHub Releases 提供一個經 Apple Development 簽署、未經公證的 DMG |
 
 ## 安裝與發佈
@@ -67,7 +67,7 @@ App 功能和 arm64 自動建置檢查已完成。在最終安裝、Helper、Gat
 sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 ```
 
-需要管理系統 DNS 時，請在 Enodia 設定中安裝 Helper；安裝過程需要管理員授權。
+需要管理系統 DNS 時，請在 Enodia 設定中註冊 Helper，並依 macOS 提示在系統設定中核准 LaunchDaemon。
 
 所有 push 和 Pull Request 都會執行 unsigned arm64 CI。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
 
@@ -75,7 +75,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 ## 從原始碼建置
 
-需要 macOS 15.0+、Xcode 16+ 和 Apple ID。開啟 `Enodia.xcodeproj`，選擇自己的開發團隊，再將 `App/Info.plist` 和 `EnodiaHelper/Info.plist` 中的簽署 requirement 更新為自己的 Apple Development 憑證和 Team ID，最後建置 `Enodia` scheme。
+需要 macOS 26.0+、Xcode 26+ 和 Apple ID。開啟 `Enodia.xcodeproj`，選擇自己的開發團隊，再將 `App/Services/DNSManager.swift` 和 `EnodiaHelper/main.swift` 中的 XPC 簽署 requirement 更新為自己的 Team ID，最後建置 `Enodia` scheme。
 
 ## API Key
 

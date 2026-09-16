@@ -53,10 +53,10 @@ Enodia 把常用的网络操作集中到一个菜单栏应用中。它可以根�
 
 | 项目 | 要求 |
 |---|---|
-| 最低系统 | macOS 15.0 Sequoia |
+| 最低系统 | macOS 26.0 Tahoe |
 | 处理器 | Apple Silicon（arm64） |
 | 应用类型 | 菜单栏 LSUIElement 应用，不使用沙盒 |
-| 特权组件 | 用于系统 DNS 操作的内嵌 Helper |
+| 特权组件 | 用于系统 DNS 操作的 `SMAppService` LaunchDaemon |
 | 发布方式 | GitHub Releases 提供一个经过 Apple Development 签名、未经公证的 DMG |
 
 ## 安装与发布
@@ -67,7 +67,7 @@ Enodia 把常用的网络操作集中到一个菜单栏应用中。它可以根�
 sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 ```
 
-需要管理系统 DNS 时，请在 Enodia 设置中安装 Helper；安装过程需要管理员授权。
+需要管理系统 DNS 时，请在 Enodia 设置中注册 Helper，并按 macOS 提示在系统设置中批准 LaunchDaemon。
 
 所有 push 和 Pull Request 都会执行 unsigned arm64 CI。只有 main CI 成功、发布配置中的 `release` 为 `true`、版本尚未发布，并且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章节时，Release workflow 才会签名、打包和发布 DMG。
 
@@ -75,7 +75,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 ## 从源码构建
 
-需要 macOS 15.0+、Xcode 16+ 和 Apple ID。打开 `Enodia.xcodeproj`，选择自己的开发团队，再将 `App/Info.plist` 和 `EnodiaHelper/Info.plist` 中的签名 requirement 更新为自己的 Apple Development 证书和 Team ID，最后构建 `Enodia` scheme。
+需要 macOS 26.0+、Xcode 26+ 和 Apple ID。打开 `Enodia.xcodeproj`，选择自己的开发团队，再将 `App/Services/DNSManager.swift` 和 `EnodiaHelper/main.swift` 中的 XPC 签名 requirement 更新为自己的 Team ID，最后构建 `Enodia` scheme。
 
 ## API Key
 

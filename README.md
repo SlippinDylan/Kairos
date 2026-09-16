@@ -53,10 +53,10 @@ The application features and automated arm64 build checks are implemented. The i
 
 | Property | Value |
 |---|---|
-| Deployment target | macOS 15.0 (Sequoia) or later |
+| Deployment target | macOS 26.0 (Tahoe) or later |
 | Architecture | Apple Silicon (arm64) |
 | App type | Menu-bar LSUIElement app, non-sandboxed |
-| Privileged component | Embedded Helper for system DNS operations |
+| Privileged component | `SMAppService` LaunchDaemon for system DNS operations |
 | Distribution | Version-gated GitHub Releases with one Apple Development-signed, non-notarized DMG |
 
 ## Installation and Releases
@@ -67,7 +67,7 @@ Each GitHub Release contains one `Enodia-<version>.dmg`. Open the DMG and drag `
 sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 ```
 
-Open Enodia and install the Helper from Settings when you want to manage system DNS. Administrator authorization is required for installation.
+Open Enodia and register the Helper from Settings when you want to manage system DNS. Approve its LaunchDaemon in System Settings when macOS asks.
 
 Every push and pull request runs unsigned arm64 CI. Release configuration lives in [`Config/Release/manifest.json`](Config/Release/manifest.json). A DMG is signed, packaged, and published only after main CI succeeds, `release` is `true`, the version is unpublished, and [`CHANGELOG.md`](CHANGELOG.md) contains one unique, non-empty section with the same version.
 
@@ -77,11 +77,11 @@ Supported versions are `x.y.z`, `x.y.z-alpha.n`, and `x.y.z-beta.n`. Alpha and b
 
 Requirements:
 
-- macOS 15.0 or later
-- Xcode 16 or later
+- macOS 26.0 or later
+- Xcode 26 or later
 - An Apple ID
 
-Open `Enodia.xcodeproj`, select your development team, then update the signing requirements in `App/Info.plist` and `EnodiaHelper/Info.plist` to match your Apple Development certificate and Team ID. Build and run the `Enodia` scheme.
+Open `Enodia.xcodeproj`, select your development team, then update the XPC code-signing requirements in `App/Services/DNSManager.swift` and `EnodiaHelper/main.swift` to match your Team ID. Build and run the `Enodia` scheme.
 
 ## API Keys
 

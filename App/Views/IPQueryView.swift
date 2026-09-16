@@ -63,7 +63,7 @@ struct IPQueryView: View {
                                     Text("查询")
                                 }
                             }
-                            .adaptiveGlassProminentButtonStyle()
+                            .buttonStyle(.glassProminent)
                             .disabled(viewModel.isLoading || viewModel.ipAddress.trimmingCharacters(in: .whitespaces).isEmpty)
                         }
                     }

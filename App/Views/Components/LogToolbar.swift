@@ -28,15 +28,17 @@ struct LogToolbar: View {
     private let filterOptions: [LogLevel?] = [nil] + LogLevel.allCases.map(Optional.some)
 
     var body: some View {
-        HStack(spacing: 12) {
-            filterControl
-                .fixedSize()
+        GlassEffectContainer(spacing: 12) {
+            HStack(spacing: 12) {
+                filterControl
+                    .fixedSize()
 
-            searchControl
-                .layoutPriority(1)
+                searchControl
+                    .layoutPriority(1)
 
-            actionControls
-                .fixedSize()
+                actionControls
+                    .fixedSize()
+            }
         }
     }
 
@@ -125,18 +127,7 @@ struct LogToolbar: View {
 }
 
 private extension View {
-    @ViewBuilder
     func logToolbarGlass(tint: Color? = nil) -> some View {
-        if #available(macOS 26, *) {
-            glassEffect(.regular.tint(tint).interactive(), in: Capsule())
-        } else if let tint {
-            background(tint, in: Capsule())
-        } else {
-            background(Color(nsColor: .controlBackgroundColor), in: Capsule())
-                .overlay {
-                    Capsule()
-                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
-                }
-        }
+        glassEffect(.regular.tint(tint).interactive(), in: Capsule())
     }
 }

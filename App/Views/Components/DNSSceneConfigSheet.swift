@@ -164,7 +164,7 @@ struct DNSSceneConfigSheet: View {
                 Button("取消") {
                     dismiss()
                 }
-                .adaptiveGlassButtonStyle()
+                .buttonStyle(.glass)
                 .frame(minWidth: 80)
 
                 Spacer()
@@ -172,7 +172,7 @@ struct DNSSceneConfigSheet: View {
                 Button("保存") {
                     saveScene()
                 }
-                .adaptiveGlassProminentButtonStyle()
+                .buttonStyle(.glassProminent)
                 .frame(minWidth: 80)
                 .disabled(!isFormValid)
             }

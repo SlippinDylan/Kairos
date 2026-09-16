@@ -16,9 +16,11 @@ All notable changes to Enodia releases are recorded here.
 - Added application launch and termination actions triggered by network-scene changes.
 - Added privileged Helper installation, version validation, and removal for DNS operations.
 - Added version-gated release automation and Feishu notifications for repository activity.
+- Added native Liquid Glass controls and surfaces for macOS 26.
 
 ### Distribution
 
-- Supports macOS 15.0 or later on Apple Silicon (`arm64`).
+- Supports macOS 26.0 or later on Apple Silicon (`arm64`).
+- Registers the privileged DNS Helper as an `SMAppService` LaunchDaemon with reciprocal XPC code-signing requirements.
 - Signed with an Apple Development certificate and distributed as a non-notarized DMG.
 - Runs CI for every push and pull request; only an explicit release request that passes main-branch CI can publish.

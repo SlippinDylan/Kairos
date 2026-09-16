@@ -76,7 +76,7 @@ struct IPQualityCardCompletedView: View {
             Button(action: onRetest) {
                 Label("重新检测", systemImage: "arrow.clockwise")
             }
-            .adaptiveGlassProminentButtonStyle()
+            .buttonStyle(.glassProminent)
             Text(formattedDate(result.detectedAt))
                 .font(.caption)
                 .foregroundStyle(.secondary)

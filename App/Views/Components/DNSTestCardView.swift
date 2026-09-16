@@ -79,7 +79,7 @@ struct DNSTestCardView: View {
                 } label: {
                     Text("测试")
                 }
-                .adaptiveGlassProminentButtonStyle()
+                .buttonStyle(.glassProminent)
                 .disabled(viewModel.dnsServer.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
@@ -156,7 +156,7 @@ struct DNSTestCardView: View {
                     }
                     .font(.subheadline)
                 }
-                .adaptiveGlassProminentButtonStyle()
+                .buttonStyle(.glassProminent)
                 .controlSize(.small)
             }
 

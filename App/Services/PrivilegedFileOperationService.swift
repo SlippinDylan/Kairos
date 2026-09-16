@@ -35,7 +35,6 @@ import AppKit
 /// try session.copyItem(from: source, to: destination)
 /// try session.removeItem(at: path)
 /// try session.moveItem(from: source, to: destination)
-/// try session.setPermissions(at: path, permissions: 0o755)
 /// ```
 final class PrivilegedFileOperationService: Sendable {
 
@@ -77,59 +76,6 @@ final class PrivilegedFileOperationService: Sendable {
         }
     }
 
-    // MARK: - Legacy Support (向后兼容，逐步废弃)
-
-    /// 以管理员权限复制文件（单次操作，会弹出密码框）
-    ///
-    /// - Warning: 此方法仅为向后兼容保留，建议使用 `createAuthorizedSession()` 批量操作。
-    /// - Parameters:
-    ///   - source: 源文件路径
-    ///   - destination: 目标文件路径
-    /// - Throws: PrivilegedOperationError
-    @MainActor
-    func copyFile(from source: String, to destination: String) async throws {
-        let session = try await createAuthorizedSession()
-        try session.copyItem(from: source, to: destination)
-    }
-
-    /// 以管理员权限删除文件（单次操作，会弹出密码框）
-    ///
-    /// - Warning: 此方法仅为向后兼容保留，建议使用 `createAuthorizedSession()` 批量操作。
-    /// - Parameter path: 文件路径
-    /// - Throws: PrivilegedOperationError
-    @MainActor
-    func removeFile(at path: String) async throws {
-        let session = try await createAuthorizedSession()
-        try session.removeItem(at: path)
-    }
-
-    /// 以管理员权限设置文件权限（单次操作，会弹出密码框）
-    ///
-    /// - Warning: **此方法不生效！** `setAttributes` 不在 `replaceFile` 授权范围内。
-    ///   请在源文件（可写目录）中预先设置权限，复制时权限会被保留。
-    /// - Parameters:
-    ///   - path: 文件路径
-    ///   - permissions: 权限值（例如：0o755）
-    /// - Throws: PrivilegedOperationError
-    @available(*, deprecated, message: "setAttributes 不在 replaceFile 授权范围内，请在复制前设置权限")
-    @MainActor
-    func setFilePermissions(at path: String, permissions: UInt16) async throws {
-        let session = try await createAuthorizedSession()
-        try session.setPermissions(at: path, permissions: permissions)
-    }
-
-    /// 以管理员权限移动文件（单次操作，会弹出密码框）
-    ///
-    /// - Warning: 此方法仅为向后兼容保留，建议使用 `createAuthorizedSession()` 批量操作。
-    /// - Parameters:
-    ///   - source: 源文件路径
-    ///   - destination: 目标文件路径
-    /// - Throws: PrivilegedOperationError
-    @MainActor
-    func moveFile(from source: String, to destination: String) async throws {
-        let session = try await createAuthorizedSession()
-        try session.moveItem(from: source, to: destination)
-    }
 }
 
 // MARK: - Authorized Session
@@ -220,37 +166,6 @@ final class AuthorizedSession: @unchecked Sendable {
         } catch {
             AppLogger.error("文件删除失败: \(error.localizedDescription)")
             throw PrivilegedOperationError.fileOperationFailed("删除失败: \(error.localizedDescription)")
-        }
-    }
-
-    /// 设置文件权限
-    ///
-    /// - Warning: **此方法在 `FileManager(authorization:)` 中不生效！**
-    ///   `NSWorkspace.AuthorizationType.replaceFile` 的授权范围不包括 `setAttributes`。
-    ///   请在源文件（可写目录）中预先设置权限，复制时权限会被保留。
-    ///
-    /// - Parameters:
-    ///   - path: 文件路径
-    ///   - permissions: POSIX 权限值（例如：0o755 表示 rwxr-xr-x）
-    /// - Throws: PrivilegedOperationError
-    ///
-    /// ## 常用权限值
-    /// - `0o755`：可执行文件（rwxr-xr-x）
-    /// - `0o644`：普通文件（rw-r--r--）
-    /// - `0o600`：私有文件（rw-------）
-    func setPermissions(at path: String, permissions: UInt16) throws {
-        AppLogger.debug("设置文件权限: \(path) → \(String(permissions, radix: 8))")
-
-        let attributes: [FileAttributeKey: Any] = [
-            .posixPermissions: NSNumber(value: permissions)
-        ]
-
-        do {
-            try fileManager.setAttributes(attributes, ofItemAtPath: path)
-            AppLogger.info("✅ 文件权限设置成功")
-        } catch {
-            AppLogger.error("文件权限设置失败: \(error.localizedDescription)")
-            throw PrivilegedOperationError.fileOperationFailed("权限设置失败: \(error.localizedDescription)")
         }
     }
 

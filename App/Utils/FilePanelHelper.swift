@@ -212,7 +212,7 @@ enum FilePanelHelper {
                 print("选中应用: \(urls.map { $0.lastPathComponent })")
             }
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.glassProminent)
 
         Button("选择多个应用") {
             Task {
@@ -220,7 +220,7 @@ enum FilePanelHelper {
                 print("选中应用: \(urls.map { $0.lastPathComponent })")
             }
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.glassProminent)
 
         Button("选择 JSON 文件") {
             Task {
@@ -231,7 +231,7 @@ enum FilePanelHelper {
                 print("选中文件: \(urls.map { $0.lastPathComponent })")
             }
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.glassProminent)
 
         Button("选择目录") {
             Task {
@@ -241,7 +241,7 @@ enum FilePanelHelper {
                 print("选中目录: \(urls.map { $0.path })")
             }
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(.glassProminent)
     }
     .padding()
     .frame(width: 400, height: 400)

@@ -43,7 +43,7 @@ struct MihomoView: View {
                 Image(systemName: "arrow.clockwise")
             }
         }
-        .adaptiveGlassButtonStyle()
+        .buttonStyle(.glass)
         .help("刷新状态")
         .disabled(viewModel.isRefreshing)
     }
@@ -174,7 +174,7 @@ struct KernelManagementCard: View {
                     Button("备份内核") {
                         viewModel.backupKernel()
                     }
-                    .adaptiveGlassButtonStyle()
+                    .buttonStyle(.glass)
                     .disabled(
                         viewModel.isLoading ||
                         viewModel.isDownloading ||
@@ -195,7 +195,7 @@ struct KernelManagementCard: View {
                     Button("恢复内核") {
                         viewModel.restoreKernel()
                     }
-                    .adaptiveGlassButtonStyle()
+                    .buttonStyle(.glass)
                     .disabled(
                         viewModel.isLoading ||
                         viewModel.isDownloading ||
@@ -215,7 +215,7 @@ struct KernelManagementCard: View {
                     Button("替换内核") {
                         viewModel.replaceKernel()
                     }
-                    .adaptiveGlassProminentButtonStyle()
+                    .buttonStyle(.glassProminent)
                     .disabled(
                         viewModel.isLoading ||
                         viewModel.isDownloading ||
@@ -374,13 +374,13 @@ struct ConfigurationCard: View {
                     Button("重置配置") {
                         viewModel.resetConfig()
                     }
-                    .adaptiveGlassButtonStyle()
+                    .buttonStyle(.glass)
                     .disabled(viewModel.isLoading || viewModel.isDownloading)
 
                     Button("保存配置") {
                         viewModel.saveConfig()
                     }
-                    .adaptiveGlassProminentButtonStyle()
+                    .buttonStyle(.glassProminent)
                     .disabled(viewModel.isLoading || viewModel.isDownloading)
                 }
                 .padding(.bottom, DesignSystem.Spacing.small)

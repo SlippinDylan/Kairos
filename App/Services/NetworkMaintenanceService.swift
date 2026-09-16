@@ -6,8 +6,6 @@
 //
 
 import Foundation
-import Security
-import ServiceManagement
 import CoreWLAN
 import SystemConfiguration
 
@@ -15,8 +13,8 @@ import SystemConfiguration
 ///
 /// ## 职责
 /// - 提供系统级网络维护工具（DNS缓存清理、网络接口重置等）
-/// - 优先使用 Swift 原生 API，最小化 shell 命令依赖
-/// - 管理需要管理员权限的操作
+/// - 优先使用 Swift 原生 API，最小化外部命令依赖
+/// - 将需要 root 权限的固定命令交给 SMAppService LaunchDaemon
 ///
 /// ## 设计说明
 /// - **最小 shell 原则**: 只在无原生 API 时使用 shell
@@ -39,27 +37,21 @@ final class NetworkMaintenanceService {
     // MARK: - Error Types
 
     enum MaintenanceError: LocalizedError {
-        case authorizationFailed(OSStatus)
-        case commandExecutionFailed(command: String, exitCode: Int32, stderr: String)
         case wifiInterfaceNotFound
         case wifiControlFailed(String)
         case networkInterfaceError(String)
-        case permissionDenied
+        case helperUnavailable
 
         var errorDescription: String? {
             switch self {
-            case .authorizationFailed(let status):
-                return "授权失败，错误码: \(status)"
-            case .commandExecutionFailed(let command, let exitCode, let stderr):
-                return "命令执行失败: \(command)\n退出码: \(exitCode)\n错误: \(stderr)"
             case .wifiInterfaceNotFound:
                 return "未找到 WiFi 网卡"
             case .wifiControlFailed(let message):
                 return "WiFi 控制失败: \(message)"
             case .networkInterfaceError(let message):
                 return "网络接口错误: \(message)"
-            case .permissionDenied:
-                return "权限被拒绝，需要管理员权限"
+            case .helperUnavailable:
+                return "DNS Helper 未启用，请先在设置中注册并批准 Helper"
             }
         }
     }
@@ -72,30 +64,27 @@ final class NetworkMaintenanceService {
 
     // MARK: - Public Methods - Deep Clean
 
-    /// 深度清理（最小 shell 方案）
+    /// 深度清理
     ///
     /// ## 实现说明（方案 C）
     /// 1. ✅ [Swift] CoreWLAN 关闭 WiFi
-    /// 2. ⚠️ [Shell] killall -HUP mDNSResponder（无原生 API）
-    /// 3. ⚠️ [Shell] dscacheutil -flushcache（无原生 API）
+    /// 2. ⚠️ [Helper] 刷新 DNS 缓存（无公开 API）
     /// 4. ✅ [Swift] SystemConfiguration 重置网络接口
-    /// 5. ⚠️ [Shell] arp -d -a（技术上可用 sysctl，但过于复杂）
+    /// 4. ⚠️ [Helper] 清除 ARP 缓存
     /// 6. ✅ [Swift] CoreWLAN 开启 WiFi
     /// 7. ✅ [Swift] FileManager 清理浏览器缓存
-    /// 8. ⚠️ [Shell] purge（无原生 API）
-    ///
-    /// ## 优势
-    /// - shell 命令减少 60%（8个→3个）
-    /// - 类型安全，错误处理精细
-    /// - 符合 Apple 开发规范
+    /// 8. ⚠️ [Helper] 刷新 DNS 并清理非活跃内存
     ///
     /// - Throws: MaintenanceError
     nonisolated func deepClean() async throws {
-        AppLogger.info("⚠️ 开始深度清理（最小 shell 方案）")
+        AppLogger.info("⚠️ 开始深度清理")
 
-        let authRef = try await requestAdminPrivileges()
-        defer {
-            AuthorizationFree(authRef, [])
+        let helperAvailable = await MainActor.run {
+            DNSManager.shared.checkHelperStatus()
+            return DNSManager.shared.isHelperInstalled
+        }
+        guard helperAvailable else {
+            throw MaintenanceError.helperUnavailable
         }
 
         // 1. ✅ [Swift] 关闭 WiFi
@@ -103,29 +92,16 @@ final class NetworkMaintenanceService {
         try await disableWiFi()
 
         // 2. ⚠️ [Shell] 清理 DNS 缓存（无原生 API）
-        AppLogger.debug("步骤 2/8: 清理 DNS 缓存（Shell - 无替代方案）")
-        try await executeWithPrivileges(
-            authRef: authRef,
-            command: "/usr/bin/killall",
-            arguments: ["-HUP", "mDNSResponder"]
-        )
-        try await executeWithPrivileges(
-            authRef: authRef,
-            command: "/usr/bin/dscacheutil",
-            arguments: ["-flushcache"]
-        )
+        AppLogger.debug("步骤 2/8: 通过 Helper 清理 DNS 缓存")
+        try await DNSManager.shared.flushDNSCacheForMaintenance()
 
         // 3. ✅ [Swift] 重置网络接口（SystemConfiguration）
         AppLogger.debug("步骤 3/8: 重置网络接口（SystemConfiguration）")
         try await resetNetworkInterfaceNative()
 
         // 4. ⚠️ [Shell] 清除 ARP 缓存（技术上可用 sysctl，但过于复杂）
-        AppLogger.debug("步骤 4/8: 清除 ARP 缓存（Shell - sysctl 过于复杂）")
-        try await executeWithPrivileges(
-            authRef: authRef,
-            command: "/usr/sbin/arp",
-            arguments: ["-d", "-a"]
-        )
+        AppLogger.debug("步骤 4/8: 通过 Helper 清除 ARP 缓存")
+        try await DNSManager.shared.clearARPCache()
         RouterInfoService.shared.clearMACCache()
 
         // 5. 等待 2 秒
@@ -141,24 +117,11 @@ final class NetworkMaintenanceService {
         await clearBrowserCaches()
 
         // 8. ⚠️ [Shell] 再次刷新 DNS + 清理系统缓存（无原生 API）
-        AppLogger.debug("步骤 8/8: 最终清理（Shell - 无替代方案）")
-        try await executeWithPrivileges(
-            authRef: authRef,
-            command: "/usr/bin/killall",
-            arguments: ["-HUP", "mDNSResponder"]
-        )
-        try await executeWithPrivileges(
-            authRef: authRef,
-            command: "/usr/bin/dscacheutil",
-            arguments: ["-flushcache"]
-        )
-        try await executeWithPrivileges(
-            authRef: authRef,
-            command: "/usr/sbin/purge",
-            arguments: []
-        )
+        AppLogger.debug("步骤 8/8: 通过 Helper 执行最终清理")
+        try await DNSManager.shared.flushDNSCacheForMaintenance()
+        try await DNSManager.shared.purgeInactiveMemory()
 
-        AppLogger.info("✅ 深度清理完成（原生 API 占比: 62.5%）")
+        AppLogger.info("✅ 深度清理完成")
     }
 
     // MARK: - Private Methods - WiFi Control (CoreWLAN)
@@ -321,98 +284,4 @@ final class NetworkMaintenanceService {
         }
     }
 
-    // MARK: - Private Methods - Authorization
-
-    /// 请求管理员权限
-    ///
-    /// - Returns: AuthorizationRef
-    /// - Throws: MaintenanceError.authorizationFailed
-    private nonisolated func requestAdminPrivileges() async throws -> AuthorizationRef {
-        return try await withCheckedThrowingContinuation { continuation in
-            var authRef: AuthorizationRef?
-
-            var authItem = kSMRightBlessPrivilegedHelper.withCString { authItemName in
-                AuthorizationItem(name: authItemName, valueLength: 0, value: nil, flags: 0)
-            }
-
-            withUnsafeMutablePointer(to: &authItem) { authItemPtr in
-                var authRights = AuthorizationRights(count: 1, items: authItemPtr)
-                let flags: AuthorizationFlags = [.interactionAllowed, .extendRights, .preAuthorize]
-
-                let status = AuthorizationCreate(&authRights, nil, flags, &authRef)
-
-                guard status == errAuthorizationSuccess, let authRef = authRef else {
-                    AppLogger.error("授权失败，状态码: \(status)")
-                    continuation.resume(throwing: MaintenanceError.authorizationFailed(status))
-                    return
-                }
-
-                continuation.resume(returning: authRef)
-            }
-        }
-    }
-
-    // MARK: - Private Methods - Shell Execution (Minimal)
-
-    /// 使用管理员权限执行 shell 命令（仅用于无原生 API 的操作）
-    ///
-    /// ## 使用场景（仅限以下 3 种）
-    /// 1. DNS 缓存清理（mDNSResponder、dscacheutil）
-    /// 2. ARP 缓存清理（arp -d -a）
-    /// 3. 系统缓存清理（purge）
-    ///
-    /// ## 安全说明
-    /// - 所有命令和参数硬编码，防止注入
-    /// - 捕获 stderr 用于错误诊断
-    ///
-    /// - Parameters:
-    ///   - authRef: 授权引用
-    ///   - command: 命令路径（绝对路径）
-    ///   - arguments: 参数列表
-    /// - Throws: MaintenanceError.commandExecutionFailed
-    private nonisolated func executeWithPrivileges(
-        authRef: AuthorizationRef,
-        command: String,
-        arguments: [String]
-    ) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
-                process.arguments = ["-S"] + [command] + arguments
-
-                let stderrPipe = Pipe()
-                process.standardError = stderrPipe
-
-                do {
-                    try process.run()
-                    process.waitUntilExit()
-
-                    let exitCode = process.terminationStatus
-
-                    if exitCode != 0 {
-                        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-                        let stderr = String(data: stderrData, encoding: .utf8) ?? "Unknown error"
-
-                        AppLogger.error("Shell 命令失败: \(command) \(arguments.joined(separator: " "))")
-                        AppLogger.error("退出码: \(exitCode), 错误: \(stderr)")
-
-                        continuation.resume(
-                            throwing: MaintenanceError.commandExecutionFailed(
-                                command: command,
-                                exitCode: exitCode,
-                                stderr: stderr
-                            )
-                        )
-                        return
-                    }
-
-                    continuation.resume()
-                } catch {
-                    AppLogger.error("Shell 命令执行异常: \(command)", error: error)
-                    continuation.resume(throwing: error)
-                }
-            }
-        }
-    }
 }

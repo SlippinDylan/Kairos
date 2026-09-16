@@ -143,14 +143,14 @@ struct SettingsView: View {
                         Button("取消关联") {
                             mihomoViewModel.clearHostApp()
                         }
-                        .adaptiveGlassButtonStyle()
+                        .buttonStyle(.glass)
                         .disabled(mihomoViewModel.isSelectingHostApp)
                     }
 
                     Button(mihomoViewModel.config.hasAssociatedApp ? "更换应用…" : "选择应用…") {
                         mihomoViewModel.selectHostApp()
                     }
-                    .adaptiveGlassProminentButtonStyle()
+                    .buttonStyle(.glassProminent)
                     .disabled(mihomoViewModel.isSelectingHostApp)
                 }
             }
@@ -192,7 +192,7 @@ struct SettingsView: View {
                             Text("导入配置")
                         }
                     }
-                    .adaptiveGlassButtonStyle()
+                    .buttonStyle(.glass)
                     .disabled(isImporting || isExporting)
                 }
 
@@ -220,7 +220,7 @@ struct SettingsView: View {
                             Text("导出配置")
                         }
                     }
-                    .adaptiveGlassProminentButtonStyle()
+                    .buttonStyle(.glassProminent)
                     .disabled(isImporting || isExporting)
                 }
             }
@@ -408,13 +408,13 @@ struct SettingsView: View {
                     Button("清除全部") {
                         apiKeyManager.clearAllAPIKeys()
                     }
-                    .adaptiveGlassButtonStyle()
+                    .buttonStyle(.glass)
                     .disabled(!apiKeyManager.hasAnyAPIKey)
 
                     Button("保存配置") {
                         apiKeyManager.saveAPIKeys()
                     }
-                    .adaptiveGlassProminentButtonStyle()
+                    .buttonStyle(.glassProminent)
                 }
                 .padding(.bottom, DesignSystem.Spacing.small)
             }
@@ -456,7 +456,7 @@ struct SettingsView: View {
                                 Button("打开设置") {
                                     permissionManager.openAccessibilitySettings()
                                 }
-                                .adaptiveGlassProminentButtonStyle()
+                                .buttonStyle(.glassProminent)
                                 .controlSize(.small)
                             }
                         case .helperTool:
@@ -505,14 +505,14 @@ private struct HelperActionButton: View {
                 } label: {
                     buttonLabel
                 }
-                .adaptiveGlassButtonStyle()
+                .buttonStyle(.glass)
             } else {
                 Button {
                     installHelper()
                 } label: {
                     buttonLabel
                 }
-                .adaptiveGlassProminentButtonStyle()
+                .buttonStyle(.glassProminent)
             }
         }
         .controlSize(.small)

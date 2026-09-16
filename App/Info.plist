@@ -11,10 +11,5 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
-	<key>SMPrivilegedExecutables</key>
-	<dict>
-		<key>studio.slippindylan.BrewKit.Enodia.helper</key>
-		<string>identifier "studio.slippindylan.BrewKit.Enodia.helper" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>
-	</dict>
 </dict>
 </plist>

@@ -99,6 +99,7 @@ final class PermissionManager {
 
     // MARK: - 权限刷新
     func refresh() {
+        DNSManager.shared.checkHelperStatus()
         var statuses: [PermissionStatus] = []
 
         // 1. 辅助功能权限（网络控制功能需要）
@@ -119,11 +120,6 @@ final class PermissionManager {
         self.allRequiredGranted = statuses
             .filter { $0.isRequired }
             .allSatisfy { $0.isGranted }
-    }
-
-    /// 兼容旧调用方，内部转发到 `refresh()`
-    func checkAllPermissions() {
-        refresh()
     }
 
     // MARK: - 检查辅助功能权限

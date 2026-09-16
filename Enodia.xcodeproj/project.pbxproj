@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper in Embed Helper */ = {isa = PBXBuildFile; fileRef = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		BE7C5A66305ACCE70041C3BF /* Enodia.icon in Resources */ = {isa = PBXBuildFile; fileRef = BE7C5A65305ACCE70041C3BF /* Enodia.icon */; };
+		BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist in Embed LaunchDaemon */ = {isa = PBXBuildFile; fileRef = BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,12 +35,23 @@
 		BE72E1D42F0E2800002A3C57 /* Embed Helper */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = Contents/Library/LaunchServices;
+			dstPath = Contents/Resources;
 			dstSubfolderSpec = 1;
 			files = (
 				BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper in Embed Helper */,
 			);
 			name = "Embed Helper";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BE8D0003305B000000000001 /* Embed LaunchDaemon */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchDaemons;
+			dstSubfolderSpec = 1;
+			files = (
+				BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist in Embed LaunchDaemon */,
+			);
+			name = "Embed LaunchDaemon";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -48,6 +60,7 @@
 		BE6E6C7F2EFC5EF2008F6A66 /* Enodia.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Enodia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = studio.slippindylan.BrewKit.Enodia.helper; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE7C5A65305ACCE70041C3BF /* Enodia.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Enodia.icon; sourceTree = "<group>"; };
+		BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = EnodiaHelper/studio.slippindylan.BrewKit.Enodia.helper.plist; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -124,6 +137,7 @@
 				BE6E6C7C2EFC5EF2008F6A66 /* Frameworks */,
 				BE6E6C7D2EFC5EF2008F6A66 /* Resources */,
 				BE72E1D42F0E2800002A3C57 /* Embed Helper */,
+				BE8D0003305B000000000001 /* Embed LaunchDaemon */,
 			);
 			buildRules = (
 			);
@@ -241,6 +255,7 @@
 		BE6E6C882EFC5EF3008F6A66 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -292,7 +307,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -305,6 +320,7 @@
 		BE6E6C892EFC5EF3008F6A66 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -350,9 +366,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
@@ -439,12 +456,6 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = EnodiaHelper/Info.plist;
 				MARKETING_VERSION = 1.0;
-				OTHER_LDFLAGS = (
-					"-sectcreate",
-					__TEXT,
-					__launchd_plist,
-					"$(SRCROOT)/EnodiaHelper/Launchd.plist",
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Enodia.helper;
 				PRODUCT_NAME = studio.slippindylan.BrewKit.Enodia.helper;
 				SKIP_INSTALL = YES;
@@ -468,12 +479,6 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = EnodiaHelper/Info.plist;
 				MARKETING_VERSION = 1.0;
-				OTHER_LDFLAGS = (
-					"-sectcreate",
-					__TEXT,
-					__launchd_plist,
-					"$(SRCROOT)/EnodiaHelper/Launchd.plist",
-				);
 				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Enodia.helper;
 				PRODUCT_NAME = studio.slippindylan.BrewKit.Enodia.helper;
 				SKIP_INSTALL = YES;

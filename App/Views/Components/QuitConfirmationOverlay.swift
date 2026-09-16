@@ -11,7 +11,7 @@ import SwiftUI
 ///
 /// ## 设计规范
 /// - 符合 macOS 26 Liquid Glass 设计语言
-/// - 使用 `.ultraThinMaterial` 毛玻璃效果
+/// - 使用 `glassEffect` 呈现原生 Liquid Glass
 /// - 水平垂直居中显示
 /// - 优雅的进入/退出动画
 ///
@@ -59,16 +59,7 @@ struct QuitConfirmationOverlay: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
-        .background {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 8)
-                .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1)
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
-        }
+        .glassEffect(.regular, in: .rect(cornerRadius: 12))
     }
 }
 

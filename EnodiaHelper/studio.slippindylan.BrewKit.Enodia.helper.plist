@@ -4,10 +4,8 @@
 <dict>
 	<key>Label</key>
 	<string>studio.slippindylan.BrewKit.Enodia.helper</string>
-	<key>ProgramArguments</key>
-	<array>
-		<string>/Library/PrivilegedHelperTools/studio.slippindylan.BrewKit.Enodia.helper</string>
-	</array>
+	<key>BundleProgram</key>
+	<string>Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper</string>
 	<key>MachServices</key>
 	<dict>
 		<key>studio.slippindylan.BrewKit.Enodia.helper</key>

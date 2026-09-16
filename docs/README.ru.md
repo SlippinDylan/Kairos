@@ -53,10 +53,10 @@ Enodia объединяет повседневные сетевые операц
 
 | Параметр | Значение |
 |---|---|
-| Минимальная версия | macOS 15.0 Sequoia |
+| Минимальная версия | macOS 26.0 Tahoe |
 | Процессор | Apple Silicon (arm64) |
 | Тип приложения | Несандбоксированное приложение LSUIElement для строки меню |
-| Привилегированный компонент | Встроенный Helper для управления системным DNS |
+| Привилегированный компонент | LaunchDaemon на основе `SMAppService` для управления системным DNS |
 | Распространение | Один подписанный Apple Development, но не нотариально заверенный DMG в GitHub Releases |
 
 ## Установка и выпуски
@@ -67,7 +67,7 @@ Enodia объединяет повседневные сетевые операц
 sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 ```
 
-Для управления системным DNS установите Helper в настройках Enodia. Установка требует авторизации администратора.
+Для управления системным DNS зарегистрируйте Helper в настройках Enodia и подтвердите LaunchDaemon в Системных настройках по запросу macOS.
 
 Каждый push и Pull Request запускает unsigned arm64 CI. DMG публикуется только после успешного CI в main, при `release: true`, для ещё не опубликованной версии и при наличии единственного непустого раздела той же версии в [`CHANGELOG.md`](../CHANGELOG.md).
 
@@ -75,7 +75,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 ## Сборка из исходного кода
 
-Требуются macOS 15.0 или новее, Xcode 16 или новее и Apple ID. Откройте `Enodia.xcodeproj`, выберите свою команду разработчика, обновите signing requirement в `App/Info.plist` и `EnodiaHelper/Info.plist` под свой сертификат Apple Development и Team ID, затем соберите scheme `Enodia`.
+Требуются macOS 26.0 или новее, Xcode 26 или новее и Apple ID. Откройте `Enodia.xcodeproj`, выберите свою команду разработчика, обновите требования подписи XPC в `App/Services/DNSManager.swift` и `EnodiaHelper/main.swift` под свой Team ID, затем соберите scheme `Enodia`.
 
 ## Ключи API
 

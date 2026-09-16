@@ -252,7 +252,7 @@ final class MihomoViewModel {
                 let canProceed = try await ensureHostAppQuitIfRunning(
                     bundleIdentifier: snapshot.appBundleIdentifier,
                     displayName: snapshot.appDisplayName,
-                    onWaiting: { [weak self] in self?.downloadStatusText = "等待应用退出..." }
+                    onWaiting: { self.downloadStatusText = "等待应用退出..." }
                 )
                 guard canProceed else {
                     isDownloading = false

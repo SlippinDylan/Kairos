@@ -151,7 +151,7 @@ struct SceneConfigSheet: View {
                                     await selectApplication()
                                 }
                             }
-                            .adaptiveGlassProminentButtonStyle()
+                            .buttonStyle(.glassProminent)
                             .frame(maxWidth: .infinity)
                             .padding(.top, 8)
                         }
@@ -167,7 +167,7 @@ struct SceneConfigSheet: View {
                 Button("取消") {
                     dismiss()
                 }
-                .adaptiveGlassButtonStyle()
+                .buttonStyle(.glass)
                 .frame(minWidth: 80)
 
                 Spacer()
@@ -175,7 +175,7 @@ struct SceneConfigSheet: View {
                 Button("保存") {
                     saveScene()
                 }
-                .adaptiveGlassProminentButtonStyle()
+                .buttonStyle(.glassProminent)
                 .frame(minWidth: 80)
                 .disabled(!isFormValid)
             }

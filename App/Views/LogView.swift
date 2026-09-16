@@ -107,16 +107,10 @@ struct LogView: View {
         .padding(DesignSystem.Spacing.standard)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .toolbar {
-            if #available(macOS 26, *) {
-                ToolbarItem(placement: .principal) {
-                    toolbarContent
-                }
-                .sharedBackgroundVisibility(.hidden)
-            } else {
-                ToolbarItem(placement: .principal) {
-                    toolbarContent
-                }
+            ToolbarItem(placement: .principal) {
+                toolbarContent
             }
+            .sharedBackgroundVisibility(.hidden)
         }
         .fileExporter(
             isPresented: $showingExportPanel,
@@ -166,7 +160,7 @@ struct LogView: View {
                         searchText = ""
                         selectedLevel = nil
                     }
-                    .adaptiveGlassProminentButtonStyle()
+                    .buttonStyle(.glassProminent)
                     .controlSize(.small)
                 } else {
                     Text("应用运行时产生的日志将在此显示")

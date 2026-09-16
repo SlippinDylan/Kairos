@@ -213,7 +213,8 @@ jobs:
         run: |
           app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Enodia.app"
           binary="$app/Contents/MacOS/Enodia"
-          helper="$app/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
+          helper="$app/Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper"
+          daemon_plist="$app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Enodia.helper.plist"
           app_signature="$RUNNER_TEMP/app-signature.txt"
           helper_signature="$RUNNER_TEMP/helper-signature.txt"
           helper_info="$RUNNER_TEMP/helper-info.plist"
@@ -221,13 +222,16 @@ jobs:
           test -d "$app"
           test -x "$binary"
           test -x "$helper"
+          test -f "$daemon_plist"
           test "$(lipo -archs "$binary")" = 'arm64'
           test "$(lipo -archs "$helper")" = 'arm64'
-          test "$(vtool -show-build "$binary" | grep -c 'minos 15.0')" -eq 1
-          test "$(vtool -show-build "$helper" | grep -c 'minos 15.0')" -eq 1
+          test "$(vtool -show-build "$binary" | grep -c 'minos 26.0')" -eq 1
+          test "$(vtool -show-build "$helper" | grep -c 'minos 26.0')" -eq 1
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$MARKETING_VERSION"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist")" = '${{ github.run_number }}'
           test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
+          test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper'
+          test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Enodia\.helper' raw -o - "$daemon_plist")" = 'true'
 
           otool -X -v -s __TEXT __info_plist "$helper" > "$helper_info"
           plutil -lint "$helper_info"
@@ -245,10 +249,8 @@ jobs:
           grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$app_signature"
           grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$helper_signature"
 
-          helper_requirement="$(/usr/libexec/PlistBuddy \
-            -c 'Print :SMPrivilegedExecutables:studio.slippindylan.BrewKit.Enodia.helper' \
-            "$app/Contents/Info.plist")"
-          app_requirement="$(plutil -extract SMAuthorizedClients.0 raw -o - "$helper_info")"
+          helper_requirement='identifier "studio.slippindylan.BrewKit.Enodia.helper" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
+          app_requirement='identifier "studio.slippindylan.BrewKit.Enodia" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
           codesign --verify --strict --all-architectures -R="$helper_requirement" "$helper"
           codesign --verify --strict --all-architectures -R="$app_requirement" "$app"
 
@@ -268,8 +270,10 @@ jobs:
           test -d "$mount_point/Enodia.app"
           test "$(readlink "$mount_point/Applications")" = '/Applications'
           binary="$mount_point/Enodia.app/Contents/MacOS/Enodia"
-          helper="$mount_point/Enodia.app/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
+          helper="$mount_point/Enodia.app/Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper"
+          daemon_plist="$mount_point/Enodia.app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Enodia.helper.plist"
           test -x "$helper"
+          test -f "$daemon_plist"
           test "$(lipo -archs "$binary")" = 'arm64'
           test "$(lipo -archs "$helper")" = 'arm64'
           codesign --verify --strict --all-architectures "$mount_point/Enodia.app"

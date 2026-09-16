@@ -357,7 +357,7 @@ struct NetworkMonitorView: View {
                     showingDNSSceneSheet = true
                 }
             }
-            .adaptiveGlassProminentButtonStyle()
+            .buttonStyle(.glassProminent)
         }
     }
 

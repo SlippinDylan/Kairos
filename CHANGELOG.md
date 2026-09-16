@@ -4,6 +4,10 @@ All notable changes to Enodia releases are recorded here.
 
 ## [Unreleased]
 
+### Added
+
+- Added Feishu notifications when CI starts and when a release enters the packaging stage.
+
 ## [0.1.0-beta.1] - 2026-09-16
 
 ### Added

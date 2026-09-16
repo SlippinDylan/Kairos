@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper in Embed Helper */ = {isa = PBXBuildFile; fileRef = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		BE7C5A66305ACCE70041C3BF /* Enodia.icon in Resources */ = {isa = PBXBuildFile; fileRef = BE7C5A65305ACCE70041C3BF /* Enodia.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 /* Begin PBXFileReference section */
 		BE6E6C7F2EFC5EF2008F6A66 /* Enodia.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Enodia.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = studio.slippindylan.BrewKit.Enodia.helper; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE7C5A65305ACCE70041C3BF /* Enodia.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Enodia.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -95,6 +97,7 @@
 		BE6E6C762EFC5EF2008F6A66 = {
 			isa = PBXGroup;
 			children = (
+				BE7C5A65305ACCE70041C3BF /* Enodia.icon */,
 				BE6E6C812EFC5EF2008F6A66 /* Enodia */,
 				BE72E1CC2F0E2590002A3C57 /* EnodiaHelper */,
 				BE6E6C802EFC5EF2008F6A66 /* Products */,
@@ -203,6 +206,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BE7C5A66305ACCE70041C3BF /* Enodia.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -357,8 +361,9 @@
 		BE6E6C8B2EFC5EF3008F6A66 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Enodia;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Enodia/Enodia.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -390,8 +395,9 @@
 		BE6E6C8C2EFC5EF3008F6A66 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Enodia;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Enodia/Enodia.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;

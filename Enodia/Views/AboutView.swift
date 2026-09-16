@@ -22,7 +22,7 @@ struct AboutView: View {
 
             VStack(spacing: DesignSystem.Spacing.extraLarge) {
                 // 应用图标
-                if let appIcon = NSImage(named: "AppIcon") {
+                if let appIcon = NSApplication.shared.applicationIconImage {
                     Image(nsImage: appIcon)
                         .resizable()
                         .frame(width: 128, height: 128)

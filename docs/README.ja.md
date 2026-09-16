@@ -75,7 +75,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 ## ソースからのビルド
 
-macOS 15.0 以降、Xcode 16 以降、Apple ID が必要です。`Enodia.xcodeproj` を開き、開発チームを選択したうえで、`Apps/Info.plist` と `EnodiaHelper/Info.plist` の signing requirement を自分の Apple Development 証明書と Team ID に合わせて更新し、`Enodia` scheme をビルドしてください。
+macOS 15.0 以降、Xcode 16 以降、Apple ID が必要です。`Enodia.xcodeproj` を開き、開発チームを選択したうえで、`App/Info.plist` と `EnodiaHelper/Info.plist` の signing requirement を自分の Apple Development 証明書と Team ID に合わせて更新し、`Enodia` scheme をビルドしてください。
 
 ## API キー
 

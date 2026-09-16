@@ -75,7 +75,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 ## 從原始碼建置
 
-需要 macOS 15.0+、Xcode 16+ 和 Apple ID。開啟 `Enodia.xcodeproj`，選擇自己的開發團隊，再將 `Apps/Info.plist` 和 `EnodiaHelper/Info.plist` 中的簽署 requirement 更新為自己的 Apple Development 憑證和 Team ID，最後建置 `Enodia` scheme。
+需要 macOS 15.0+、Xcode 16+ 和 Apple ID。開啟 `Enodia.xcodeproj`，選擇自己的開發團隊，再將 `App/Info.plist` 和 `EnodiaHelper/Info.plist` 中的簽署 requirement 更新為自己的 Apple Development 憑證和 Team ID，最後建置 `Enodia` scheme。
 
 ## API Key
 

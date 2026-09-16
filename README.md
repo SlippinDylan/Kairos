@@ -81,7 +81,7 @@ Requirements:
 - Xcode 16 or later
 - An Apple ID
 
-Open `Enodia.xcodeproj`, select your development team, then update the signing requirements in `Apps/Info.plist` and `EnodiaHelper/Info.plist` to match your Apple Development certificate and Team ID. Build and run the `Enodia` scheme.
+Open `Enodia.xcodeproj`, select your development team, then update the signing requirements in `App/Info.plist` and `EnodiaHelper/Info.plist` to match your Apple Development certificate and Team ID. Build and run the `Enodia` scheme.
 
 ## API Keys
 

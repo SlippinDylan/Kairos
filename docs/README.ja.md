@@ -47,7 +47,7 @@ Enodia は、日常的なネットワーク操作を 1 つのメニューバー�
 
 > **最初の公開ベータを準備しています**
 
-アプリの機能と arm64 自動ビルド検証は実装済みです。最終的なインストール、Helper、Gatekeeper、DMG の確認が完了するまで、`0.1.0-beta.1` のリリース設定は無効です。
+アプリの機能と arm64 ビルド検証は実装済みです。main への push と Pull Request では軽量な自動化チェックを実行します。変更が `README.md`、`docs/`、`LICENSE`、`AGENTS.md` のみに限られ、公開が無効な場合は macOS ビルドを省略し、それ以外では未署名の App と Helper をビルドします。現在、`0.1.0-beta.1` の公開は無効です。
 
 ## 動作環境
 
@@ -69,7 +69,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 システム DNS を管理する場合は、Enodia の設定から Helper を登録し、macOS の案内に従ってシステム設定で LaunchDaemon を承認します。
 
-すべての push と Pull Request で unsigned arm64 CI が実行されます。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](../CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
+main への push と Pull Request では、軽量なリリース自動化チェックを常に実行します。`README.md`、`docs/`、`LICENSE`、`AGENTS.md` 以外の変更では、未署名の arm64 App、Helper、LaunchDaemon bundle もビルドして検証します。公開を有効にした場合も、この完全なチェックを強制します。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](../CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
 
 バージョン形式は `x.y.z`、`x.y.z-alpha.n`、`x.y.z-beta.n` に対応しています。Alpha/Beta 接尾辞は tag、Release、DMG、Changelog に使用され、App と Helper のマーケティングバージョンには対応する `x.y.z` が使われます。
 

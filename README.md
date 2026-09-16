@@ -47,7 +47,7 @@ Enodia brings routine network operations into one menu-bar app. It can recognize
 
 > **The first public beta is being prepared**
 
-The application features and automated arm64 build checks are implemented. The initial `0.1.0-beta.1` release remains disabled until final installation, Helper, Gatekeeper, and DMG checks are complete.
+The application features and arm64 build checks are implemented. Pushes to main and pull requests run lightweight automation checks. Changes limited to `README.md`, `docs/`, `LICENSE`, or `AGENTS.md` skip the macOS build while publishing is disabled; all other changes run the unsigned App and Helper build. The initial `0.1.0-beta.1` release remains disabled.
 
 ## Platform
 
@@ -69,7 +69,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 Open Enodia and register the Helper from Settings when you want to manage system DNS. Approve its LaunchDaemon in System Settings when macOS asks.
 
-Every push and pull request runs unsigned arm64 CI. Release configuration lives in [`Config/Release/manifest.json`](Config/Release/manifest.json). A DMG is signed, packaged, and published only after main CI succeeds, `release` is `true`, the version is unpublished, and [`CHANGELOG.md`](CHANGELOG.md) contains one unique, non-empty section with the same version.
+Pushes to main and pull requests always run lightweight release-automation checks. Changes outside `README.md`, `docs/`, `LICENSE`, and `AGENTS.md` additionally build and verify the unsigned arm64 App, Helper, and LaunchDaemon bundle; enabling publishing also forces this full check. Release configuration lives in [`Config/Release/manifest.json`](Config/Release/manifest.json). A DMG is signed, packaged, and published only after main CI succeeds, `release` is `true`, the version is unpublished, and [`CHANGELOG.md`](CHANGELOG.md) contains one unique, non-empty section with the same version.
 
 Supported versions are `x.y.z`, `x.y.z-alpha.n`, and `x.y.z-beta.n`. Alpha and beta suffixes are used by the tag, Release, DMG, and Changelog; the App and Helper use the matching numeric `x.y.z` marketing version.
 

@@ -47,7 +47,7 @@ Enodia 把常用的網路操作集中到一個選單列 App 中。它可以根�
 
 > **正在準備第一個公開 Beta 版本**
 
-App 功能和 arm64 自動建置檢查已完成。在最終安裝、Helper、Gatekeeper 和 DMG 檢查完成前，`0.1.0-beta.1` 的發佈開關維持關閉。
+App 功能和 arm64 建置檢查已完成。main push 與 Pull Request 都會執行輕量自動化檢查；僅修改 `README.md`、`docs/`、`LICENSE` 或 `AGENTS.md` 且發佈關閉時，會略過 macOS 建置，其他變更會建置未簽署的 App 和 Helper。目前 `0.1.0-beta.1` 的發佈開關維持關閉。
 
 ## 系統需求
 
@@ -69,7 +69,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
 
 需要管理系統 DNS 時，請在 Enodia 設定中註冊 Helper，並依 macOS 提示在系統設定中核准 LaunchDaemon。
 
-所有 push 和 Pull Request 都會執行 unsigned arm64 CI。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
+main push 與 Pull Request 一律執行輕量發佈自動化檢查。修改 `README.md`、`docs/`、`LICENSE` 和 `AGENTS.md` 以外的內容時，還會建置並驗證未簽署的 arm64 App、Helper 和 LaunchDaemon bundle；啟用發佈也會強制執行這項完整檢查。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
 
 支援 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 後綴用於 tag、Release、DMG 和 Changelog；App 與 Helper 使用對應的純數字 `x.y.z` 行銷版本。
 

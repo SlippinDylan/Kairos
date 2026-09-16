@@ -1,6 +1,6 @@
 //
 //  EmailTestUseCase.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //  Refactored from IPQualityViewModel.swift - Email service testing logic

@@ -1,6 +1,6 @@
 //
 //  IPQualityViewModel.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/29.
 //  Refactored on 2025/12/31 - Simplified to MVVM + UseCase pattern

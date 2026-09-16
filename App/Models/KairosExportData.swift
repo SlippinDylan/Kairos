@@ -1,6 +1,6 @@
 //
-//  EnodiaExportData.swift
-//  Enodia
+//  KairosExportData.swift
+//  Kairos
 //
 //  Created by Claude on 2026/01/09.
 //
@@ -12,7 +12,7 @@
 
 import Foundation
 
-/// Enodia 配置导出数据结构
+/// Kairos 配置导出数据结构
 ///
 /// ## 包含内容
 /// - 应用控制场景 (NetworkScene)
@@ -22,8 +22,8 @@ import Foundation
 ///
 /// ## 文件格式
 /// - 内部格式：JSON
-/// - 文件扩展名：.enodia
-struct EnodiaExportData: Codable {
+/// - 文件扩展名：.kairos
+struct KairosExportData: Codable {
     // MARK: - Metadata
 
     /// 导出格式版本（便于未来兼容性处理）
@@ -73,7 +73,7 @@ struct EnodiaExportData: Codable {
     ) {
         self.version = Self.currentVersion
         self.exportedAt = Date()
-        self.appName = "Enodia"
+        self.appName = "Kairos"
         self.appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         self.appControlScenes = appControlScenes
         self.dnsControlScenes = dnsControlScenes

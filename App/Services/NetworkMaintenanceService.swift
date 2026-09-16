@@ -1,6 +1,6 @@
 //
 //  NetworkMaintenanceService.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/04.
 //
@@ -213,7 +213,7 @@ final class NetworkMaintenanceService {
                         // 这里我们通过重新配置接口来达到重置效果
 
                         // 创建临时配置存储
-                        if let prefs = SCPreferencesCreate(nil, "com.enodia.maintenance" as CFString, nil) {
+                        if let prefs = SCPreferencesCreate(nil, "com.kairos.maintenance" as CFString, nil) {
                             // 应用配置变更（触发接口重新初始化）
                             SCPreferencesCommitChanges(prefs)
                             SCPreferencesApplyChanges(prefs)

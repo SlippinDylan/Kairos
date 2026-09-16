@@ -1,6 +1,6 @@
 //
 //  NetworkMonitor.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/26.
 //
@@ -29,7 +29,7 @@ import UserNotifications
 /// - `DNSSceneMatchingEngine`: DNS 场景匹配
 ///
 /// ## 使用方式
-/// 1. 在 EnodiaApp 中创建: `@State private var networkMonitor = NetworkMonitor()`
+/// 1. 在 KairosApp 中创建: `@State private var networkMonitor = NetworkMonitor()`
 /// 2. 注入到视图层级: `.environment(networkMonitor)`
 /// 3. 在 AppDelegate 中初始化: `networkMonitor.startMonitoring(...)`
 @MainActor
@@ -216,7 +216,7 @@ final class NetworkMonitor {
     /// - 网络变化时触发异步更新
     private func setupNetworkMonitoring() {
         pathMonitor = NWPathMonitor()
-        let queue = DispatchQueue(label: "com.enodia.networkmonitor", qos: .userInitiated)
+        let queue = DispatchQueue(label: "com.kairos.networkmonitor", qos: .userInitiated)
 
         pathMonitor?.pathUpdateHandler = { [weak self] _ in
             guard let self = self else { return }

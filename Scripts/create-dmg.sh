@@ -29,7 +29,7 @@ case "$dmg_path" in
     ;;
 esac
 
-temporary_root="$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/enodia-dmg.XXXXXX")"
+temporary_root="$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/kairos-dmg.XXXXXX")"
 staging_directory="$temporary_root/contents"
 cleanup() {
   rm -rf "$temporary_root"
@@ -37,7 +37,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$staging_directory" "$(dirname "$dmg_path")"
-ditto "$app_path" "$staging_directory/Enodia.app"
+ditto "$app_path" "$staging_directory/Kairos.app"
 ln -s /Applications "$staging_directory/Applications"
 
 hdiutil create \

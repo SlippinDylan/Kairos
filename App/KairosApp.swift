@@ -1,6 +1,6 @@
 //
-//  EnodiaApp.swift
-//  Enodia
+//  KairosApp.swift
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/25.
 //  Updated: 2026/01/27 - Certificate refresh
@@ -9,7 +9,7 @@
 import SwiftUI
 
 @main
-struct EnodiaApp: App {
+struct KairosApp: App {
     // MARK: - App Delegate
 
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -45,7 +45,7 @@ struct EnodiaApp: App {
 
     init() {
         // 应用启动日志
-        AppLogger.info("🚀 Enodia 应用已启动")
+        AppLogger.info("🚀 Kairos 应用已启动")
         AppLogger.debug("系统版本: \(ProcessInfo.processInfo.operatingSystemVersionString)")
         AppLogger.debug("应用版本: \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "未知")")
     }
@@ -54,7 +54,7 @@ struct EnodiaApp: App {
 
     var body: some Scene {
         // 菜单栏入口
-        MenuBarExtra("Enodia", systemImage: "wifi.router") {
+        MenuBarExtra("Kairos", systemImage: "wifi.router") {
             MenuBarView()
                 .environment(windowCoordinator)
                 .task {

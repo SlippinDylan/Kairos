@@ -1,6 +1,6 @@
 //
 //  LogView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -194,7 +194,7 @@ struct LogView: View {
          .replacingOccurrences(of: ":", with: "-")
          .replacingOccurrences(of: ", ", with: "_")
          .replacingOccurrences(of: " ", with: "_")
-        return "Enodia_Logs_\(timestamp).txt"
+        return "Kairos_Logs_\(timestamp).txt"
     }
 }
 

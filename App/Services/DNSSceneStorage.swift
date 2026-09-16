@@ -1,6 +1,6 @@
 //
 //  DNSSceneStorage.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/26.
 //
@@ -16,9 +16,9 @@ class DNSSceneStorage {
     private var storageURL: URL {
         let urls = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         let base = urls.first ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Library/Application Support")
-        let enodiaDir = base.appendingPathComponent("Enodia")
-        try? FileManager.default.createDirectory(at: enodiaDir, withIntermediateDirectories: true)
-        return enodiaDir.appendingPathComponent("dnsScenes.json")
+        let kairosDir = base.appendingPathComponent("Kairos")
+        try? FileManager.default.createDirectory(at: kairosDir, withIntermediateDirectories: true)
+        return kairosDir.appendingPathComponent("dnsScenes.json")
     }
 
     private init() {}

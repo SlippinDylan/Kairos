@@ -172,7 +172,7 @@ async function main() {
       marketing_version: manifest.version.base,
       tag: `v${manifest.version.value}`,
       prerelease: manifest.version.prerelease,
-      dmg_name: `Enodia-${manifest.version.value}.dmg`,
+      dmg_name: `Kairos-${manifest.version.value}.dmg`,
     });
     return;
   }

@@ -1,6 +1,6 @@
 //
 //  SceneConfigSheet.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/25.
 //  Updated by SlippinDylan on 2026/01/06 - P2-6 修复
@@ -37,7 +37,7 @@ struct SceneConfigSheet: View {
             Divider()
 
             // 配置表单（使用 VStack 替代 Form，避免嵌套滚动冲突）
-            EnodiaScrollView {
+            KairosScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Section 1: 场景名称
                     FormSection(title: "场景名称") {

@@ -1,6 +1,6 @@
 //
 //  DNSTestViewModel.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/06.
 //  Extracted from DNSTestView for reuse in DNSTestCardView

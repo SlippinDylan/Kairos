@@ -1,6 +1,6 @@
 //
 //  DesignSystem.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //  统一的设计规范，符合 macOS HIG

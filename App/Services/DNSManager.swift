@@ -1,6 +1,6 @@
 //
 //  DNSManager.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/26.
 //
@@ -20,9 +20,9 @@ final class DNSManager {
     var currentSecondaryDNS: String = "-"
     var isHelperInstalled = false
 
-    private let helperIdentifier = "studio.slippindylan.BrewKit.Enodia.helper"
-    private let daemonPlistName = "studio.slippindylan.BrewKit.Enodia.helper.plist"
-    private let helperCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Enodia.helper\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
+    private let helperIdentifier = "studio.slippindylan.BrewKit.Kairos.helper"
+    private let daemonPlistName = "studio.slippindylan.BrewKit.Kairos.helper.plist"
+    private let helperCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Kairos.helper\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var helperConnection: NSXPCConnection?
 
     private var helperService: SMAppService {
@@ -250,7 +250,7 @@ final class DNSManager {
     func getCurrentDNS(interface: String, completion: @escaping ([String]) -> Void) {
         AppLogger.debug("获取当前 DNS 配置 - 接口: \(interface)")
 
-        guard let store = SCDynamicStoreCreate(nil, "Enodia" as CFString, nil, nil),
+        guard let store = SCDynamicStoreCreate(nil, "Kairos" as CFString, nil, nil),
               let dictionary = SCDynamicStoreCopyValue(
                 store,
                 "State:/Network/Global/DNS" as CFString

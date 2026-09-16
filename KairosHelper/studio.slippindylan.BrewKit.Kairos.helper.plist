@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>studio.slippindylan.BrewKit.Enodia.helper</string>
+	<string>studio.slippindylan.BrewKit.Kairos.helper</string>
 	<key>BundleProgram</key>
-	<string>Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper</string>
+	<string>Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper</string>
 	<key>MachServices</key>
 	<dict>
-		<key>studio.slippindylan.BrewKit.Enodia.helper</key>
+		<key>studio.slippindylan.BrewKit.Kairos.helper</key>
 		<true/>
 	</dict>
 </dict>

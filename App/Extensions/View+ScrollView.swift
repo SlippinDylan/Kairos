@@ -1,6 +1,6 @@
 //
 //  View+ScrollView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/07.
 //  SwiftUI scroll view with AppKit overlay-scroller configuration
@@ -17,14 +17,14 @@ import AppKit
 ///
 /// Usage:
 /// ```swift
-/// EnodiaScrollView {
+/// KairosScrollView {
 ///     VStack(alignment: .leading, spacing: 24) {
 ///         // Content
 ///     }
 ///     .padding()
 /// }
 /// ```
-struct EnodiaScrollView<Content: View>: View {
+struct KairosScrollView<Content: View>: View {
     private let showsVerticalScroller: Bool
     private let showsHorizontalScroller: Bool
     private let content: Content

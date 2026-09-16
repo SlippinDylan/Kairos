@@ -1,6 +1,6 @@
 //
 //  LogStore.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -62,7 +62,7 @@ final class LogStore {
 
     /// 文件写入队列（串行，确保写入顺序）
     private let fileQueue = DispatchQueue(
-        label: "com.enodia.logging.file",
+        label: "com.kairos.logging.file",
         qos: .utility
     )
 
@@ -74,7 +74,7 @@ final class LogStore {
     private init() {
         // 确定日志文件路径
         let logsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Enodia/Logs", isDirectory: true)
+            .appendingPathComponent("Kairos/Logs", isDirectory: true)
 
         // 创建日志目录
         try? FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
@@ -82,7 +82,7 @@ final class LogStore {
 
         // 日志文件名包含日期（使用 ISO 8601 日期格式）
         let dateString = Date().formatted(.iso8601.year().month().day().dateSeparator(.dash))
-        logFileURL = logsDir.appendingPathComponent("enodia-\(dateString).log")
+        logFileURL = logsDir.appendingPathComponent("kairos-\(dateString).log")
 
         // 初始化文件写入器
         fileWriter = LogFileWriter(

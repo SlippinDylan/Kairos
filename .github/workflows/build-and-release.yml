@@ -141,13 +141,13 @@ jobs:
             echo
             echo '## 安装'
             echo
-            echo "1. 打开 DMG，将 \`Enodia.app\` 拖到 \`Applications\`。"
+            echo "1. 打开 DMG，将 \`Kairos.app\` 拖到 \`Applications\`。"
             echo '2. 移除下载隔离属性：'
             echo
             echo '   ```bash'
-            echo '   sudo xattr -rd com.apple.quarantine /Applications/Enodia.app'
+            echo '   sudo xattr -rd com.apple.quarantine /Applications/Kairos.app'
             echo '   ```'
-            echo '3. 打开 Enodia，在设置中安装 Helper。'
+            echo '3. 打开 Kairos，在设置中安装 Helper。'
             echo
             echo '> 此版本使用 Apple Development 证书签名，未经 Apple 公证。'
           } >> "$release_notes_path"
@@ -163,7 +163,7 @@ jobs:
           : "${CERTIFICATES_PASSWORD:?Missing CERTIFICATES_PASSWORD secret}"
 
           certificate_path="$RUNNER_TEMP/apple-development.p12"
-          signing_keychain_path="$RUNNER_TEMP/enodia-signing.keychain-db"
+          signing_keychain_path="$RUNNER_TEMP/kairos-signing.keychain-db"
           keychain_password="$(openssl rand -hex 24)"
           umask 077
 
@@ -213,8 +213,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild build \
-            -project Enodia.xcodeproj \
-            -scheme Enodia \
+            -project Kairos.xcodeproj \
+            -scheme Kairos \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
@@ -228,16 +228,16 @@ jobs:
             CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
             DEVELOPMENT_TEAM="$SIGNING_TEAM_ID" \
             PROVISIONING_PROFILE_SPECIFIER='' \
-            OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/enodia-signing.keychain-db"
+            OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/kairos-signing.keychain-db"
 
       - name: Verify signed app and Helper
         env:
           SIGNING_TEAM_ID: ${{ steps.signing.outputs.team_id }}
         run: |
-          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Enodia.app"
-          binary="$app/Contents/MacOS/Enodia"
-          helper="$app/Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper"
-          daemon_plist="$app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Enodia.helper.plist"
+          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Kairos.app"
+          binary="$app/Contents/MacOS/Kairos"
+          helper="$app/Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper"
+          daemon_plist="$app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Kairos.helper.plist"
           app_signature="$RUNNER_TEMP/app-signature.txt"
           helper_signature="$RUNNER_TEMP/helper-signature.txt"
           helper_info="$RUNNER_TEMP/helper-info.plist"
@@ -253,8 +253,8 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$MARKETING_VERSION"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist")" = '${{ github.run_number }}'
           test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
-          test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper'
-          test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Enodia\.helper' raw -o - "$daemon_plist")" = 'true'
+          test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper'
+          test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Kairos\.helper' raw -o - "$daemon_plist")" = 'true'
 
           otool -X -v -s __TEXT __info_plist "$helper" > "$helper_info"
           plutil -lint "$helper_info"
@@ -272,34 +272,34 @@ jobs:
           grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$app_signature"
           grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$helper_signature"
 
-          helper_requirement='identifier "studio.slippindylan.BrewKit.Enodia.helper" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
-          app_requirement='identifier "studio.slippindylan.BrewKit.Enodia" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
+          helper_requirement='identifier "studio.slippindylan.BrewKit.Kairos.helper" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
+          app_requirement='identifier "studio.slippindylan.BrewKit.Kairos" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
           codesign --verify --strict --all-architectures -R="$helper_requirement" "$helper"
           codesign --verify --strict --all-architectures -R="$app_requirement" "$app"
 
       - name: Package drag-to-install DMG
         run: |
-          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Enodia.app"
-          Scripts/create-dmg.sh "$app" "$RUNNER_TEMP/$DMG_NAME" "Enodia $VERSION"
+          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Kairos.app"
+          Scripts/create-dmg.sh "$app" "$RUNNER_TEMP/$DMG_NAME" "Kairos $VERSION"
 
       - name: Verify DMG
         run: |
-          mount_point="$RUNNER_TEMP/EnodiaDMG"
+          mount_point="$RUNNER_TEMP/KairosDMG"
           dmg_path="$RUNNER_TEMP/$DMG_NAME"
           mkdir -p "$mount_point"
           hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "$dmg_path"
           cleanup_mount() { hdiutil detach "$mount_point" >/dev/null; }
           trap cleanup_mount EXIT
-          test -d "$mount_point/Enodia.app"
+          test -d "$mount_point/Kairos.app"
           test "$(readlink "$mount_point/Applications")" = '/Applications'
-          binary="$mount_point/Enodia.app/Contents/MacOS/Enodia"
-          helper="$mount_point/Enodia.app/Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper"
-          daemon_plist="$mount_point/Enodia.app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Enodia.helper.plist"
+          binary="$mount_point/Kairos.app/Contents/MacOS/Kairos"
+          helper="$mount_point/Kairos.app/Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper"
+          daemon_plist="$mount_point/Kairos.app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Kairos.helper.plist"
           test -x "$helper"
           test -f "$daemon_plist"
           test "$(lipo -archs "$binary")" = 'arm64'
           test "$(lipo -archs "$helper")" = 'arm64'
-          codesign --verify --strict --all-architectures "$mount_point/Enodia.app"
+          codesign --verify --strict --all-architectures "$mount_point/Kairos.app"
           cleanup_mount
           trap - EXIT
 
@@ -409,7 +409,7 @@ jobs:
       - name: Remove signing keychain
         if: always()
         run: |
-          signing_keychain_path="$RUNNER_TEMP/enodia-signing.keychain-db"
+          signing_keychain_path="$RUNNER_TEMP/kairos-signing.keychain-db"
           if [[ -f "$signing_keychain_path" ]]; then
             security delete-keychain "$signing_keychain_path" || true
           fi

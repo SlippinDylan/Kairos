@@ -1,6 +1,6 @@
 //
 //  NotificationCoordinator.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -13,9 +13,9 @@ import UserNotifications
 /// 使用反向域名命名规范
 /// 相同标识符的通知会自动替换旧通知，实现去重
 enum NotificationID {
-    static let sceneMatch = "studio.slippindylan.enodia.notification.scene-match"
-    static let appManagement = "studio.slippindylan.enodia.notification.app-management"
-    static let dnsChange = "studio.slippindylan.enodia.notification.dns-change"
+    static let sceneMatch = "studio.slippindylan.kairos.notification.scene-match"
+    static let appManagement = "studio.slippindylan.kairos.notification.app-management"
+    static let dnsChange = "studio.slippindylan.kairos.notification.dns-change"
 }
 
 /// 通知业务协调器

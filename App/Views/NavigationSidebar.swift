@@ -1,6 +1,6 @@
 //
 //  NavigationSidebar.swift
-//  Enodia
+//  Kairos
 //
 
 import SwiftUI
@@ -31,7 +31,7 @@ struct NavigationSidebar: View {
         .padding(.horizontal, DesignSystem.Spacing.small)
         .padding(.vertical, DesignSystem.Spacing.medium)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle("Enodia")
+        .navigationTitle("Kairos")
     }
 
     private func destinationGroup(_ destinations: [Destination]) -> some View {

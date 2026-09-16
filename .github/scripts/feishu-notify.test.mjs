@@ -10,7 +10,7 @@ import {
   truncate,
 } from './feishu-notify.mjs';
 
-const repository = { full_name: 'owner/Enodia' };
+const repository = { full_name: 'owner/Kairos' };
 const sender = { login: 'developer' };
 
 test('creates the documented Feishu signature', () => {
@@ -36,7 +36,7 @@ test('builds push and merged pull request notifications', () => {
     commits: [{ id: sha }, { id: 'b'.repeat(40) }],
     head_commit: { message: 'feat: release' },
   });
-  assert.equal(push.title, 'Enodia 代码已推送');
+  assert.equal(push.title, 'Kairos 代码已推送');
   assert.match(push.details[3], /提交：2 个/);
 
   const pullRequest = buildNotification('pull_request_target', {
@@ -45,7 +45,7 @@ test('builds push and merged pull request notifications', () => {
     action: 'closed',
     pull_request: { number: 7, title: 'Ship', state: 'closed', merged: true },
   });
-  assert.equal(pullRequest.title, 'Enodia PR 已合并');
+  assert.equal(pullRequest.title, 'Kairos PR 已合并');
   assert.equal(pullRequest.color, 'green');
 });
 
@@ -68,7 +68,7 @@ test('normalizes every configured collaboration event', () => {
 
   for (const [eventName, event] of cases) {
     const notification = buildNotification(eventName, event);
-    assert.match(notification.title, /^Enodia /);
+    assert.match(notification.title, /^Kairos /);
     assert.ok(notification.button.url);
   }
 });
@@ -109,10 +109,10 @@ test('reports CI start and suppresses Release planning start', () => {
       head_branch: 'feature',
       head_sha: sha,
       run_number: 12,
-      html_url: 'https://github.com/owner/Enodia/actions/runs/12',
+      html_url: 'https://github.com/owner/Kairos/actions/runs/12',
     },
   });
-  assert.equal(ciStarted.title, 'Enodia CI 已开始');
+  assert.equal(ciStarted.title, 'Kairos CI 已开始');
   assert.equal(ciStarted.color, 'blue');
   assert.ok(ciStarted.details.includes('提交：aaaaaaa'));
 
@@ -131,18 +131,18 @@ test('extracts at most three release highlights', () => {
   ]);
 });
 
-test('builds a release card with Enodia product facts', () => {
+test('builds a release card with Kairos product facts', () => {
   const notification = buildNotification('release', {
     repository,
     sender,
     release: {
       tag_name: 'v0.2.0-beta.1',
       prerelease: true,
-      html_url: 'https://github.com/owner/Enodia/releases/tag/v0.2.0-beta.1',
+      html_url: 'https://github.com/owner/Kairos/releases/tag/v0.2.0-beta.1',
       body: '- Added automation.',
       assets: [{
-        name: 'Enodia-0.2.0-beta.1.dmg',
-        browser_download_url: 'https://github.com/owner/Enodia/releases/download/v0.2.0-beta.1/Enodia-0.2.0-beta.1.dmg',
+        name: 'Kairos-0.2.0-beta.1.dmg',
+        browser_download_url: 'https://github.com/owner/Kairos/releases/download/v0.2.0-beta.1/Kairos-0.2.0-beta.1.dmg',
       }],
     },
   });
@@ -160,18 +160,18 @@ test('builds an automated release dispatch card', () => {
     client_payload: {
       version: '0.2.0-beta.1',
       prerelease: true,
-      dmg_name: 'Enodia-0.2.0-beta.1.dmg',
+      dmg_name: 'Kairos-0.2.0-beta.1.dmg',
       changelog: '- Added automation.',
-      release_url: 'https://github.com/owner/Enodia/releases/tag/v0.2.0-beta.1',
-      download_url: 'https://github.com/owner/Enodia/releases/download/v0.2.0-beta.1/Enodia-0.2.0-beta.1.dmg',
+      release_url: 'https://github.com/owner/Kairos/releases/tag/v0.2.0-beta.1',
+      download_url: 'https://github.com/owner/Kairos/releases/download/v0.2.0-beta.1/Kairos-0.2.0-beta.1.dmg',
     },
   });
   const card = buildCard(notification);
-  assert.equal(notification.title, 'Enodia 0.2.0-beta.1 发布成功');
+  assert.equal(notification.title, 'Kairos 0.2.0-beta.1 发布成功');
   assert.equal(card.elements[1].actions.length, 2);
 });
 
-test('builds a packaging-started dispatch card with Enodia product facts', () => {
+test('builds a packaging-started dispatch card with Kairos product facts', () => {
   const notification = buildNotification('repository_dispatch', {
     repository,
     sender,
@@ -179,18 +179,18 @@ test('builds a packaging-started dispatch card with Enodia product facts', () =>
     client_payload: {
       version: '0.2.0-beta.1',
       prerelease: true,
-      dmg_name: 'Enodia-0.2.0-beta.1.dmg',
+      dmg_name: 'Kairos-0.2.0-beta.1.dmg',
       sha: 'a'.repeat(40),
-      run_url: 'https://github.com/owner/Enodia/actions/runs/12',
+      run_url: 'https://github.com/owner/Kairos/actions/runs/12',
     },
   });
-  assert.equal(notification.title, 'Enodia 0.2.0-beta.1 开始打包');
+  assert.equal(notification.title, 'Kairos 0.2.0-beta.1 开始打包');
   assert.equal(notification.color, 'blue');
   assert.ok(notification.details.includes('架构：arm64'));
   assert.ok(notification.details.includes('系统：macOS 26+'));
-  assert.ok(notification.details.includes('组件：Enodia.app + DNS Helper'));
+  assert.ok(notification.details.includes('组件：Kairos.app + DNS Helper'));
   assert.ok(notification.details.includes('提交：aaaaaaa'));
-  assert.equal(notification.button.url, 'https://github.com/owner/Enodia/actions/runs/12');
+  assert.equal(notification.button.url, 'https://github.com/owner/Kairos/actions/runs/12');
 });
 
 test('retries transient Feishu responses and accepts a successful response', async () => {

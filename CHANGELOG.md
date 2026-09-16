@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Enodia releases are recorded here.
+All notable changes to Kairos releases are recorded here.
 
 ## [Unreleased]
 

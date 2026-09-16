@@ -1,6 +1,6 @@
 //
 //  SettingsExportService.swift
-//  Enodia
+//  Kairos
 //
 //  Created by Claude on 2026/01/09.
 //
@@ -17,11 +17,11 @@ import UniformTypeIdentifiers
 /// 设置导出/导入服务
 ///
 /// ## 功能
-/// - 导出当前所有配置到 .enodia 文件
-/// - 从 .enodia 文件解析配置（不负责写入，写入时机由调用方决定）
+/// - 导出当前所有配置到 .kairos 文件
+/// - 从 .kairos 文件解析配置（不负责写入，写入时机由调用方决定）
 ///
 /// ## 技术实现
-/// - 文件格式：JSON（内部） + .enodia（扩展名）
+/// - 文件格式：JSON（内部） + .kairos（扩展名）
 /// - 对话框：NSSavePanel / NSOpenPanel（100% 原生）
 /// - 编解码：JSONEncoder / JSONDecoder
 @MainActor
@@ -36,10 +36,10 @@ final class SettingsExportService {
     // MARK: - Constants
 
     /// 文件扩展名
-    private static let fileExtension = "enodia"
+    private static let fileExtension = "kairos"
 
     /// 文件名前缀
-    private static let fileNamePrefix = "Enodia_Settings"
+    private static let fileNamePrefix = "Kairos_Settings"
 
     // MARK: - Export
 
@@ -111,11 +111,11 @@ final class SettingsExportService {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
 
-            let importData = try decoder.decode(EnodiaExportData.self, from: jsonData)
+            let importData = try decoder.decode(KairosExportData.self, from: jsonData)
 
             // 3. 版本兼容性检查
-            if importData.version > EnodiaExportData.currentVersion {
-                AppLogger.warning("⚠️ 导入文件版本较新: \(importData.version) > \(EnodiaExportData.currentVersion)")
+            if importData.version > KairosExportData.currentVersion {
+                AppLogger.warning("⚠️ 导入文件版本较新: \(importData.version) > \(KairosExportData.currentVersion)")
             }
 
             AppLogger.info("✅ 设置文件解析成功: \(importData.appControlScenes.count) 个应用场景, \(importData.dnsControlScenes.count) 个 DNS 场景")
@@ -130,7 +130,7 @@ final class SettingsExportService {
     // MARK: - Private Methods - Data Collection
 
     /// 收集当前所有配置
-    private func collectCurrentSettings() -> EnodiaExportData {
+    private func collectCurrentSettings() -> KairosExportData {
         let appScenes = SceneStorage.loadScenes()
         let dnsScenes = DNSSceneStorage.shared.loadScenes()
         let apiKeys = APIKeyExportData(from: APIKeyManager.shared)
@@ -138,7 +138,7 @@ final class SettingsExportService {
 
         AppLogger.debug("收集配置: \(appScenes.count) 个应用场景, \(dnsScenes.count) 个 DNS 场景")
 
-        return EnodiaExportData(
+        return KairosExportData(
             appControlScenes: appScenes,
             dnsControlScenes: dnsScenes,
             apiKeys: apiKeys,
@@ -155,7 +155,7 @@ final class SettingsExportService {
         let panel = NSSavePanel()
 
         // 配置对话框
-        panel.title = "导出 Enodia 设置"
+        panel.title = "导出 Kairos 设置"
         panel.message = "选择保存位置"
         panel.nameFieldLabel = "文件名:"
         panel.nameFieldStringValue = generateFileName()
@@ -185,7 +185,7 @@ final class SettingsExportService {
         let panel = NSOpenPanel()
 
         // 配置对话框
-        panel.title = "导入 Enodia 设置"
+        panel.title = "导入 Kairos 设置"
         panel.message = "选择要导入的配置文件"
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -211,7 +211,7 @@ final class SettingsExportService {
 
     /// 生成导出文件名
     ///
-    /// 格式：Enodia_Settings_20260109_094532.enodia
+    /// 格式：Kairos_Settings_20260109_094532.kairos
     private func generateFileName() -> String {
         let timestamp = Date().formatted(
             Date.FormatStyle()
@@ -247,7 +247,7 @@ extension SettingsExportService {
 
     /// 导入结果
     enum ImportResult {
-        case success(data: EnodiaExportData)
+        case success(data: KairosExportData)
         case cancelled
         case failure(error: Error)
 
@@ -257,7 +257,7 @@ extension SettingsExportService {
         }
 
         /// 获取导入的数据（仅成功时有值）
-        var importedData: EnodiaExportData? {
+        var importedData: KairosExportData? {
             if case .success(let data) = self { return data }
             return nil
         }

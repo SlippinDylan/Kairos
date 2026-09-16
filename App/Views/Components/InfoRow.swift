@@ -1,6 +1,6 @@
 //
 //  InfoRow.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/06.
 //  Extracted from NetworkMonitorView.swift - P1-8 修复

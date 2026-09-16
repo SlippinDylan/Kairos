@@ -1,6 +1,6 @@
 //
 //  MenuBarView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -112,8 +112,8 @@ struct MenuBarView: View {
                 shortcut: "5"
             )
 
-            Button("关于 Enodia") {
-                AppLogger.info("菜单栏点击：关于 Enodia")
+            Button("关于 Kairos") {
+                AppLogger.info("菜单栏点击：关于 Kairos")
                 windowCoordinator.requestShow(tab: 5)
             }
             .keyboardShortcut("6", modifiers: .command)

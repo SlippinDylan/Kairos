@@ -1,6 +1,6 @@
 //
 //  main.swift
-//  EnodiaHelper
+//  KairosHelper
 //
 //  Created by SlippinDylan on 2025/12/26.
 //
@@ -15,10 +15,10 @@ import SystemConfiguration
 /// ## 设计说明
 /// - 作为 launchd MachService 运行，接收主应用的 XPC 连接
 /// - 使用 `disableSuddenTermination()` 防止系统在操作过程中强制终止
-/// - 仅接受满足 Enodia App 签名要求的 XPC 客户端
+/// - 仅接受满足 Kairos App 签名要求的 XPC 客户端
 /// - 保持运行并等待 launchd Mach service 连接
 class HelperToolMain: NSObject {
-    private let appCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Enodia\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
+    private let appCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Kairos\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var listener: NSXPCListener?
     private var connections = [NSXPCConnection]()
 
@@ -27,7 +27,7 @@ class HelperToolMain: NSObject {
         ProcessInfo.processInfo.disableSuddenTermination()
 
         // 创建 XPC Listener
-        listener = NSXPCListener(machServiceName: "studio.slippindylan.BrewKit.Enodia.helper")
+        listener = NSXPCListener(machServiceName: "studio.slippindylan.BrewKit.Kairos.helper")
         listener?.setConnectionCodeSigningRequirement(appCodeSigningRequirement)
         listener?.delegate = self
 
@@ -96,7 +96,7 @@ class DNSHelper: NSObject, DNSHelperProtocol {
     /// - 配置应用失败 → 返回错误
     func setDNS(interface: String, primaryDNS: String, secondaryDNS: String?, reply: @escaping (Bool, String?) -> Void) {
         // 创建网络配置首选项
-        guard let prefs = SCPreferencesCreate(nil, "EnodiaHelper" as CFString, nil) else {
+        guard let prefs = SCPreferencesCreate(nil, "KairosHelper" as CFString, nil) else {
             reply(false, "无法创建网络配置")
             return
         }
@@ -166,7 +166,7 @@ class DNSHelper: NSObject, DNSHelperProtocol {
     /// - 使用 `SCPreferences` 原生 API 替代 `networksetup -setdnsservers <interface> Empty`
     /// - 设置空的 DNS 服务器列表，恢复为 DHCP 自动获取
     func clearDNS(interface: String, reply: @escaping (Bool, String?) -> Void) {
-        guard let prefs = SCPreferencesCreate(nil, "EnodiaHelper" as CFString, nil) else {
+        guard let prefs = SCPreferencesCreate(nil, "KairosHelper" as CFString, nil) else {
             reply(false, "无法创建网络配置")
             return
         }
@@ -224,7 +224,7 @@ class DNSHelper: NSObject, DNSHelperProtocol {
     /// - 读取全局 DNS 配置（State:/Network/Global/DNS）
     /// - 返回 DNS 服务器列表
     func getDNS(interface: String, reply: @escaping ([String]) -> Void) {
-        guard let store = SCDynamicStoreCreate(nil, "EnodiaHelper" as CFString, nil, nil) else {
+        guard let store = SCDynamicStoreCreate(nil, "KairosHelper" as CFString, nil, nil) else {
             reply([])
             return
         }

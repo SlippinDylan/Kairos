@@ -1,6 +1,6 @@
 //
 //  MihomoDownloadService.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/08.
 //
@@ -84,7 +84,7 @@ final class MihomoDownloadService: NSObject {
 
     /// 临时下载目录
     private var tempDirectory: URL {
-        FileManager.default.temporaryDirectory.appendingPathComponent("enodia_mihomo_download")
+        FileManager.default.temporaryDirectory.appendingPathComponent("kairos_mihomo_download")
     }
 
     // MARK: - Public Methods
@@ -204,7 +204,7 @@ final class MihomoDownloadService: NSObject {
 
         var request = URLRequest(url: url)
         request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
-        request.setValue("Enodia/1.0", forHTTPHeaderField: "User-Agent")
+        request.setValue("Kairos/1.0", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)
 

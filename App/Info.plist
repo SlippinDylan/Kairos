@@ -5,7 +5,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Enodia 需要控制其他应用程序的启动和退出，以便在切换网络场景时自动管理应用。</string>
+	<string>Kairos 需要控制其他应用程序的启动和退出，以便在切换网络场景时自动管理应用。</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

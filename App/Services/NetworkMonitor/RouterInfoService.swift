@@ -1,6 +1,6 @@
 //
 //  RouterInfoService.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/04.
 //
@@ -80,7 +80,7 @@ nonisolated final class RouterInfoService: @unchecked Sendable {
     /// - Returns: 路由器 IP 地址，失败时返回 "-"
     nonisolated func getRouterIP() -> String {
         // 创建 SCDynamicStore 实例
-        guard let store = SCDynamicStoreCreate(nil, "Enodia" as CFString, nil, nil) else {
+        guard let store = SCDynamicStoreCreate(nil, "Kairos" as CFString, nil, nil) else {
             AppLogger.error("❌ 无法创建 SCDynamicStore")
             return "-"
         }
@@ -203,7 +203,7 @@ nonisolated final class RouterInfoService: @unchecked Sendable {
     /// - Parameter interface: 接口名称（如 "en0", "en7"）
     /// - Returns: true 表示有 IP，false 表示无 IP
     nonisolated private func hasIPAddressNative(interface: String) -> Bool {
-        guard let store = SCDynamicStoreCreate(nil, "Enodia" as CFString, nil, nil) else {
+        guard let store = SCDynamicStoreCreate(nil, "Kairos" as CFString, nil, nil) else {
             return false
         }
 

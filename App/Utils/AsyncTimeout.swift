@@ -1,6 +1,6 @@
 //
 //  AsyncTimeout.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/06.
 //  Utility for adding timeout control to async operations

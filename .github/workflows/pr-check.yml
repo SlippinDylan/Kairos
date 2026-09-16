@@ -79,7 +79,7 @@ jobs:
           node --test .github/scripts/*.test.mjs
 
   macos-check:
-    name: Build Enodia
+    name: Build Kairos
     needs: lightweight-check
     if: needs.lightweight-check.outputs.run_macos == 'true'
     runs-on: macos-26
@@ -103,8 +103,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild build \
-            -project Enodia.xcodeproj \
-            -scheme Enodia \
+            -project Kairos.xcodeproj \
+            -scheme Kairos \
             -configuration Release \
             -destination 'generic/platform=macOS' \
             -derivedDataPath build/DerivedData-Release \
@@ -116,10 +116,10 @@ jobs:
 
       - name: Verify artifact contract
         run: |
-          app='build/DerivedData-Release/Build/Products/Release/Enodia.app'
-          binary="$app/Contents/MacOS/Enodia"
-          helper="$app/Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper"
-          daemon_plist="$app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Enodia.helper.plist"
+          app='build/DerivedData-Release/Build/Products/Release/Kairos.app'
+          binary="$app/Contents/MacOS/Kairos"
+          helper="$app/Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper"
+          daemon_plist="$app/Contents/Library/LaunchDaemons/studio.slippindylan.BrewKit.Kairos.helper.plist"
           test -d "$app"
           test -x "$binary"
           test -x "$helper"
@@ -129,8 +129,8 @@ jobs:
           test "$(vtool -show-build "$binary" | grep -c 'minos 26.0')" -eq 1
           test "$(vtool -show-build "$helper" | grep -c 'minos 26.0')" -eq 1
           test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
-          test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Enodia.helper'
-          test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Enodia\.helper' raw -o - "$daemon_plist")" = 'true'
+          test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper'
+          test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Kairos\.helper' raw -o - "$daemon_plist")" = 'true'
 
   build-check:
     # Keep this context stable because the main ruleset requires "Build Check".

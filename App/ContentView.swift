@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/25.
 //
@@ -10,18 +10,18 @@ import SwiftUI
 struct ContentView: View {
     // MARK: - Environment Objects
 
-    /// 网络监控服务（从 EnodiaApp 注入）
+    /// 网络监控服务（从 KairosApp 注入）
     ///
     /// ## 架构说明
-    /// - 使用 @Environment 接收从 EnodiaApp 注入的实例
+    /// - 使用 @Environment 接收从 KairosApp 注入的实例
     /// - 不再在此创建 NetworkMonitor（避免重复实例）
     /// - 整个应用共享同一个 NetworkMonitor 实例
     @Environment(NetworkMonitor.self) var networkMonitor
 
-    /// 窗口协调器（从 EnodiaApp 注入）
+    /// 窗口协调器（从 KairosApp 注入）
     ///
     /// ## 架构说明
-    /// - 使用 @Environment 接收从 EnodiaApp 注入的实例
+    /// - 使用 @Environment 接收从 KairosApp 注入的实例
     /// - 管理窗口状态和 Tab 切换
     /// - 替代原 AppCoordinator，解决 P1-2 架构问题
     @Environment(WindowCoordinator.self) var windowCoordinator

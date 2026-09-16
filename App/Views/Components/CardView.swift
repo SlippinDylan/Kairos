@@ -1,6 +1,6 @@
 //
 //  CardView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/06.
 //  P2-10 修复：统一 GroupBox 样式组件

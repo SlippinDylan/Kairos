@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleIdentifier</key>
-	<string>studio.slippindylan.BrewKit.Enodia.helper</string>
+	<string>studio.slippindylan.BrewKit.Kairos.helper</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>studio.slippindylan.BrewKit.Enodia.helper</string>
+	<string>studio.slippindylan.BrewKit.Kairos.helper</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleShortVersionString</key>

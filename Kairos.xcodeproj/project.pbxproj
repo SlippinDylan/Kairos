@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper in Embed Helper */ = {isa = PBXBuildFile; fileRef = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		BE7C5A66305ACCE70041C3BF /* Enodia.icon in Resources */ = {isa = PBXBuildFile; fileRef = BE7C5A65305ACCE70041C3BF /* Enodia.icon */; };
-		BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist in Embed LaunchDaemon */ = {isa = PBXBuildFile; fileRef = BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist */; };
+		BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper in Embed Helper */ = {isa = PBXBuildFile; fileRef = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		BE7C5A66305ACCE70041C3BF /* Kairos.icon in Resources */ = {isa = PBXBuildFile; fileRef = BE7C5A65305ACCE70041C3BF /* Kairos.icon */; };
+		BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist in Embed LaunchDaemon */ = {isa = PBXBuildFile; fileRef = BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -18,7 +18,7 @@
 			containerPortal = BE6E6C772EFC5EF2008F6A66 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = BE72E1CA2F0E2590002A3C57;
-			remoteInfo = EnodiaHelper;
+			remoteInfo = KairosHelper;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -38,7 +38,7 @@
 			dstPath = Contents/Resources;
 			dstSubfolderSpec = 1;
 			files = (
-				BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper in Embed Helper */,
+				BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper in Embed Helper */,
 			);
 			name = "Embed Helper";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -49,7 +49,7 @@
 			dstPath = Contents/Library/LaunchDaemons;
 			dstSubfolderSpec = 1;
 			files = (
-				BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist in Embed LaunchDaemon */,
+				BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist in Embed LaunchDaemon */,
 			);
 			name = "Embed LaunchDaemon";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -57,19 +57,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		BE6E6C7F2EFC5EF2008F6A66 /* Enodia.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Enodia.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = studio.slippindylan.BrewKit.Enodia.helper; sourceTree = BUILT_PRODUCTS_DIR; };
-		BE7C5A65305ACCE70041C3BF /* Enodia.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Enodia.icon; sourceTree = "<group>"; };
-		BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Enodia.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = EnodiaHelper/studio.slippindylan.BrewKit.Enodia.helper.plist; sourceTree = SOURCE_ROOT; };
+		BE6E6C7F2EFC5EF2008F6A66 /* Kairos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kairos.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = studio.slippindylan.BrewKit.Kairos.helper; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE7C5A65305ACCE70041C3BF /* Kairos.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Kairos.icon; sourceTree = "<group>"; };
+		BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		BE6E6C822EFC5EF2008F6A67 /* Exceptions for "App" folder in "Enodia" target */ = {
+		BE6E6C822EFC5EF2008F6A67 /* Exceptions for "App" folder in "Kairos" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = BE6E6C7E2EFC5EF2008F6A66 /* Enodia */;
+			target = BE6E6C7E2EFC5EF2008F6A66 /* Kairos */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -77,14 +77,14 @@
 		BE6E6C812EFC5EF2008F6A66 /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				BE6E6C822EFC5EF2008F6A67 /* Exceptions for "App" folder in "Enodia" target */,
+				BE6E6C822EFC5EF2008F6A67 /* Exceptions for "App" folder in "Kairos" target */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
-		BE72E1CC2F0E2590002A3C57 /* EnodiaHelper */ = {
+		BE72E1CC2F0E2590002A3C57 /* KairosHelper */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = EnodiaHelper;
+			path = KairosHelper;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -110,9 +110,9 @@
 		BE6E6C762EFC5EF2008F6A66 = {
 			isa = PBXGroup;
 			children = (
-				BE7C5A65305ACCE70041C3BF /* Enodia.icon */,
+				BE7C5A65305ACCE70041C3BF /* Kairos.icon */,
 				BE6E6C812EFC5EF2008F6A66 /* App */,
-				BE72E1CC2F0E2590002A3C57 /* EnodiaHelper */,
+				BE72E1CC2F0E2590002A3C57 /* KairosHelper */,
 				BE6E6C802EFC5EF2008F6A66 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -120,8 +120,8 @@
 		BE6E6C802EFC5EF2008F6A66 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				BE6E6C7F2EFC5EF2008F6A66 /* Enodia.app */,
-				BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */,
+				BE6E6C7F2EFC5EF2008F6A66 /* Kairos.app */,
+				BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -129,9 +129,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		BE6E6C7E2EFC5EF2008F6A66 /* Enodia */ = {
+		BE6E6C7E2EFC5EF2008F6A66 /* Kairos */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BE6E6C8A2EFC5EF3008F6A66 /* Build configuration list for PBXNativeTarget "Enodia" */;
+			buildConfigurationList = BE6E6C8A2EFC5EF3008F6A66 /* Build configuration list for PBXNativeTarget "Kairos" */;
 			buildPhases = (
 				BE6E6C7B2EFC5EF2008F6A66 /* Sources */,
 				BE6E6C7C2EFC5EF2008F6A66 /* Frameworks */,
@@ -147,16 +147,16 @@
 			fileSystemSynchronizedGroups = (
 				BE6E6C812EFC5EF2008F6A66 /* App */,
 			);
-			name = Enodia;
+			name = Kairos;
 			packageProductDependencies = (
 			);
-			productName = Enodia;
-			productReference = BE6E6C7F2EFC5EF2008F6A66 /* Enodia.app */;
+			productName = Kairos;
+			productReference = BE6E6C7F2EFC5EF2008F6A66 /* Kairos.app */;
 			productType = "com.apple.product-type.application";
 		};
-		BE72E1CA2F0E2590002A3C57 /* EnodiaHelper */ = {
+		BE72E1CA2F0E2590002A3C57 /* KairosHelper */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BE72E1CF2F0E2590002A3C57 /* Build configuration list for PBXNativeTarget "EnodiaHelper" */;
+			buildConfigurationList = BE72E1CF2F0E2590002A3C57 /* Build configuration list for PBXNativeTarget "KairosHelper" */;
 			buildPhases = (
 				BE72E1C72F0E2590002A3C57 /* Sources */,
 				BE72E1C82F0E2590002A3C57 /* Frameworks */,
@@ -167,13 +167,13 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				BE72E1CC2F0E2590002A3C57 /* EnodiaHelper */,
+				BE72E1CC2F0E2590002A3C57 /* KairosHelper */,
 			);
-			name = EnodiaHelper;
+			name = KairosHelper;
 			packageProductDependencies = (
 			);
-			productName = EnodiaHelper;
-			productReference = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Enodia.helper */;
+			productName = KairosHelper;
+			productReference = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -195,7 +195,7 @@
 					};
 				};
 			};
-			buildConfigurationList = BE6E6C7A2EFC5EF2008F6A66 /* Build configuration list for PBXProject "Enodia" */;
+			buildConfigurationList = BE6E6C7A2EFC5EF2008F6A66 /* Build configuration list for PBXProject "Kairos" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -209,8 +209,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BE6E6C7E2EFC5EF2008F6A66 /* Enodia */,
-				BE72E1CA2F0E2590002A3C57 /* EnodiaHelper */,
+				BE6E6C7E2EFC5EF2008F6A66 /* Kairos */,
+				BE72E1CA2F0E2590002A3C57 /* KairosHelper */,
 			);
 		};
 /* End PBXProject section */
@@ -220,7 +220,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BE7C5A66305ACCE70041C3BF /* Enodia.icon in Resources */,
+				BE7C5A66305ACCE70041C3BF /* Kairos.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,7 +246,7 @@
 /* Begin PBXTargetDependency section */
 		BE72E1D62F0E2900002A3C57 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BE72E1CA2F0E2590002A3C57 /* EnodiaHelper */;
+			target = BE72E1CA2F0E2590002A3C57 /* KairosHelper */;
 			targetProxy = BE72E1D32F0E2700002A3C57 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -378,10 +378,10 @@
 		BE6E6C8B2EFC5EF3008F6A66 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Enodia;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Kairos;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = App/Enodia.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/Kairos.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -397,7 +397,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Enodia;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Kairos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -412,10 +412,10 @@
 		BE6E6C8C2EFC5EF3008F6A66 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Enodia;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Kairos;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
-				CODE_SIGN_ENTITLEMENTS = App/Enodia.entitlements;
+				CODE_SIGN_ENTITLEMENTS = App/Kairos.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -431,7 +431,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Enodia;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Kairos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -447,17 +447,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = EnodiaHelper/EnodiaHelper.entitlements;
+				CODE_SIGN_ENTITLEMENTS = KairosHelper/KairosHelper.entitlements;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				DEVELOPMENT_TEAM = K7623V57QS;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = EnodiaHelper/Info.plist;
+				INFOPLIST_FILE = KairosHelper/Info.plist;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Enodia.helper;
-				PRODUCT_NAME = studio.slippindylan.BrewKit.Enodia.helper;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Kairos.helper;
+				PRODUCT_NAME = studio.slippindylan.BrewKit.Kairos.helper;
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -470,17 +470,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = EnodiaHelper/EnodiaHelper.entitlements;
+				CODE_SIGN_ENTITLEMENTS = KairosHelper/KairosHelper.entitlements;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				DEVELOPMENT_TEAM = K7623V57QS;
 				ENABLE_HARDENED_RUNTIME = YES;
-				INFOPLIST_FILE = EnodiaHelper/Info.plist;
+				INFOPLIST_FILE = KairosHelper/Info.plist;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Enodia.helper;
-				PRODUCT_NAME = studio.slippindylan.BrewKit.Enodia.helper;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Kairos.helper;
+				PRODUCT_NAME = studio.slippindylan.BrewKit.Kairos.helper;
 				SKIP_INSTALL = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -491,7 +491,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		BE6E6C7A2EFC5EF2008F6A66 /* Build configuration list for PBXProject "Enodia" */ = {
+		BE6E6C7A2EFC5EF2008F6A66 /* Build configuration list for PBXProject "Kairos" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BE6E6C882EFC5EF3008F6A66 /* Debug */,
@@ -500,7 +500,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BE6E6C8A2EFC5EF3008F6A66 /* Build configuration list for PBXNativeTarget "Enodia" */ = {
+		BE6E6C8A2EFC5EF3008F6A66 /* Build configuration list for PBXNativeTarget "Kairos" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BE6E6C8B2EFC5EF3008F6A66 /* Debug */,
@@ -509,7 +509,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BE72E1CF2F0E2590002A3C57 /* Build configuration list for PBXNativeTarget "EnodiaHelper" */ = {
+		BE72E1CF2F0E2590002A3C57 /* Build configuration list for PBXNativeTarget "KairosHelper" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BE72E1D02F0E2590002A3C57 /* Debug */,

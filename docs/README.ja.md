@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="images/readme/app-icon.png" width="160" height="160" alt="Enodia のアプリアイコン">
-  <h1>Enodia</h1>
+  <img src="images/readme/app-icon.png" width="160" height="160" alt="Kairos のアプリアイコン">
+  <h1>Kairos</h1>
   <p>ネットワーク環境、DNS、IP 情報、Mihomo 設定をまとめて扱う、macOS ネイティブのメニューバーアプリです。</p>
   <p>
     <a href="README.zh-CN.md">简体中文</a> ·
@@ -11,11 +11,11 @@
   </p>
 </div>
 
-## Enodia について
+## Kairos について
 
-Enodia は、日常的なネットワーク操作を 1 つのメニューバーアプリにまとめます。Wi-Fi 名、IP 範囲、DNS の特徴から現在の環境を判定し、対応するプロキシ、DNS、アプリの起動・終了操作を自動で実行できます。DNS ツール、複数サービスを使った IP 検索、プライバシーリスク検査、Mihomo 設定も利用できます。
+Kairos は、日常的なネットワーク操作を 1 つのメニューバーアプリにまとめます。Wi-Fi 名、IP 範囲、DNS の特徴から現在の環境を判定し、対応するプロキシ、DNS、アプリの起動・終了操作を自動で実行できます。DNS ツール、複数サービスを使った IP 検索、プライバシーリスク検査、Mihomo 設定も利用できます。
 
-**Enodia は macOS のネットワーク設定やプロキシクライアントを置き換えるものではありません。** 既存のツールを連携させ、よく使う診断機能へすぐアクセスできるようにします。
+**Kairos は macOS のネットワーク設定やプロキシクライアントを置き換えるものではありません。** 既存のツールを連携させ、よく使う診断機能へすぐアクセスできるようにします。
 
 ## 機能
 
@@ -25,21 +25,21 @@ Enodia は、日常的なネットワーク操作を 1 つのメニューバー�
       <strong>ネットワーク自動化</strong><br><br>
       現在の Wi-Fi、ゲートウェイ、DNS をまとめて確認できます。環境が変わると、シーンルールに従ってアプリ操作と DNS 切り替えを実行します。
     </td>
-    <td width="68%"><img src="images/readme/network-automation.png" alt="現在のネットワーク、アプリ操作、DNS シーンを表示する Enodia"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="現在のネットワーク、アプリ操作、DNS シーンを表示する Kairos"></td>
   </tr>
   <tr>
     <td>
       <strong>ネットワークツール</strong><br><br>
       DNS のクリーンアップ、IP 検索、DNS テスト、IP 品質検査を 1 つの画面から実行できます。
     </td>
-    <td><img src="images/readme/network-tools.png" alt="DNS クリーンアップ、IP 検索、DNS テスト、IP 品質検査を表示する Enodia"></td>
+    <td><img src="images/readme/network-tools.png" alt="DNS クリーンアップ、IP 検索、DNS テスト、IP 品質検査を表示する Kairos"></td>
   </tr>
   <tr>
     <td>
       <strong>Mihomo 管理</strong><br><br>
       連携アプリとカーネルの状態確認、現在のカーネルのバックアップや復元、GitHub Releases からの置き換えを行えます。
     </td>
-    <td><img src="images/readme/mihomo-management.png" alt="Mihomo カーネルの状態、置き換え、復元、ダウンロード設定を表示する Enodia"></td>
+    <td><img src="images/readme/mihomo-management.png" alt="Mihomo カーネルの状態、置き換え、復元、ダウンロード設定を表示する Kairos"></td>
   </tr>
 </table>
 
@@ -61,13 +61,13 @@ Enodia は、日常的なネットワーク操作を 1 つのメニューバー�
 
 ## インストールとリリース
 
-各 GitHub Release には `Enodia-<バージョン>.dmg` が 1 つ含まれます。DMG を開き、`Enodia.app` を `Applications` にドラッグしてください。現在のリリースは Apple Development 証明書で署名されていますが、Apple の公証は受けていません。初回起動前にダウンロード隔離属性を削除してください。
+各 GitHub Release には `Kairos-<バージョン>.dmg` が 1 つ含まれます。DMG を開き、`Kairos.app` を `Applications` にドラッグしてください。現在のリリースは Apple Development 証明書で署名されていますが、Apple の公証は受けていません。初回起動前にダウンロード隔離属性を削除してください。
 
 ```bash
-sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
+sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
-システム DNS を管理する場合は、Enodia の設定から Helper を登録し、macOS の案内に従ってシステム設定で LaunchDaemon を承認します。
+システム DNS を管理する場合は、Kairos の設定から Helper を登録し、macOS の案内に従ってシステム設定で LaunchDaemon を承認します。
 
 main への push と Pull Request では、軽量なリリース自動化チェックを常に実行します。`README.md`、`docs/`、`LICENSE`、`AGENTS.md` 以外の変更では、未署名の arm64 App、Helper、LaunchDaemon bundle もビルドして検証します。公開を有効にした場合も、この完全なチェックを強制します。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](../CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
 
@@ -75,7 +75,7 @@ main への push と Pull Request では、軽量なリリース自動化チェ�
 
 ## ソースからのビルド
 
-macOS 26.0 以降、Xcode 26 以降、Apple ID が必要です。`Enodia.xcodeproj` を開き、開発チームを選択したうえで、`App/Services/DNSManager.swift` と `EnodiaHelper/main.swift` の XPC signing requirement を自分の Team ID に合わせて更新し、`Enodia` scheme をビルドしてください。
+macOS 26.0 以降、Xcode 26 以降、Apple ID が必要です。`Kairos.xcodeproj` を開き、開発チームを選択したうえで、`App/Services/DNSManager.swift` と `KairosHelper/main.swift` の XPC signing requirement を自分の Team ID に合わせて更新し、`Kairos` scheme をビルドしてください。
 
 ## API キー
 
@@ -99,4 +99,4 @@ IP 検索とプライバシー検査では複数の外部サービスを利用�
 
 ## ライセンス
 
-Copyright © 2025–2026 SlippinDylan Studio. Enodia は [Apache License 2.0](../LICENSE) で公開されています。
+Copyright © 2025–2026 SlippinDylan Studio. Kairos は [Apache License 2.0](../LICENSE) で公開されています。

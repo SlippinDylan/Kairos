@@ -1,6 +1,6 @@
 //
 //  NetworkMonitorView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/25.
 //
@@ -51,7 +51,7 @@ struct NetworkMonitorView: View {
     // MARK: - Body
 
     var body: some View {
-        EnodiaScrollView {
+        KairosScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // GroupBox 1: 当前网络
                 currentNetworkGroupBox

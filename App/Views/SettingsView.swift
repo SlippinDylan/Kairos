@@ -1,6 +1,6 @@
 //
 //  SettingsView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/25.
 //
@@ -26,10 +26,10 @@ struct SettingsView: View {
     @State private var isExporting = false
     @State private var isImporting = false
     @State private var showImportConfirmAlert = false
-    @State private var importedData: EnodiaExportData?
+    @State private var importedData: KairosExportData?
 
     var body: some View {
-        EnodiaScrollView {
+        KairosScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 // 通用设置
                 generalSettingsSection
@@ -78,7 +78,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
                     Text("登录时自动启动")
                         .font(.body)
-                    Text("登录系统后自动运行 Enodia")
+                    Text("登录系统后自动运行 Kairos")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -285,7 +285,7 @@ struct SettingsView: View {
         }
     }
 
-    private func applyImportedData(_ data: EnodiaExportData) {
+    private func applyImportedData(_ data: KairosExportData) {
         // 应用应用控制场景
         SceneStorage.saveScenes(data.appControlScenes)
 
@@ -475,7 +475,7 @@ struct SettingsView: View {
                 title: "权限",
                 icon: "lock.shield",
                 iconColor: permissionManager.allRequiredGranted ? .green : .orange,
-                description: "Enodia 所需的系统权限"
+                description: "Kairos 所需的系统权限"
             )
         }
     }

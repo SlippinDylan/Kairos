@@ -1,6 +1,6 @@
 //
 //  FilePanelHelper.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/06.
 //  P2-6 修复：优化文件选择面板

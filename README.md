@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="docs/images/readme/app-icon.png" width="160" height="160" alt="Enodia app icon">
-  <h1>Enodia</h1>
+  <img src="docs/images/readme/app-icon.png" width="160" height="160" alt="Kairos app icon">
+  <h1>Kairos</h1>
   <p>A native macOS menu-bar utility that automates network scenes, DNS, IP intelligence, and Mihomo configuration.</p>
   <p>
     <a href="docs/README.zh-CN.md">简体中文</a> ·
@@ -13,9 +13,9 @@
 
 ## What It Is
 
-Enodia brings routine network operations into one menu-bar app. It can recognize the current environment from Wi-Fi names, IP ranges, and DNS characteristics, then apply the matching proxy, DNS, and application actions automatically. It also provides DNS tools, multi-source IP lookup, privacy-risk checks, and focused Mihomo utilities.
+Kairos brings routine network operations into one menu-bar app. It can recognize the current environment from Wi-Fi names, IP ranges, and DNS characteristics, then apply the matching proxy, DNS, and application actions automatically. It also provides DNS tools, multi-source IP lookup, privacy-risk checks, and focused Mihomo utilities.
 
-**Enodia does not replace macOS network settings or your proxy client.** It coordinates the tools you already use and keeps common diagnostics close at hand.
+**Kairos does not replace macOS network settings or your proxy client.** It coordinates the tools you already use and keeps common diagnostics close at hand.
 
 ## Features
 
@@ -25,21 +25,21 @@ Enodia brings routine network operations into one menu-bar app. It can recognize
       <strong>Network automation</strong><br><br>
       See the current Wi-Fi, gateway, and DNS at a glance. Scene rules can coordinate application actions and DNS changes as the network environment changes.
     </td>
-    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Enodia network overview with application and DNS scene controls"></td>
+    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Kairos network overview with application and DNS scene controls"></td>
   </tr>
   <tr>
     <td>
       <strong>Network tools</strong><br><br>
       Run DNS cleanup, look up an IP address, test a resolver, or start a broader IP-quality check from one workspace.
     </td>
-    <td><img src="docs/images/readme/network-tools.png" alt="Enodia network tools for DNS cleanup, IP lookup, DNS testing, and IP quality"></td>
+    <td><img src="docs/images/readme/network-tools.png" alt="Kairos network tools for DNS cleanup, IP lookup, DNS testing, and IP quality"></td>
   </tr>
   <tr>
     <td>
       <strong>Mihomo management</strong><br><br>
       Check the linked application's kernel status, back up or restore the current kernel, replace it from GitHub Releases, and keep download settings in one place.
     </td>
-    <td><img src="docs/images/readme/mihomo-management.png" alt="Enodia Mihomo kernel status, replacement, recovery, and configuration"></td>
+    <td><img src="docs/images/readme/mihomo-management.png" alt="Kairos Mihomo kernel status, replacement, recovery, and configuration"></td>
   </tr>
 </table>
 
@@ -61,13 +61,13 @@ The application features and arm64 build checks are implemented. Pushes to main 
 
 ## Installation and Releases
 
-Each GitHub Release contains one `Enodia-<version>.dmg`. Open the DMG and drag `Enodia.app` into `Applications`. Releases are signed with an Apple Development certificate but are not notarized. Before the first launch, remove the download quarantine attribute:
+Each GitHub Release contains one `Kairos-<version>.dmg`. Open the DMG and drag `Kairos.app` into `Applications`. Releases are signed with an Apple Development certificate but are not notarized. Before the first launch, remove the download quarantine attribute:
 
 ```bash
-sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
+sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
-Open Enodia and register the Helper from Settings when you want to manage system DNS. Approve its LaunchDaemon in System Settings when macOS asks.
+Open Kairos and register the Helper from Settings when you want to manage system DNS. Approve its LaunchDaemon in System Settings when macOS asks.
 
 Pushes to main and pull requests always run lightweight release-automation checks. Changes outside `README.md`, `docs/`, `LICENSE`, and `AGENTS.md` additionally build and verify the unsigned arm64 App, Helper, and LaunchDaemon bundle; enabling publishing also forces this full check. Release configuration lives in [`Config/Release/manifest.json`](Config/Release/manifest.json). A DMG is signed, packaged, and published only after main CI succeeds, `release` is `true`, the version is unpublished, and [`CHANGELOG.md`](CHANGELOG.md) contains one unique, non-empty section with the same version.
 
@@ -81,7 +81,7 @@ Requirements:
 - Xcode 26 or later
 - An Apple ID
 
-Open `Enodia.xcodeproj`, select your development team, then update the XPC code-signing requirements in `App/Services/DNSManager.swift` and `EnodiaHelper/main.swift` to match your Team ID. Build and run the `Enodia` scheme.
+Open `Kairos.xcodeproj`, select your development team, then update the XPC code-signing requirements in `App/Services/DNSManager.swift` and `KairosHelper/main.swift` to match your Team ID. Build and run the `Kairos` scheme.
 
 ## API Keys
 
@@ -105,4 +105,4 @@ IP lookup and privacy checks aggregate several external providers. Basic functio
 
 ## License
 
-Copyright © 2025–2026 SlippinDylan Studio. Enodia is licensed under the [Apache License 2.0](LICENSE).
+Copyright © 2025–2026 SlippinDylan Studio. Kairos is licensed under the [Apache License 2.0](LICENSE).

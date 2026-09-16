@@ -1,6 +1,6 @@
 //
 //  MihomoView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/30.
 //
@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct MihomoView: View {
-    /// 从 EnodiaApp 注入的视图模型（确保切换 Tab 时状态不丢失）
+    /// 从 KairosApp 注入的视图模型（确保切换 Tab 时状态不丢失）
     @Environment(MihomoViewModel.self) private var viewModel
 
     var body: some View {
-        EnodiaScrollView {
+        KairosScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 // 内核状态卡片
                 StatusCard()

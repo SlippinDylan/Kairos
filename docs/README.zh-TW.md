@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="images/readme/app-icon.png" width="160" height="160" alt="Enodia App 圖示">
-  <h1>Enodia</h1>
+  <img src="images/readme/app-icon.png" width="160" height="160" alt="Kairos App 圖示">
+  <h1>Kairos</h1>
   <p>原生 macOS 選單列工具，用來自動切換網路情境、管理 DNS、查詢 IP，並設定 Mihomo。</p>
   <p>
     <a href="README.zh-CN.md">简体中文</a> ·
@@ -11,11 +11,11 @@
   </p>
 </div>
 
-## Enodia 是什麼
+## Kairos 是什麼
 
-Enodia 把常用的網路操作集中到一個選單列 App 中。它可以根據 Wi-Fi 名稱、IP 網段和 DNS 特徵識別目前的網路環境，再自動執行對應的代理、DNS 和 App 控制動作。同時也提供 DNS 工具、多來源 IP 查詢、隱私風險檢測和 Mihomo 設定。
+Kairos 把常用的網路操作集中到一個選單列 App 中。它可以根據 Wi-Fi 名稱、IP 網段和 DNS 特徵識別目前的網路環境，再自動執行對應的代理、DNS 和 App 控制動作。同時也提供 DNS 工具、多來源 IP 查詢、隱私風險檢測和 Mihomo 設定。
 
-**Enodia 不會取代 macOS 網路設定或你的代理客戶端。** 它會呼叫這些既有工具，並提供統一的診斷入口。
+**Kairos 不會取代 macOS 網路設定或你的代理客戶端。** 它會呼叫這些既有工具，並提供統一的診斷入口。
 
 ## 功能
 
@@ -25,21 +25,21 @@ Enodia 把常用的網路操作集中到一個選單列 App 中。它可以根�
       <strong>網路自動化</strong><br><br>
       集中顯示目前的 Wi-Fi、閘道和 DNS。網路環境變更時，情境規則可以連動 App 控制與 DNS 切換。
     </td>
-    <td width="68%"><img src="images/readme/network-automation.png" alt="Enodia 目前網路、App 控制與 DNS 情境介面"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="Kairos 目前網路、App 控制與 DNS 情境介面"></td>
   </tr>
   <tr>
     <td>
       <strong>網路工具</strong><br><br>
       在同一個頁面執行 DNS 深度清理、IP 查詢、DNS 測試和 IP 品質檢測。
     </td>
-    <td><img src="images/readme/network-tools.png" alt="Enodia DNS 清理、IP 查詢、DNS 測試與 IP 品質工具"></td>
+    <td><img src="images/readme/network-tools.png" alt="Kairos DNS 清理、IP 查詢、DNS 測試與 IP 品質工具"></td>
   </tr>
   <tr>
     <td>
       <strong>Mihomo 管理</strong><br><br>
       查看關聯 App 和核心狀態，備份或還原目前的核心，也可以從 GitHub Releases 下載並替換核心。
     </td>
-    <td><img src="images/readme/mihomo-management.png" alt="Enodia Mihomo 核心狀態、替換、還原與下載設定"></td>
+    <td><img src="images/readme/mihomo-management.png" alt="Kairos Mihomo 核心狀態、替換、還原與下載設定"></td>
   </tr>
 </table>
 
@@ -61,13 +61,13 @@ App 功能和 arm64 建置檢查已完成。main push 與 Pull Request 都會執
 
 ## 安裝與發佈
 
-每個 GitHub Release 包含一個 `Enodia-<版本號>.dmg`。開啟 DMG，把 `Enodia.app` 拖入 `Applications`。目前版本使用 Apple Development 憑證簽署，但未經 Apple 公證。第一次開啟前需要移除下載隔離屬性：
+每個 GitHub Release 包含一個 `Kairos-<版本號>.dmg`。開啟 DMG，把 `Kairos.app` 拖入 `Applications`。目前版本使用 Apple Development 憑證簽署，但未經 Apple 公證。第一次開啟前需要移除下載隔離屬性：
 
 ```bash
-sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
+sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
-需要管理系統 DNS 時，請在 Enodia 設定中註冊 Helper，並依 macOS 提示在系統設定中核准 LaunchDaemon。
+需要管理系統 DNS 時，請在 Kairos 設定中註冊 Helper，並依 macOS 提示在系統設定中核准 LaunchDaemon。
 
 main push 與 Pull Request 一律執行輕量發佈自動化檢查。修改 `README.md`、`docs/`、`LICENSE` 和 `AGENTS.md` 以外的內容時，還會建置並驗證未簽署的 arm64 App、Helper 和 LaunchDaemon bundle；啟用發佈也會強制執行這項完整檢查。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
 
@@ -75,7 +75,7 @@ main push 與 Pull Request 一律執行輕量發佈自動化檢查。修改 `REA
 
 ## 從原始碼建置
 
-需要 macOS 26.0+、Xcode 26+ 和 Apple ID。開啟 `Enodia.xcodeproj`，選擇自己的開發團隊，再將 `App/Services/DNSManager.swift` 和 `EnodiaHelper/main.swift` 中的 XPC 簽署 requirement 更新為自己的 Team ID，最後建置 `Enodia` scheme。
+需要 macOS 26.0+、Xcode 26+ 和 Apple ID。開啟 `Kairos.xcodeproj`，選擇自己的開發團隊，再將 `App/Services/DNSManager.swift` 和 `KairosHelper/main.swift` 中的 XPC 簽署 requirement 更新為自己的 Team ID，最後建置 `Kairos` scheme。
 
 ## API Key
 
@@ -99,4 +99,4 @@ IP 查詢和隱私檢測會整合多個外部資料來源。基本功能不要�
 
 ## 授權條款
 
-Copyright © 2025–2026 SlippinDylan Studio。Enodia 採用 [Apache License 2.0](../LICENSE) 開放原始碼授權條款。
+Copyright © 2025–2026 SlippinDylan Studio。Kairos 採用 [Apache License 2.0](../LICENSE) 開放原始碼授權條款。

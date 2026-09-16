@@ -1,6 +1,6 @@
 //
 //  AboutView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/03/09.
 //  关于页面 - 适配 Cleanroom 设计风格
@@ -43,7 +43,7 @@ struct AboutView: View {
                 }
 
                 VStack(spacing: DesignSystem.Spacing.small) {
-                    Text("Enodia")
+                    Text("Kairos")
                         .font(.system(size: 32, weight: .bold))
                         .tracking(1.0)
 

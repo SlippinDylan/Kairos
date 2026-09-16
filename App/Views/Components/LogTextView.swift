@@ -1,6 +1,6 @@
 //
 //  LogTextView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -51,7 +51,7 @@ struct LogTextView: NSViewRepresentable {
         scrollView.drawsBackground = true
         scrollView.backgroundColor = Self.terminalBackground
 
-        // 强制 Overlay 模式（与 EnodiaScrollView 一致）
+        // 强制 Overlay 模式（与 KairosScrollView 一致）
         scrollView.scrollerStyle = .overlay
         scrollView.autohidesScrollers = true
 

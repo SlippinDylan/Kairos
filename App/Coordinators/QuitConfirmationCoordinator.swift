@@ -1,6 +1,6 @@
 //
 //  QuitConfirmationCoordinator.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/08.
 //

@@ -1,6 +1,6 @@
 //
 //  DNSTestCardView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/06.
 //  Migrated from DNSTestView for NetworkToolsView integration

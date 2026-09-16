@@ -1,6 +1,6 @@
 //
 //  PermissionManager.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/29.
 //
@@ -34,7 +34,7 @@ enum PermissionType {
     var guideText: String {
         switch self {
         case .accessibility:
-            return "请前往：系统设置 > 隐私与安全性 > 辅助功能，添加 Enodia"
+            return "请前往：系统设置 > 隐私与安全性 > 辅助功能，添加 Kairos"
         case .helperTool:
             return "点击「安装 Helper」按钮，输入管理员密码完成安装"
         }
@@ -152,7 +152,7 @@ final class PermissionManager {
 
     // MARK: - 打印权限状态（调试用）
     func printStatus() {
-        AppLogger.info("=== Enodia 权限状态 ===")
+        AppLogger.info("=== Kairos 权限状态 ===")
         for permission in permissions {
             let required = permission.isRequired ? "[必需]" : "[可选]"
             let status = permission.isGranted ? "✅" : "❌"

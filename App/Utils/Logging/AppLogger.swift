@@ -1,6 +1,6 @@
 //
 //  AppLogger.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -35,7 +35,7 @@ actor AppLogger {
 
     /// 串行队列（确保日志按顺序写入）
     private let loggingQueue = DispatchQueue(
-        label: "com.enodia.logging",
+        label: "com.kairos.logging",
         qos: .utility
     )
 

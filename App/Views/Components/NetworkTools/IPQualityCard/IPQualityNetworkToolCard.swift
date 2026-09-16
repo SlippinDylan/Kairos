@@ -1,6 +1,6 @@
 //
 //  IPQualityNetworkToolCard.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/07.
 //  网络工具 - IP质量卡片主容器

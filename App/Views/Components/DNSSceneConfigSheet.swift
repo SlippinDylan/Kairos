@@ -1,6 +1,6 @@
 //
 //  DNSSceneConfigSheet.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/25.
 //  Updated by SlippinDylan on 2026/01/08 - 修复滚动问题，Form 改为 VStack
@@ -41,7 +41,7 @@ struct DNSSceneConfigSheet: View {
             Divider()
 
             // 配置表单（使用 VStack 替代 Form，避免嵌套滚动冲突）
-            EnodiaScrollView {
+            KairosScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Section 1: 场景名称
                     DNSFormSection(title: "场景名称") {

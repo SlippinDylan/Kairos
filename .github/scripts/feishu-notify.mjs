@@ -83,7 +83,7 @@ function buildPush(event) {
   const commitUrl = SHA_PATTERN.test(sha ?? '') ? `${repoUrl}/commit/${sha}` : repoUrl;
 
   return {
-    title: 'Enodia 代码已推送',
+    title: 'Kairos 代码已推送',
     details: commonDetails(event, [
       `分支：${branch}`,
       `提交：${event.size ?? (commits.length || (event.head_commit ? 1 : 0))} 个`,
@@ -95,15 +95,15 @@ function buildPush(event) {
 }
 
 function pullRequestTitle(action, merged) {
-  if (action === 'closed' && merged) return 'Enodia PR 已合并';
+  if (action === 'closed' && merged) return 'Kairos PR 已合并';
   const titles = {
-    opened: 'Enodia PR 已创建',
-    reopened: 'Enodia PR 已重新打开',
-    ready_for_review: 'Enodia PR 已可审查',
-    review_requested: 'Enodia PR 请求审查',
-    closed: 'Enodia PR 已关闭',
+    opened: 'Kairos PR 已创建',
+    reopened: 'Kairos PR 已重新打开',
+    ready_for_review: 'Kairos PR 已可审查',
+    review_requested: 'Kairos PR 请求审查',
+    closed: 'Kairos PR 已关闭',
   };
-  return titles[action] ?? 'Enodia PR 已更新';
+  return titles[action] ?? 'Kairos PR 已更新';
 }
 
 function buildPullRequest(event) {
@@ -135,7 +135,7 @@ function buildIssue(event) {
   const repoUrl = repositoryUrl(event);
   const issue = event.issue ?? {};
   return {
-    title: `Enodia Issue ${issueAction(event.action)}`,
+    title: `Kairos Issue ${issueAction(event.action)}`,
     details: commonDetails(event, [
       `Issue #${issue.number ?? '未知'}：${truncate(issue.title, MAX_TITLE_LENGTH)}`,
       event.assignee?.login ? `负责人：${event.assignee.login}` : '',
@@ -151,7 +151,7 @@ function buildIssueComment(event) {
   const comment = event.comment ?? {};
   const kind = issue.pull_request ? 'PR' : 'Issue';
   return {
-    title: `Enodia ${kind} 有新评论`,
+    title: `Kairos ${kind} 有新评论`,
     details: commonDetails(event, [
       `${kind} #${issue.number ?? '未知'}：${truncate(issue.title, MAX_TITLE_LENGTH)}`,
       `评论：${truncate(comment.body, MAX_CONTENT_LENGTH) || '（无文字内容）'}`,
@@ -167,7 +167,7 @@ function buildReview(event) {
   const review = event.review ?? {};
   const state = String(review.state ?? '未知').toLowerCase();
   return {
-    title: 'Enodia PR 收到审查',
+    title: 'Kairos PR 收到审查',
     details: commonDetails(event, [
       `PR #${pullRequest.number ?? event.number ?? '未知'}：${truncate(pullRequest.title, MAX_TITLE_LENGTH)}`,
       `结论：${state}`,
@@ -200,7 +200,7 @@ function buildWorkflowRun(event) {
   if (action === 'in_progress') {
     if (run.name !== 'CI') return null;
     return {
-      title: 'Enodia CI 已开始',
+      title: 'Kairos CI 已开始',
       details: commonDetails(event, [
         `分支：${run.head_branch ?? '未知'}`,
         `提交：${shortSha(run.head_sha)}`,
@@ -219,7 +219,7 @@ function buildWorkflowRun(event) {
 
   const workflowLabel = run.name === 'Release' ? '版本发布' : 'CI';
   return {
-    title: `Enodia ${workflowLabel}${conclusionLabel(conclusion)}`,
+    title: `Kairos ${workflowLabel}${conclusionLabel(conclusion)}`,
     details: commonDetails(event, [
       `分支：${run.head_branch ?? '未知'}`,
       `提交：${shortSha(run.head_sha)}`,
@@ -246,7 +246,7 @@ function releaseDetails(event, release) {
     release.dmgName ? `制品：${release.dmgName}` : '',
     '架构：arm64',
     '系统：macOS 26+',
-    '组件：Enodia.app + DNS Helper',
+    '组件：Kairos.app + DNS Helper',
     '签名：Apple Development（未公证）',
     ...release.highlights,
   ]);
@@ -258,7 +258,7 @@ function buildRelease(event) {
   const version = String(release.tag_name ?? '未知版本').replace(/^v/, '');
   const asset = release.assets?.find((candidate) => String(candidate.name ?? '').endsWith('.dmg'));
   return {
-    title: `Enodia ${version} 发布成功`,
+    title: `Kairos ${version} 发布成功`,
     details: releaseDetails(event, {
       prerelease: release.prerelease,
       dmgName: asset?.name,
@@ -276,7 +276,7 @@ function buildReleaseDispatch(event) {
   const repoUrl = repositoryUrl(event);
   const payload = event.client_payload ?? {};
   return {
-    title: `Enodia ${payload.version ?? '未知版本'} 发布成功`,
+    title: `Kairos ${payload.version ?? '未知版本'} 发布成功`,
     details: releaseDetails(event, {
       prerelease: payload.prerelease,
       dmgName: payload.dmg_name,
@@ -294,13 +294,13 @@ function buildReleaseStarted(event) {
   const repoUrl = repositoryUrl(event);
   const payload = event.client_payload ?? {};
   return {
-    title: `Enodia ${payload.version ?? '未知版本'} 开始打包`,
+    title: `Kairos ${payload.version ?? '未知版本'} 开始打包`,
     details: commonDetails(event, [
       `类型：${payload.prerelease ? 'Pre-release' : 'Stable'}`,
       payload.dmg_name ? `制品：${payload.dmg_name}` : '',
       '架构：arm64',
       '系统：macOS 26+',
-      '组件：Enodia.app + DNS Helper',
+      '组件：Kairos.app + DNS Helper',
       `提交：${shortSha(payload.sha)}`,
     ]),
     button: { text: '查看运行', url: safeGitHubUrl(payload.run_url, repoUrl) },

@@ -1,6 +1,6 @@
 //
 //  NetworkToolsView.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2026/01/04.
 //
@@ -18,7 +18,7 @@ struct NetworkToolsView: View {
     @State private var ipAddress = ""
 
     var body: some View {
-        EnodiaScrollView {
+        KairosScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // DNS 深度清理卡片
                 GroupBox {

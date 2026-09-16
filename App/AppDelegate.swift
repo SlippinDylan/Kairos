@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  Enodia
+//  Kairos
 //
 //  Created by SlippinDylan on 2025/12/31.
 //
@@ -22,7 +22,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Properties
 
-    /// 网络监控服务（从 EnodiaApp 传递）
+    /// 网络监控服务（从 KairosApp 传递）
     private var networkMonitor: NetworkMonitor?
 
     // MARK: - Public Methods

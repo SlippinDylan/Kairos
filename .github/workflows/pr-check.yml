@@ -1,49 +1,72 @@
-# Enodia - PR 合并前构建校验
-#
-# 触发时机：向 main 分支发起 Pull Request
-# 目的：确认 PR 改动可以正常构建，作为合并门禁的 status check
-
-name: PR Check
+name: CI
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - '**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-check:
+    # Keep this context stable because the main ruleset requires "Build Check".
     name: Build Check
     runs-on: macos-26
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Select Xcode version
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
+
+      - name: Report toolchain
         run: |
-          sudo xcode-select -p
           xcodebuild -version
+          node --version
 
-      - name: Build Enodia.app
+      - name: Validate automation
         run: |
+          bash -n Scripts/create-dmg.sh
+          Scripts/create-dmg.sh --help >/dev/null
+          node .github/scripts/release-manifest.mjs validate
+          node --test .github/scripts/*.test.mjs
+
+      - name: Build unsigned app and Helper
+        run: |
+          set -o pipefail
           xcodebuild build \
-            -project "Enodia.xcodeproj" \
-            -scheme "Enodia" \
-            -configuration "Release" \
-            -derivedDataPath "./build" \
+            -project Enodia.xcodeproj \
+            -scheme Enodia \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build/DerivedData-Release \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
             CODE_SIGNING_ALLOWED=NO \
-            2>&1 | tee build.log
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
 
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then
-            echo "❌ 构建失败"
-            exit 1
-          fi
-
-      - name: Verify build output
+      - name: Verify artifact contract
         run: |
-          APP_PATH="./build/Build/Products/Release/Enodia.app"
-          if [[ ! -d "$APP_PATH" ]]; then
-            echo "❌ 未找到 Enodia.app"
-            exit 1
-          fi
-          echo "✅ 构建成功: $(du -sh $APP_PATH | cut -f1)"
+          app='build/DerivedData-Release/Build/Products/Release/Enodia.app'
+          binary="$app/Contents/MacOS/Enodia"
+          helper="$app/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
+          test -d "$app"
+          test -x "$binary"
+          test -x "$helper"
+          test "$(lipo -archs "$binary")" = 'arm64'
+          test "$(lipo -archs "$helper")" = 'arm64'
+          test "$(vtool -show-build "$binary" | grep -c 'minos 15.0')" -eq 1
+          test "$(vtool -show-build "$helper" | grep -c 'minos 15.0')" -eq 1
+          test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'

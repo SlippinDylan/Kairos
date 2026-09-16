@@ -1,356 +1,389 @@
-# Enodia - macOS 应用自动构建与发布
-#
-# 触发方式：
-#   1. 推送到 main 分支：自动构建，更新滚动 Pre-release（dev）
-#   2. Git Tag：git tag v1.0.0 && git push origin v1.0.0 → 正式 Release
-#   3. 手动触发：GitHub Actions 页面点击 "Run workflow"
-#
-# 发布产物：
-#   - 滚动 Pre-release：Enodia-{时间戳}.dmg
-#   - 正式 Release：Enodia-{version}.dmg
+name: Release
 
-name: Build and Release
-
-on:
-  # 推送到 main 分支触发（滚动 Pre-release）
-  # Tag 推送触发（正式发布）
-  push:
+on: # zizmor: ignore[dangerous-triggers] Only a successful push CI from this repository's main branch can publish.
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
     branches:
       - main
-    tags:
-      - 'v*.*.*'
-    # 排除只修改文档的提交
-    paths-ignore:
-      - '**.md'
-      - 'LICENSE'
 
-  # 手动触发（灵活：测试/临时发布）
-  workflow_dispatch:
-    inputs:
-      version:
-        description: '版本号（如 1.0.0，不带 v 前缀）'
-        required: true
-        default: '1.0.0'
-        type: string
-      create_release:
-        description: '是否创建 Release'
-        required: true
-        default: true
-        type: boolean
-
-# 确保同一时间只有一个构建任务运行
 concurrency:
-  group: build-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-main
+  cancel-in-progress: false
 
-# 授予创建 Release 的权限
 permissions:
-  contents: write
-
-env:
-  SCHEME_APP: Enodia
-  SCHEME_HELPER: EnodiaHelper
-  CONFIGURATION: Release
+  contents: read
 
 jobs:
-  build:
-    name: Build & Package
-    # 使用 GitHub 托管的 macOS 26 runner（支持 Xcode 26）
-    runs-on: macos-26
+  plan:
+    name: Plan release
+    if: >-
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      publish: ${{ steps.plan.outputs.publish || 'false' }}
+      version: ${{ steps.manifest.outputs.version }}
+      marketing_version: ${{ steps.manifest.outputs.marketing_version }}
+      tag: ${{ steps.manifest.outputs.tag }}
+      prerelease: ${{ steps.manifest.outputs.prerelease }}
+      dmg_name: ${{ steps.manifest.outputs.dmg_name }}
 
     steps:
-      # ─────────────────────────────────────────────
-      # 1. 环境准备
-      # ─────────────────────────────────────────────
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
-      - name: Determine version and release type
-        id: version
+      - name: Read release manifest
+        id: manifest
+        run: node .github/scripts/release-manifest.mjs validate
+
+      - name: Check existing release
+        if: steps.manifest.outputs.release == 'true'
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.manifest.outputs.tag }}
         run: |
-          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
-            # Tag 触发：正式发布，从 tag 名提取版本号
-            VERSION="${GITHUB_REF_NAME#v}"
-            RELEASE_TYPE="release"
-            DMG_NAME="Enodia-${VERSION}.dmg"
-            echo "📦 正式发布版本: ${VERSION}"
-          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
-            # main 分支触发：滚动 Pre-release，使用时间戳
-            TIMESTAMP=$(date -u +"%Y%m%d%H%M")
-            VERSION="dev-${TIMESTAMP}"
-            RELEASE_TYPE="prerelease"
-            DMG_NAME="Enodia-${TIMESTAMP}.dmg"
-            echo "🔧 滚动 Pre-release: ${VERSION}"
+          if is_draft="$(gh release view "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json isDraft \
+            --jq '.isDraft' 2>/dev/null)"; then
+            if [[ "$is_draft" == 'true' ]]; then
+              echo 'exists=false' >> "$GITHUB_OUTPUT"
+              echo 'draft=true' >> "$GITHUB_OUTPUT"
+              echo "Draft release $TAG exists; the run will rebuild and finish it."
+            else
+              echo 'exists=true' >> "$GITHUB_OUTPUT"
+              echo 'draft=false' >> "$GITHUB_OUTPUT"
+              echo "Published release $TAG already exists; packaging is not required."
+            fi
           else
-            # 手动触发：使用输入的版本号
-            VERSION="${{ github.event.inputs.version }}"
-            RELEASE_TYPE="release"
-            DMG_NAME="Enodia-${VERSION}.dmg"
-            echo "📦 手动构建版本: ${VERSION}"
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+            echo 'draft=false' >> "$GITHUB_OUTPUT"
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "release_type=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
-          echo "dmg_name=${DMG_NAME}" >> $GITHUB_OUTPUT
 
-      - name: Select Xcode version
+      - name: Validate release request
+        if: steps.manifest.outputs.release == 'true' && steps.existing.outputs.exists == 'false'
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_TAG: ${{ steps.manifest.outputs.tag }}
         run: |
-          # 使用最新稳定版 Xcode
-          sudo xcode-select -p
-          xcodebuild -version
+          all_tags="$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/releases?per_page=100" \
+            --jq '.[].tag_name')"
+          published_tags="$(awk -v current="$CURRENT_TAG" '$0 != current' <<< "$all_tags")"
+          PUBLISHED_RELEASE_TAGS="$published_tags" \
+            node .github/scripts/release-manifest.mjs plan
 
-      # ─────────────────────────────────────────────
-      # 2. 导入证书
-      # ─────────────────────────────────────────────
-      - name: Install Apple Certificate
+  release:
+    name: Build and publish DMG
+    needs: plan
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: macos-26
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.plan.outputs.version }}
+      MARKETING_VERSION: ${{ needs.plan.outputs.marketing_version }}
+      TAG: ${{ needs.plan.outputs.tag }}
+      PRERELEASE: ${{ needs.plan.outputs.prerelease }}
+      DMG_NAME: ${{ needs.plan.outputs.dmg_name }}
+      TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TESTED_SHA }}
+          persist-credentials: false
+
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
+
+      - name: Prepare release notes
+        run: |
+          release_notes_path="$RUNNER_TEMP/release-notes.md"
+          node .github/scripts/release-manifest.mjs notes > "$release_notes_path"
+          {
+            echo
+            echo '## 安装'
+            echo
+            echo "1. 打开 DMG，将 \`Enodia.app\` 拖到 \`Applications\`。"
+            echo '2. 移除下载隔离属性：'
+            echo
+            echo '   ```bash'
+            echo '   sudo xattr -rd com.apple.quarantine /Applications/Enodia.app'
+            echo '   ```'
+            echo '3. 打开 Enodia，在设置中安装 Helper。'
+            echo
+            echo '> 此版本使用 Apple Development 证书签名，未经 Apple 公证。'
+          } >> "$release_notes_path"
+
+      - name: Install Apple Development certificate
+        id: signing
         env:
           CERTIFICATES_P12: ${{ secrets.CERTIFICATES_P12 }}
           CERTIFICATES_PASSWORD: ${{ secrets.CERTIFICATES_PASSWORD }}
         run: |
-          # 创建临时钥匙串
-          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
-          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+          set -euo pipefail
+          : "${CERTIFICATES_P12:?Missing CERTIFICATES_P12 secret}"
+          : "${CERTIFICATES_PASSWORD:?Missing CERTIFICATES_PASSWORD secret}"
 
-          # 解码证书
-          echo "$CERTIFICATES_P12" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
+          certificate_path="$RUNNER_TEMP/apple-development.p12"
+          signing_keychain_path="$RUNNER_TEMP/enodia-signing.keychain-db"
+          keychain_password="$(openssl rand -hex 24)"
+          umask 077
 
-          # 创建钥匙串
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-
-          # 导入证书（-T 授权 codesign 访问私钥）
-          security import "$RUNNER_TEMP/certificate.p12" \
+          printf '%s' "$CERTIFICATES_P12" | base64 --decode > "$certificate_path"
+          test -s "$certificate_path"
+          security create-keychain -p "$keychain_password" "$signing_keychain_path"
+          security set-keychain-settings -lut 21600 "$signing_keychain_path"
+          security unlock-keychain -p "$keychain_password" "$signing_keychain_path"
+          security import "$certificate_path" \
             -P "$CERTIFICATES_PASSWORD" \
-            -A \
             -f pkcs12 \
-            -k "$KEYCHAIN_PATH" \
-            -T /usr/bin/codesign
+            -k "$signing_keychain_path" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s \
+            -k "$keychain_password" \
+            "$signing_keychain_path"
+          security list-keychains -d user -s "$signing_keychain_path"
 
-          # 允许 codesign 访问钥匙串
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          identity_line="$(security find-identity -v -p codesigning "$signing_keychain_path" \
+            | awk '/"Apple Development:/ && !found { print; found = 1 }')"
+          test -n "$identity_line"
+          signing_identity="$(awk '{ print $2 }' <<< "$identity_line")"
+          certificate_name="$(sed -E 's/^[^"]*"([^"]+)".*$/\1/' <<< "$identity_line")"
+          team_id="$(security find-certificate \
+            -c "$certificate_name" \
+            -p \
+            "$signing_keychain_path" \
+            | openssl x509 -noout -subject -nameopt RFC2253 \
+            | tr ',' '\n' \
+            | awk -F= '$1 == "OU" && !found { print $2; found = 1 }')"
+          [[ "$signing_identity" =~ ^[0-9A-Fa-f]{40}$ ]]
+          [[ "$team_id" =~ ^[A-Z0-9]{10}$ ]]
 
-          # 设为默认钥匙串 + 加入搜索列表（xcodebuild 会从这里找证书）
-          security default-keychain -s "$KEYCHAIN_PATH"
-          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          {
+            echo "identity=$signing_identity"
+            echo "team_id=$team_id"
+          } >> "$GITHUB_OUTPUT"
+          rm -f "$certificate_path"
 
-          # 验证证书（输出到日志方便排查）
-          echo "✅ 证书已导入，当前可用签名身份："
-          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
-
-          # 确认搜索路径里包含临时钥匙串
-          echo "📋 当前钥匙串搜索路径："
-          security list-keychains -d user
-
-      # ─────────────────────────────────────────────
-      # 3. 构建应用
-      # ─────────────────────────────────────────────
-      - name: Build Enodia.app (includes Helper)
+      - name: Build signed app and Helper
+        env:
+          SIGNING_IDENTITY: ${{ steps.signing.outputs.identity }}
+          SIGNING_TEAM_ID: ${{ steps.signing.outputs.team_id }}
         run: |
-          set -e  # 遇到错误立即退出
-
-          # 从钥匙串里取证书的 SHA-1 哈希，作为 CODE_SIGN_IDENTITY 直接匹配
-          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
-          SIGN_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Apple Development" | head -1 | awk '{print $2}')
-          echo "🔑 使用签名身份: $SIGN_IDENTITY"
-
+          set -o pipefail
           xcodebuild build \
-            -project "Enodia.xcodeproj" \
-            -scheme "${{ env.SCHEME_APP }}" \
-            -configuration "${{ env.CONFIGURATION }}" \
-            -derivedDataPath "./build" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
-            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            PROVISIONING_PROFILE_SPECIFIER="" \
-            MARKETING_VERSION="${{ steps.version.outputs.version }}" \
+            -project Enodia.xcodeproj \
+            -scheme Enodia \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
-            2>&1 | tee build.log
+            CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
+            DEVELOPMENT_TEAM="$SIGNING_TEAM_ID" \
+            PROVISIONING_PROFILE_SPECIFIER='' \
+            OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/enodia-signing.keychain-db"
 
-          # 检查构建结果
-          if [ ${PIPESTATUS[0]} -ne 0 ]; then
-            echo "❌ 构建失败，查看上方日志"
+      - name: Verify signed app and Helper
+        env:
+          SIGNING_TEAM_ID: ${{ steps.signing.outputs.team_id }}
+        run: |
+          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Enodia.app"
+          binary="$app/Contents/MacOS/Enodia"
+          helper="$app/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
+          app_signature="$RUNNER_TEMP/app-signature.txt"
+          helper_signature="$RUNNER_TEMP/helper-signature.txt"
+          helper_info="$RUNNER_TEMP/helper-info.plist"
+
+          test -d "$app"
+          test -x "$binary"
+          test -x "$helper"
+          test "$(lipo -archs "$binary")" = 'arm64'
+          test "$(lipo -archs "$helper")" = 'arm64'
+          test "$(vtool -show-build "$binary" | grep -c 'minos 15.0')" -eq 1
+          test "$(vtool -show-build "$helper" | grep -c 'minos 15.0')" -eq 1
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$MARKETING_VERSION"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist")" = '${{ github.run_number }}'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
+
+          otool -X -v -s __TEXT __info_plist "$helper" > "$helper_info"
+          plutil -lint "$helper_info"
+          test "$(plutil -extract CFBundleShortVersionString raw -o - "$helper_info")" = "$MARKETING_VERSION"
+          test "$(plutil -extract CFBundleVersion raw -o - "$helper_info")" = '${{ github.run_number }}'
+
+          codesign --verify --strict --all-architectures --verbose=2 "$helper"
+          codesign --verify --strict --all-architectures --verbose=2 "$app"
+          codesign --display --verbose=4 "$app" > /dev/null 2> "$app_signature"
+          codesign --display --verbose=4 "$helper" > /dev/null 2> "$helper_signature"
+          cat "$app_signature"
+          cat "$helper_signature"
+          grep -Fq 'Authority=Apple Development:' "$app_signature"
+          grep -Fq 'Authority=Apple Development:' "$helper_signature"
+          grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$app_signature"
+          grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$helper_signature"
+
+          helper_requirement="$(/usr/libexec/PlistBuddy \
+            -c 'Print :SMPrivilegedExecutables:studio.slippindylan.BrewKit.Enodia.helper' \
+            "$app/Contents/Info.plist")"
+          app_requirement="$(plutil -extract SMAuthorizedClients.0 raw -o - "$helper_info")"
+          codesign --verify --strict --all-architectures -R="$helper_requirement" "$helper"
+          codesign --verify --strict --all-architectures -R="$app_requirement" "$app"
+
+      - name: Package drag-to-install DMG
+        run: |
+          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Enodia.app"
+          Scripts/create-dmg.sh "$app" "$RUNNER_TEMP/$DMG_NAME" "Enodia $VERSION"
+
+      - name: Verify DMG
+        run: |
+          mount_point="$RUNNER_TEMP/EnodiaDMG"
+          dmg_path="$RUNNER_TEMP/$DMG_NAME"
+          mkdir -p "$mount_point"
+          hdiutil attach -readonly -nobrowse -mountpoint "$mount_point" "$dmg_path"
+          cleanup_mount() { hdiutil detach "$mount_point" >/dev/null; }
+          trap cleanup_mount EXIT
+          test -d "$mount_point/Enodia.app"
+          test "$(readlink "$mount_point/Applications")" = '/Applications'
+          binary="$mount_point/Enodia.app/Contents/MacOS/Enodia"
+          helper="$mount_point/Enodia.app/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
+          test -x "$helper"
+          test "$(lipo -archs "$binary")" = 'arm64'
+          test "$(lipo -archs "$helper")" = 'arm64'
+          codesign --verify --strict --all-architectures "$mount_point/Enodia.app"
+          cleanup_mount
+          trap - EXIT
+
+      - name: Recheck release availability
+        id: availability
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo 'draft=false' >> "$GITHUB_OUTPUT"
+          if is_draft="$(gh release view "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json isDraft \
+            --jq '.isDraft' 2>/dev/null)"; then
+            if [[ "$is_draft" != 'true' ]]; then
+              echo "Published release $TAG was created while this run was queued." >&2
+              exit 1
+            fi
+            tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha')"
+            if [[ "$tag_sha" != "$TESTED_SHA" ]]; then
+              echo "Draft release $TAG targets $tag_sha instead of tested commit $TESTED_SHA." >&2
+              exit 1
+            fi
+            echo 'draft=true' >> "$GITHUB_OUTPUT"
+          elif tag_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null)"; then
+            if [[ "$tag_sha" != "$TESTED_SHA" ]]; then
+              echo "Existing tag $TAG targets $tag_sha instead of tested commit $TESTED_SHA." >&2
+              exit 1
+            fi
+          fi
+
+      - name: Create draft GitHub Release
+        if: steps.availability.outputs.draft != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          arguments=(
+            release create "$TAG"
+            --repo "$GITHUB_REPOSITORY"
+            --target "$TESTED_SHA"
+            --title "$VERSION"
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+            --draft
+          )
+          if [[ "$PRERELEASE" == 'true' ]]; then
+            arguments+=(--prerelease)
+          fi
+          arguments+=("$RUNNER_TEMP/$DMG_NAME#$DMG_NAME")
+          gh "${arguments[@]}"
+
+      - name: Refresh existing draft GitHub Release
+        if: steps.availability.outputs.draft == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber \
+            "$RUNNER_TEMP/$DMG_NAME#$DMG_NAME"
+          gh release edit "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$VERSION" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" \
+            --prerelease="$PRERELEASE"
+
+      - name: Verify draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft')" = 'true'
+          asset_names="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name')"
+          if [[ "$asset_names" != "$DMG_NAME" ]]; then
+            echo "Draft release assets must contain only $DMG_NAME; found: $asset_names" >&2
             exit 1
           fi
 
-      - name: Verify build output
-        run: |
-          APP_PATH="./build/Build/Products/${{ env.CONFIGURATION }}/Enodia.app"
-          if [[ ! -d "$APP_PATH" ]]; then
-            echo "❌ 构建失败：未找到 Enodia.app"
-            exit 1
-          fi
-          echo "✅ 构建成功"
-          ls -la "$APP_PATH"
-
-          # 验证 Helper 是否正确嵌入
-          HELPER_PATH="$APP_PATH/Contents/Library/LaunchServices/studio.slippindylan.BrewKit.Enodia.helper"
-          if [[ ! -f "$HELPER_PATH" ]]; then
-            echo "⚠️ 警告：Helper 未嵌入"
-          else
-            echo "✅ Helper 已嵌入"
-          fi
-
-          # 验证签名
-          echo ""
-          echo "=== 验证代码签名 ==="
-          codesign -dvv "$APP_PATH" 2>&1 | grep -E "Identifier|Authority|TeamIdentifier" || echo "签名信息获取失败"
-
-          echo ""
-          echo "=== 验证 Helper 签名 ==="
-          codesign -dvv "$HELPER_PATH" 2>&1 | grep -E "Identifier|Authority|TeamIdentifier" || echo "Helper 签名信息获取失败"
-
-      # ─────────────────────────────────────────────
-      # 4. 打包 DMG
-      # ─────────────────────────────────────────────
-      - name: Install create-dmg
-        run: brew install create-dmg
-
-      - name: Create DMG
-        id: dmg
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          DMG_NAME="${{ steps.version.outputs.dmg_name }}"
-          APP_PATH="./build/Build/Products/${{ env.CONFIGURATION }}/Enodia.app"
-          DMG_PATH="./dist/${DMG_NAME}"
-
-          mkdir -p ./dist
-          mkdir -p ./dmg_contents
-
-          # 复制 App 到 DMG 内容目录（不再需要 .command 脚本，Helper 安装/卸载已集成到 App 设置中）
-          cp -R "$APP_PATH" ./dmg_contents/
-
-          # 创建 DMG（简洁布局：只有 App 和 Applications 链接）
-          create-dmg \
-            --volname "Enodia ${VERSION}" \
-            --volicon "${APP_PATH}/Contents/Resources/AppIcon.icns" \
-            --window-pos 200 120 \
-            --window-size 540 380 \
-            --icon-size 100 \
-            --icon "Enodia.app" 140 180 \
-            --hide-extension "Enodia.app" \
-            --app-drop-link 400 180 \
-            --no-internet-enable \
-            "${DMG_PATH}" \
-            "./dmg_contents" \
-            || true  # create-dmg 返回非零状态码但 DMG 可能已创建成功
-
-          # 验证 DMG
-          if [[ -f "${DMG_PATH}" ]]; then
-            echo "✅ DMG 创建成功: ${DMG_NAME}"
-            ls -lh "${DMG_PATH}"
-            echo "dmg_path=${DMG_PATH}" >> $GITHUB_OUTPUT
-            echo "dmg_name=${DMG_NAME}" >> $GITHUB_OUTPUT
-          else
-            echo "❌ DMG 创建失败"
-            exit 1
-          fi
-
-      # ─────────────────────────────────────────────
-      # 5. 上传构建产物
-      # ─────────────────────────────────────────────
-      - name: Upload DMG artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Enodia-${{ steps.version.outputs.version }}
-          path: ${{ steps.dmg.outputs.dmg_path }}
-          retention-days: 30
-
-      # ─────────────────────────────────────────────
-      # 6. 创建 GitHub Release
-      # ─────────────────────────────────────────────
-
-      # 滚动 Pre-release：先删除旧的 dev release 和 tag
-      - name: Delete old dev release
-        if: steps.version.outputs.release_type == 'prerelease'
-        run: |
-          echo "🗑️ 清理旧的 dev release..."
-          # 删除旧的 release（如果存在）
-          gh release delete dev --yes 2>/dev/null || echo "没有旧的 dev release"
-          # 删除旧的 tag（如果存在）
-          git push origin :refs/tags/dev 2>/dev/null || echo "没有旧的 dev tag"
+      - name: Publish GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
 
-      # 滚动 Pre-release
-      - name: Create Pre-release
-        if: steps.version.outputs.release_type == 'prerelease'
-        uses: softprops/action-gh-release@v2
-        with:
-          name: Enodia Dev (滚动更新)
-          tag_name: dev
-          draft: false
-          prerelease: true
-          files: ${{ steps.dmg.outputs.dmg_path }}
-          body: |
-            ## 🔧 开发版本（滚动更新）
-
-            此版本用于测试验证，始终保持最新。
-
-            **文件名**: `${{ steps.dmg.outputs.dmg_name }}`
-
-            ### 安装说明
-
-            1. 下载 `${{ steps.dmg.outputs.dmg_name }}`
-            2. 双击挂载 DMG
-            3. 拖动 **Enodia.app** 到 Applications 文件夹
-            4. 终端执行（移除隔离属性）：
-               ```bash
-               sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
-               ```
-            5. 打开 Enodia，进入 **设置** → 点击 **安装 Helper** 按钮
-
-            ---
-
-            > 构建时间: ${{ steps.version.outputs.version }}
-            > 构建编号: #${{ github.run_number }}
-            > 提交: ${{ github.sha }}
+      - name: Dispatch release notification
+        continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          changelog="$(node .github/scripts/release-manifest.mjs notes)"
+          jq -n \
+            --arg version "$VERSION" \
+            --argjson prerelease "$PRERELEASE" \
+            --arg dmg_name "$DMG_NAME" \
+            --arg changelog "$changelog" \
+            --arg release_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAG}" \
+            --arg download_url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${TAG}/${DMG_NAME}" \
+            '{
+              event_type: "release_published",
+              client_payload: {
+                version: $version,
+                prerelease: $prerelease,
+                dmg_name: $dmg_name,
+                changelog: $changelog,
+                release_url: $release_url,
+                download_url: $download_url
+              }
+            }' \
+            | gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input -
 
-      # 正式 Release
-      - name: Create Release
-        if: steps.version.outputs.release_type == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          name: Enodia v${{ steps.version.outputs.version }}
-          tag_name: ${{ github.ref_name || format('v{0}', steps.version.outputs.version) }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          files: ${{ steps.dmg.outputs.dmg_path }}
-          body: |
-            ## Enodia v${{ steps.version.outputs.version }}
-
-            ### 安装说明
-
-            1. 下载 `${{ steps.dmg.outputs.dmg_name }}`
-            2. 双击挂载 DMG
-            3. 拖动 **Enodia.app** 到 Applications 文件夹
-            4. 终端执行（移除隔离属性）：
-               ```bash
-               sudo xattr -rd com.apple.quarantine /Applications/Enodia.app
-               ```
-            5. 打开 Enodia，进入 **设置** → 点击 **安装 Helper** 按钮
-
-            ### 卸载说明
-
-            如需卸载 Helper，进入 **设置** → 点击 **卸载 Helper** 按钮
-
-            ---
-
-            > 构建编号: #${{ github.run_number }}
-            > 提交: ${{ github.sha }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # ─────────────────────────────────────────────
-      # 7. 清理
-      # ─────────────────────────────────────────────
-      - name: Cleanup keychain
+      - name: Remove signing keychain
         if: always()
         run: |
-          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
-          if [ -f "$KEYCHAIN_PATH" ]; then
-            security delete-keychain "$KEYCHAIN_PATH" || true
+          signing_keychain_path="$RUNNER_TEMP/enodia-signing.keychain-db"
+          if [[ -f "$signing_keychain_path" ]]; then
+            security delete-keychain "$signing_keychain_path" || true
           fi
-          rm -f "$RUNNER_TEMP/certificate.p12" || true
+          rm -f "$RUNNER_TEMP/apple-development.p12"

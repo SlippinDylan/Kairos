@@ -9,9 +9,9 @@
 	<key>CFBundleName</key>
 	<string>studio.slippindylan.BrewKit.Enodia.helper</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.0</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>SMAuthorizedClients</key>
 	<array>
 		<string>identifier "studio.slippindylan.BrewKit.Enodia" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */</string>

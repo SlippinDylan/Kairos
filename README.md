@@ -52,6 +52,33 @@
 
 <br>
 
+## CI 与发布
+
+所有分支的 push 和所有 Pull Request 都会执行 unsigned Release 构建，并检查 App、Helper 和自动化脚本。只有 `main` 分支的 push CI 成功后才会评估发布。
+
+发布配置位于 [`Config/Release/manifest.json`](Config/Release/manifest.json)：
+
+```json
+{
+  "version": "0.1.0-beta.1",
+  "release": false
+}
+```
+
+- `release` 为 `false` 时只执行 CI，不签名、不打包、不发布。
+- `release` 为 `true` 时，版本必须高于已有 Release，且 [`CHANGELOG.md`](CHANGELOG.md) 必须包含唯一、非空的 `## [版本] - YYYY-MM-DD` 章节。
+- 支持 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 后缀用于 tag、Release、DMG 和 CHANGELOG；App 与 Helper 的营销版本使用对应的纯数字 `x.y.z`。
+- Release 使用 CI 实际验证过的 commit，构建 Apple Silicon (`arm64`) 版本，完成 Apple Development 签名、App/Helper 安全校验和 DMG 验证后才正式发布。
+
+Release workflow 使用以下 GitHub Actions repository secrets：
+
+- `CERTIFICATES_P12`：Apple Development P12 的 Base64 内容
+- `CERTIFICATES_PASSWORD`：P12 导出密码
+- `FEISHU_WEBHOOK`：飞书自定义机器人的 Webhook
+- `FEISHU_SECRET`：飞书自定义机器人的签名密钥
+
+<br>
+
 ## 从源码构建
 
 **环境要求**

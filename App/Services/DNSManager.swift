@@ -197,9 +197,14 @@ final class DNSManager {
             return
         }
 
-        if let registeredFingerprint = UserDefaults.standard.string(
+        guard let registeredFingerprint = UserDefaults.standard.string(
             forKey: Self.registeredHelperFingerprintKey
-        ), registeredFingerprint != bundledFingerprint {
+        ) else {
+            attemptAutomaticRepair(reason: "现有 Helper 尚未登记 Bundle 指纹")
+            return
+        }
+
+        if registeredFingerprint != bundledFingerprint {
             attemptAutomaticRepair(reason: "Bundle 内 Helper executable 或 LaunchDaemon plist 已更新")
             return
         }

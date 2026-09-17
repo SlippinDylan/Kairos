@@ -24,7 +24,6 @@ final class DNSManager {
     private let daemonPlistName = "studio.slippindylan.BrewKit.Kairos.helper.plist"
     private let helperCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Kairos.helper\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var helperConnection: NSXPCConnection?
-    private var helperHealthCheckID: UUID?
 
     private var helperService: SMAppService {
         .daemon(plistName: daemonPlistName)
@@ -154,14 +153,16 @@ final class DNSManager {
         let connection = NSXPCConnection(machServiceName: helperIdentifier, options: .privileged)
         connection.remoteObjectInterface = NSXPCInterface(with: DNSHelperProtocol.self)
         connection.setCodeSigningRequirement(helperCodeSigningRequirement)
-        connection.invalidationHandler = { [weak self] in
+        connection.invalidationHandler = { [weak self, weak connection] in
             Task { @MainActor [weak self] in
-                self?.helperConnection = nil
+                guard let connection else { return }
+                self?.clearHelperConnection(ifCurrent: connection)
             }
         }
-        connection.interruptionHandler = { [weak self] in
+        connection.interruptionHandler = { [weak self, weak connection] in
             Task { @MainActor [weak self] in
-                self?.helperConnection = nil
+                guard let connection else { return }
+                self?.clearHelperConnection(ifCurrent: connection)
             }
         }
 
@@ -175,83 +176,75 @@ final class DNSManager {
         helperConnection = nil
     }
 
-    func checkHelperHealth(completion: @escaping (Result<String, Error>) -> Void) {
-        let checkID = UUID()
-        helperHealthCheckID = checkID
+    private func invalidateHelperConnection(ifCurrent connection: NSXPCConnection) {
+        guard helperConnection === connection else { return }
+        invalidateHelperConnection()
+    }
 
-        connectToHelper { [weak self] connection in
-            guard let self else { return }
+    private func clearHelperConnection(ifCurrent connection: NSXPCConnection) {
+        guard helperConnection === connection else { return }
+        helperConnection = nil
+    }
+
+    private func performHelperRequest<Response: Sendable>(
+        operation: String,
+        timeoutNanoseconds: UInt64 = 10_000_000_000,
+        invoke: @escaping (DNSHelperProtocol, @escaping (Response) -> Void) -> Void,
+        completion: @escaping (Result<Response, Error>) -> Void
+    ) {
+        let request = HelperRequest(completion: completion)
+
+        connectToHelper { [weak self, request, invoke] connection in
             guard let connection else {
-                finishHelperHealthCheck(
-                    checkID,
-                    result: .failure(HelperServiceError.unavailable),
-                    completion: completion
-                )
+                request.finish(.failure(HelperServiceError.unavailable))
                 return
             }
 
-            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self, weak connection] error in
                 Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    invalidateHelperConnection()
-                    finishHelperHealthCheck(
-                        checkID,
-                        result: .failure(error),
-                        completion: completion
+                    request.finish(
+                        .failure(HelperServiceError.xpcRequestFailed(error.localizedDescription))
                     )
+                    guard let connection else { return }
+                    self?.invalidateHelperConnection(ifCurrent: connection)
                 }
             }) as? DNSHelperProtocol else {
-                finishHelperHealthCheck(
-                    checkID,
-                    result: .failure(HelperServiceError.unavailable),
-                    completion: completion
-                )
+                request.finish(.failure(HelperServiceError.unavailable))
+                self?.invalidateHelperConnection(ifCurrent: connection)
                 return
             }
 
-            proxy.getVersion { [weak self] version in
-                Task { @MainActor [weak self] in
-                    self?.finishHelperHealthCheck(
-                        checkID,
-                        result: .success(version),
-                        completion: completion
+            request.timeoutTask = Task { @MainActor [weak self, weak request] in
+                do {
+                    try await Task.sleep(nanoseconds: timeoutNanoseconds)
+                } catch {
+                    return
+                }
+                request?.finish(
+                    .failure(
+                        HelperServiceError.requestTimedOut(operation)
                     )
+                )
+                self?.invalidateHelperConnection(ifCurrent: connection)
+            }
+
+            invoke(proxy) { response in
+                Task { @MainActor in
+                    request.finish(.success(response))
                 }
             }
         }
-
-        Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 5_000_000_000)
-            self?.finishHelperHealthCheck(
-                checkID,
-                result: .failure(HelperServiceError.healthCheckTimedOut),
-                completion: completion
-            )
-        }
     }
 
-    private func finishHelperHealthCheck(
-        _ checkID: UUID,
-        result: Result<String, Error>,
-        completion: @escaping (Result<String, Error>) -> Void
-    ) {
-        guard helperHealthCheckID == checkID else { return }
-        helperHealthCheckID = nil
-        completion(result)
-    }
-
-    private func getHelperProxy(completion: @escaping (DNSHelperProtocol?) -> Void) {
-        connectToHelper { connection in
-            guard let connection else {
-                completion(nil)
-                return
-            }
-
-            let proxy = connection.remoteObjectProxyWithErrorHandler { error in
-                AppLogger.error("Helper XPC request failed", error: error)
-            } as? DNSHelperProtocol
-            completion(proxy)
-        }
+    func checkHelperHealth(completion: @escaping (Result<String, Error>) -> Void) {
+        performHelperRequest(
+            operation: "健康检查",
+            timeoutNanoseconds: 5_000_000_000,
+            invoke: { proxy, reply in
+                proxy.getVersion(reply: reply)
+            },
+            completion: completion
+        )
     }
 
     // MARK: - DNS Operations
@@ -267,27 +260,26 @@ final class DNSManager {
             return
         }
 
-        getHelperProxy { [weak self] proxy in
-            guard let self else {
-                completion(false, "DNSManager 已释放")
-                return
+        performHelperRequest(
+            operation: "设置 DNS",
+            invoke: { proxy, reply in
+                proxy.setDNS(
+                    interface: interface,
+                    primaryDNS: primaryDNS,
+                    secondaryDNS: secondaryDNS
+                ) { success, error in
+                    reply((success, error))
+                }
             }
-            guard let proxy else {
-                completion(false, "无法连接到 Helper")
-                return
-            }
-
-            proxy.setDNS(
-                interface: interface,
-                primaryDNS: primaryDNS,
-                secondaryDNS: secondaryDNS
-            ) { success, error in
+        ) { [weak self] result in
+            switch result {
+            case .success(let (success, error)):
                 if success {
-                    Task { @MainActor in
-                        self.getCurrentDNS(interface: interface) { _ in }
-                    }
+                    self?.getCurrentDNS(interface: interface) { _ in }
                 }
                 completion(success, error)
+            case .failure(let error):
+                completion(false, error.localizedDescription)
             }
         }
     }
@@ -298,23 +290,22 @@ final class DNSManager {
             return
         }
 
-        getHelperProxy { [weak self] proxy in
-            guard let self else {
-                completion(false, "DNSManager 已释放")
-                return
+        performHelperRequest(
+            operation: "清除 DNS",
+            invoke: { proxy, reply in
+                proxy.clearDNS(interface: interface) { success, error in
+                    reply((success, error))
+                }
             }
-            guard let proxy else {
-                completion(false, "无法连接到 Helper")
-                return
-            }
-
-            proxy.clearDNS(interface: interface) { success, error in
+        ) { [weak self] result in
+            switch result {
+            case .success(let (success, error)):
                 if success {
-                    Task { @MainActor in
-                        self.getCurrentDNS(interface: interface) { _ in }
-                    }
+                    self?.getCurrentDNS(interface: interface) { _ in }
                 }
                 completion(success, error)
+            case .failure(let error):
+                completion(false, error.localizedDescription)
             }
         }
     }
@@ -340,28 +331,40 @@ final class DNSManager {
     }
 
     func flushDNSCache() {
-        getHelperProxy { proxy in
-            proxy?.flushDNSCache { success in
-                if !success {
-                    AppLogger.error("DNS 缓存刷新失败")
-                }
+        performHelperRequest(
+            operation: "刷新 DNS 缓存",
+            invoke: { proxy, reply in
+                proxy.flushDNSCache(reply: reply)
+            }
+        ) { result in
+            switch result {
+            case .success(true):
+                break
+            case .success(false):
+                AppLogger.error("DNS 缓存刷新失败")
+            case .failure(let error):
+                AppLogger.error("DNS 缓存刷新失败", error: error)
             }
         }
     }
 
     func flushDNSCacheForMaintenance() async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            getHelperProxy { proxy in
-                guard let proxy else {
-                    continuation.resume(throwing: HelperServiceError.unavailable)
-                    return
+            performHelperRequest(
+                operation: "刷新 DNS 缓存",
+                invoke: { proxy, reply in
+                    proxy.flushDNSCache(reply: reply)
                 }
-                proxy.flushDNSCache { success in
+            ) { result in
+                switch result {
+                case .success(let success):
                     if success {
                         continuation.resume()
                     } else {
                         continuation.resume(throwing: HelperServiceError.operationFailed("DNS cache flush"))
                     }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
                 }
             }
         }
@@ -369,12 +372,16 @@ final class DNSManager {
 
     func clearARPCache() async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            getHelperProxy { proxy in
-                guard let proxy else {
-                    continuation.resume(throwing: HelperServiceError.unavailable)
-                    return
+            performHelperRequest(
+                operation: "清除 ARP 缓存",
+                invoke: { proxy, reply in
+                    proxy.clearARPCache { success, message in
+                        reply((success, message))
+                    }
                 }
-                proxy.clearARPCache { success, message in
+            ) { result in
+                switch result {
+                case .success(let (success, message)):
                     if success {
                         continuation.resume()
                     } else {
@@ -382,6 +389,8 @@ final class DNSManager {
                             throwing: HelperServiceError.operationFailed(message ?? "ARP cache clear")
                         )
                     }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
                 }
             }
         }
@@ -389,12 +398,17 @@ final class DNSManager {
 
     func purgeInactiveMemory() async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            getHelperProxy { proxy in
-                guard let proxy else {
-                    continuation.resume(throwing: HelperServiceError.unavailable)
-                    return
+            performHelperRequest(
+                operation: "清理非活跃内存",
+                timeoutNanoseconds: 30_000_000_000,
+                invoke: { proxy, reply in
+                    proxy.purgeInactiveMemory { success, message in
+                        reply((success, message))
+                    }
                 }
-                proxy.purgeInactiveMemory { success, message in
+            ) { result in
+                switch result {
+                case .success(let (success, message)):
                     if success {
                         continuation.resume()
                     } else {
@@ -402,6 +416,8 @@ final class DNSManager {
                             throwing: HelperServiceError.operationFailed(message ?? "memory purge")
                         )
                     }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
                 }
             }
         }
@@ -415,7 +431,8 @@ private enum HelperServiceError: LocalizedError {
     case registrationDidNotEnableService
     case unknownStatus
     case unavailable
-    case healthCheckTimedOut
+    case xpcRequestFailed(String)
+    case requestTimedOut(String)
     case operationFailed(String)
 
     var errorDescription: String? {
@@ -432,10 +449,32 @@ private enum HelperServiceError: LocalizedError {
             return "Helper 返回未知的服务状态"
         case .unavailable:
             return "Helper 未启用或无法连接"
-        case .healthCheckTimedOut:
-            return "Helper 健康检查超时"
+        case .xpcRequestFailed(let message):
+            return "Helper 通信失败：\(message)"
+        case .requestTimedOut(let operation):
+            return "Helper \(operation)超时，操作结果未知"
         case .operationFailed(let message):
             return "Helper 操作失败：\(message)"
         }
+    }
+}
+
+@MainActor
+private final class HelperRequest<Response: Sendable> {
+    var timeoutTask: Task<Void, Never>?
+
+    private var isFinished = false
+    private let completion: (Result<Response, Error>) -> Void
+
+    init(completion: @escaping (Result<Response, Error>) -> Void) {
+        self.completion = completion
+    }
+
+    func finish(_ result: Result<Response, Error>) {
+        guard !isFinished else { return }
+        isFinished = true
+        timeoutTask?.cancel()
+        timeoutTask = nil
+        completion(result)
     }
 }

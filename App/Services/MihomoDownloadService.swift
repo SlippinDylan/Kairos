@@ -5,8 +5,9 @@
 //  Created by SlippinDylan on 2026/01/08.
 //
 
-import Foundation
 import Compression
+import CryptoKit
+import Foundation
 
 /// Mihomo 内核下载服务
 ///
@@ -48,11 +49,13 @@ final class MihomoDownloadService: NSObject {
         let name: String
         let browserDownloadUrl: String
         let size: Int
+        let digest: String?
 
         enum CodingKeys: String, CodingKey {
             case name
             case browserDownloadUrl = "browser_download_url"
             case size
+            case digest
         }
     }
 
@@ -134,6 +137,7 @@ final class MihomoDownloadService: NSObject {
 
         // 5. 下载文件
         let downloadedPath = try await downloadAsset(asset: asset, progressHandler: progressHandler)
+        try verifyAssetDigest(at: downloadedPath, expectedDigest: asset.digest)
         AppLogger.info("文件下载完成: \(downloadedPath)")
 
         // 6. 解压 gzip 文件
@@ -353,6 +357,29 @@ final class MihomoDownloadService: NSObject {
         return destinationPath.path
     }
 
+    private func verifyAssetDigest(at path: String, expectedDigest: String?) throws {
+        guard let expectedDigest, !expectedDigest.isEmpty else {
+            AppLogger.warning("GitHub asset 未提供 digest，跳过内容哈希校验")
+            return
+        }
+
+        let components = expectedDigest.split(separator: ":", maxSplits: 1).map(String.init)
+        guard components.count == 2, components[0].lowercased() == "sha256" else {
+            throw MihomoDownloadError.integrityCheckFailed("不支持的 digest 格式：\(expectedDigest)")
+        }
+
+        let fileURL = URL(fileURLWithPath: path)
+        let data = try Data(contentsOf: fileURL, options: .mappedIfSafe)
+        let actualDigest = SHA256.hash(data: data)
+            .map { String(format: "%02x", $0) }
+            .joined()
+
+        guard actualDigest == components[1].lowercased() else {
+            throw MihomoDownloadError.integrityCheckFailed("下载文件的 SHA-256 与 GitHub Release 不一致")
+        }
+        AppLogger.info("GitHub asset SHA-256 校验通过")
+    }
+
     /// 解压 gzip 文件
     ///
     /// 使用 Swift 原生 Compression 框架解压
@@ -490,6 +517,7 @@ enum MihomoDownloadError: LocalizedError {
     case invalidDownloadURL(String)
     case downloadFailed(String)
     case decompressionFailed
+    case integrityCheckFailed(String)
     case fileOperationFailed(String)
 
     var errorDescription: String? {
@@ -508,6 +536,8 @@ enum MihomoDownloadError: LocalizedError {
             return "下载失败: \(reason)"
         case .decompressionFailed:
             return "解压失败"
+        case .integrityCheckFailed(let reason):
+            return "完整性校验失败: \(reason)"
         case .fileOperationFailed(let reason):
             return "文件操作失败: \(reason)"
         }

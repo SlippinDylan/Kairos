@@ -359,8 +359,7 @@ final class MihomoDownloadService: NSObject {
 
     private func verifyAssetDigest(at path: String, expectedDigest: String?) throws {
         guard let expectedDigest, !expectedDigest.isEmpty else {
-            AppLogger.warning("GitHub asset 未提供 digest，跳过内容哈希校验")
-            return
+            throw MihomoDownloadError.integrityCheckFailed("GitHub asset 未提供 SHA-256 digest")
         }
 
         let components = expectedDigest.split(separator: ":", maxSplits: 1).map(String.init)

@@ -4,9 +4,21 @@ All notable changes to Kairos releases are recorded here.
 
 ## [Unreleased]
 
+## [0.3.0-beta.1] - 2026-09-17
+
 ### Added
 
 - Added Feishu notifications when CI starts and when a release enters the packaging stage.
+
+### Changed
+
+- Improved privileged Helper registration, update recovery, and approval guidance.
+- Made Mihomo kernel replacement atomic and verified downloaded assets against published SHA-256 digests.
+
+### Security
+
+- Derived reciprocal app and Helper trust requirements from the active signing team.
+- Tightened privileged Helper input validation.
 
 ## [0.2.0-beta.1] - 2026-09-17
 

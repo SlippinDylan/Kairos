@@ -51,4 +51,8 @@ protocol DNSHelperProtocol {
     /// 获取 Helper 版本（用于验证）
     /// - Parameter reply: 回调，返回版本号
     func getVersion(reply: @escaping (String) -> Void)
+
+    /// 获取 Helper 构建号（用于检测 executable 更新）
+    /// - Parameter reply: 回调，返回构建号
+    func getBuildVersion(reply: @escaping (String) -> Void)
 }

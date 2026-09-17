@@ -111,7 +111,8 @@ extension HelperToolMain: NSXPCListenerDelegate {
 /// - ✅ getDNS：使用 `SCDynamicStore` 读取配置
 /// - ⚠️ flushDNSCache：使用 `dscacheutil` + `killall mDNSResponder`（无原生 API）
 class DNSHelper: NSObject, DNSHelperProtocol {
-    private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+    private let version = DNSHelper.versionString(for: "CFBundleShortVersionString")
+    private let buildVersion = DNSHelper.versionString(for: "CFBundleVersion")
 
     /// 设置 DNS 服务器（原生 API 实现）
     ///
@@ -339,6 +340,21 @@ class DNSHelper: NSObject, DNSHelperProtocol {
 
     func getVersion(reply: @escaping (String) -> Void) {
         reply(version)
+    }
+
+    func getBuildVersion(reply: @escaping (String) -> Void) {
+        reply(buildVersion)
+    }
+
+    private static func versionString(for key: String) -> String {
+        switch Bundle.main.object(forInfoDictionaryKey: key) {
+        case let value as String where !value.isEmpty:
+            return value
+        case let value as NSNumber:
+            return value.stringValue
+        default:
+            return "unknown"
+        }
     }
 
     private func isValidIPAddress(_ address: String) -> Bool {

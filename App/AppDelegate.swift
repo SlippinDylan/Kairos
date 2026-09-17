@@ -69,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.info("应用启动完成")
         _ = applicationUpdater
+        DNSManager.shared.validateHelperIfNeeded()
 
         // 必须在主线程同步配置，确保代理提早设置完毕
         NotificationManager.shared.configure()

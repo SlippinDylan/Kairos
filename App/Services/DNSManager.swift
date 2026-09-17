@@ -5,6 +5,7 @@
 //  Created by SlippinDylan on 2025/12/26.
 //
 
+import CryptoKit
 import Foundation
 import Observation
 import Security
@@ -16,6 +17,7 @@ import SystemConfiguration
 @Observable
 final class DNSManager {
     static let shared = DNSManager()
+    private static let registeredHelperFingerprintKey = "Kairos.RegisteredHelperFingerprint"
 
     var currentPrimaryDNS: String = "-"
     var currentSecondaryDNS: String = "-"
@@ -24,9 +26,21 @@ final class DNSManager {
     private let helperIdentifier = "studio.slippindylan.BrewKit.Kairos.helper"
     private let daemonPlistName = "studio.slippindylan.BrewKit.Kairos.helper.plist"
     private var helperConnection: NSXPCConnection?
+    private var isValidatingHelper = false
+    private var hasAttemptedAutomaticRepair = false
 
     private var helperService: SMAppService {
         .daemon(plistName: daemonPlistName)
+    }
+
+    private var bundledHelperURL: URL {
+        Bundle.main.bundleURL
+            .appendingPathComponent("Contents/Resources/\(helperIdentifier)")
+    }
+
+    private var bundledDaemonPlistURL: URL {
+        Bundle.main.bundleURL
+            .appendingPathComponent("Contents/Library/LaunchDaemons/\(daemonPlistName)")
     }
 
     var helperRequiresApproval: Bool {
@@ -46,22 +60,17 @@ final class DNSManager {
     }
 
     func installHelper(completion: @escaping (Bool, Error?) -> Void) {
-        let helperURL = Bundle.main.bundleURL
-            .appendingPathComponent("Contents/Resources/\(helperIdentifier)")
-        let plistURL = Bundle.main.bundleURL
-            .appendingPathComponent("Contents/Library/LaunchDaemons/\(daemonPlistName)")
-
-        guard FileManager.default.isExecutableFile(atPath: helperURL.path) else {
+        guard FileManager.default.isExecutableFile(atPath: bundledHelperURL.path) else {
             finishHelperOperation(
-                .failure(HelperServiceError.missingBundledHelper(helperURL.path)),
+                .failure(HelperServiceError.missingBundledHelper(bundledHelperURL.path)),
                 completion: completion
             )
             return
         }
 
-        guard FileManager.default.fileExists(atPath: plistURL.path) else {
+        guard FileManager.default.fileExists(atPath: bundledDaemonPlistURL.path) else {
             finishHelperOperation(
-                .failure(HelperServiceError.missingLaunchDaemonPlist(plistURL.path)),
+                .failure(HelperServiceError.missingLaunchDaemonPlist(bundledDaemonPlistURL.path)),
                 completion: completion
             )
             return
@@ -69,23 +78,81 @@ final class DNSManager {
 
         invalidateHelperConnection()
 
+        let service = helperService
+        if service.status == .requiresApproval {
+            SMAppService.openSystemSettingsLoginItems()
+            finishHelperOperation(.failure(HelperServiceError.requiresApproval), completion: completion)
+            return
+        }
+        if service.status == .enabled {
+            reregisterHelper(openSystemSettingsOnApproval: true, completion: completion)
+            return
+        }
+        registerHelper(service, openSystemSettingsOnApproval: true, completion: completion)
+    }
+
+    func uninstallHelper(completion: @escaping (Bool, Error?) -> Void) {
+        invalidateHelperConnection()
+
+        let service = helperService
+        guard service.status != .notRegistered else {
+            clearRegisteredHelperFingerprint()
+            finishHelperOperation(.success(()), completion: completion)
+            return
+        }
+
+        service.unregister { [weak self] error in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let error {
+                    finishHelperOperation(.failure(error), completion: completion)
+                    return
+                }
+                clearRegisteredHelperFingerprint()
+                finishHelperOperation(.success(()), completion: completion)
+            }
+        }
+    }
+
+    private func reregisterHelper(
+        openSystemSettingsOnApproval: Bool,
+        completion: @escaping (Bool, Error?) -> Void
+    ) {
+        invalidateHelperConnection()
+        let service = helperService
+        service.unregister { [weak self] error in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let currentService = helperService
+                if let error, currentService.status != .notRegistered {
+                    finishHelperOperation(.failure(error), completion: completion)
+                    return
+                }
+                registerHelper(
+                    currentService,
+                    openSystemSettingsOnApproval: openSystemSettingsOnApproval,
+                    completion: completion
+                )
+            }
+        }
+    }
+
+    private func registerHelper(
+        _ service: SMAppService,
+        openSystemSettingsOnApproval: Bool,
+        completion: @escaping (Bool, Error?) -> Void
+    ) {
         do {
-            let service = helperService
-            if service.status == .requiresApproval {
-                SMAppService.openSystemSettingsLoginItems()
-                finishHelperOperation(.failure(HelperServiceError.requiresApproval), completion: completion)
-                return
-            }
-            if service.status == .enabled {
-                try service.unregister()
-            }
             try service.register()
 
             switch service.status {
             case .enabled:
+                recordRegisteredHelperFingerprint()
                 finishHelperOperation(.success(()), completion: completion)
             case .requiresApproval:
-                SMAppService.openSystemSettingsLoginItems()
+                if openSystemSettingsOnApproval {
+                    SMAppService.openSystemSettingsLoginItems()
+                }
                 finishHelperOperation(.failure(HelperServiceError.requiresApproval), completion: completion)
             case .notRegistered, .notFound:
                 finishHelperOperation(
@@ -96,28 +163,14 @@ final class DNSManager {
                 finishHelperOperation(.failure(HelperServiceError.unknownStatus), completion: completion)
             }
         } catch {
-            if helperService.status == .requiresApproval {
-                SMAppService.openSystemSettingsLoginItems()
+            if service.status == .requiresApproval {
+                if openSystemSettingsOnApproval {
+                    SMAppService.openSystemSettingsLoginItems()
+                }
                 finishHelperOperation(.failure(HelperServiceError.requiresApproval), completion: completion)
                 return
             }
-            checkHelperStatus()
-            completion(false, error)
-        }
-    }
-
-    func uninstallHelper(completion: @escaping (Bool, Error?) -> Void) {
-        invalidateHelperConnection()
-
-        do {
-            let service = helperService
-            if service.status != .notRegistered {
-                try service.unregister()
-            }
-            finishHelperOperation(.success(()), completion: completion)
-        } catch {
-            checkHelperStatus()
-            completion(false, error)
+            finishHelperOperation(.failure(error), completion: completion)
         }
     }
 
@@ -134,6 +187,155 @@ final class DNSManager {
         case .failure(let error):
             completion(false, error)
         }
+    }
+
+    func validateHelperIfNeeded() {
+        guard helperService.status == .enabled, !isValidatingHelper else { return }
+        guard let bundledVersion = bundledHelperVersion(),
+              let bundledFingerprint = bundledHelperFingerprint() else {
+            AppLogger.error("无法读取 Bundle 内 Helper 的版本或指纹")
+            return
+        }
+
+        if let registeredFingerprint = UserDefaults.standard.string(
+            forKey: Self.registeredHelperFingerprintKey
+        ), registeredFingerprint != bundledFingerprint {
+            attemptAutomaticRepair(reason: "Bundle 内 Helper executable 或 LaunchDaemon plist 已更新")
+            return
+        }
+
+        isValidatingHelper = true
+        runningHelperVersion { [weak self] result in
+            guard let self else { return }
+            isValidatingHelper = false
+
+            switch result {
+            case .success(let runningVersion) where runningVersion == bundledVersion:
+                UserDefaults.standard.set(
+                    bundledFingerprint,
+                    forKey: Self.registeredHelperFingerprintKey
+                )
+                AppLogger.info(
+                    "Helper 版本验证通过: \(runningVersion.shortVersion) (\(runningVersion.buildVersion))"
+                )
+            case .success(let runningVersion):
+                attemptAutomaticRepair(
+                    reason: "Helper 版本不一致: 运行中 \(runningVersion.shortVersion) "
+                        + "(\(runningVersion.buildVersion))，Bundle \(bundledVersion.shortVersion) "
+                        + "(\(bundledVersion.buildVersion))"
+                )
+            case .failure(let error):
+                attemptAutomaticRepair(reason: "Helper 健康检查失败: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func attemptAutomaticRepair(reason: String) {
+        guard !hasAttemptedAutomaticRepair else {
+            AppLogger.error("Helper 自动修复已尝试，本次不再重试: \(reason)")
+            return
+        }
+
+        hasAttemptedAutomaticRepair = true
+        isValidatingHelper = true
+        AppLogger.warning("开始自动重新注册 Helper: \(reason)")
+
+        reregisterHelper(openSystemSettingsOnApproval: false) { [weak self] success, error in
+            guard let self else { return }
+            isValidatingHelper = false
+
+            if success {
+                AppLogger.info("Helper 自动重新注册成功")
+            } else {
+                AppLogger.error(
+                    "Helper 自动重新注册失败",
+                    error: error ?? HelperServiceError.registrationDidNotEnableService
+                )
+            }
+        }
+    }
+
+    private func runningHelperVersion(
+        completion: @escaping (Result<HelperVersion, Error>) -> Void
+    ) {
+        performHelperRequest(
+            operation: "读取 Helper 版本",
+            timeoutNanoseconds: 5_000_000_000,
+            invoke: { proxy, reply in
+                proxy.getVersion(reply: reply)
+            }
+        ) { [weak self] shortVersionResult in
+            guard let self else { return }
+            switch shortVersionResult {
+            case .failure(let error):
+                completion(.failure(error))
+            case .success(let shortVersion):
+                performHelperRequest(
+                    operation: "读取 Helper 构建号",
+                    timeoutNanoseconds: 5_000_000_000,
+                    invoke: { proxy, reply in
+                        proxy.getBuildVersion(reply: reply)
+                    }
+                ) { buildVersionResult in
+                    completion(
+                        buildVersionResult.map {
+                            HelperVersion(shortVersion: shortVersion, buildVersion: $0)
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private func bundledHelperVersion() -> HelperVersion? {
+        guard let information = CFBundleCopyInfoDictionaryForURL(
+            bundledHelperURL as CFURL
+        ) as? [String: Any],
+        let shortVersion = Self.versionString(
+            information["CFBundleShortVersionString"]
+        ),
+        let buildVersion = Self.versionString(
+            information[kCFBundleVersionKey as String]
+        ) else {
+            return nil
+        }
+        return HelperVersion(shortVersion: shortVersion, buildVersion: buildVersion)
+    }
+
+    private static func versionString(_ value: Any?) -> String? {
+        switch value {
+        case let value as String where !value.isEmpty:
+            return value
+        case let value as NSNumber:
+            return value.stringValue
+        default:
+            return nil
+        }
+    }
+
+    private func bundledHelperFingerprint() -> String? {
+        guard let helperData = try? Data(contentsOf: bundledHelperURL, options: .mappedIfSafe),
+              let plistData = try? Data(contentsOf: bundledDaemonPlistURL, options: .mappedIfSafe) else {
+            return nil
+        }
+        var hasher = SHA256()
+        hasher.update(data: helperData)
+        hasher.update(data: plistData)
+        return hasher.finalize()
+            .map { String(format: "%02x", $0) }
+            .joined()
+    }
+
+    private func recordRegisteredHelperFingerprint() {
+        guard let fingerprint = bundledHelperFingerprint() else {
+            AppLogger.warning("Helper 已注册，但无法记录 bundled executable 指纹")
+            return
+        }
+        UserDefaults.standard.set(fingerprint, forKey: Self.registeredHelperFingerprintKey)
+    }
+
+    private func clearRegisteredHelperFingerprint() {
+        UserDefaults.standard.removeObject(forKey: Self.registeredHelperFingerprintKey)
     }
 
     // MARK: - Helper Connection
@@ -528,6 +730,11 @@ private enum HelperServiceError: LocalizedError {
             return "Helper 操作失败：\(message)"
         }
     }
+}
+
+private struct HelperVersion: Equatable, Sendable {
+    let shortVersion: String
+    let buildVersion: String
 }
 
 @MainActor

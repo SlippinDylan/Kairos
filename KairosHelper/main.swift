@@ -266,6 +266,24 @@ class DNSHelper: NSObject, DNSHelperProtocol {
         }
     }
 
+    func refreshNetworkInterface(interface: String, reply: @escaping (Bool, String?) -> Void) {
+        guard let interfaces = SCNetworkInterfaceCopyAll() as? [SCNetworkInterface],
+              let networkInterface = interfaces.first(where: {
+                  (SCNetworkInterfaceGetBSDName($0) as String?) == interface
+              }) else {
+            reply(false, "未找到网络接口：\(interface)")
+            return
+        }
+
+        guard SCNetworkInterfaceForceConfigurationRefresh(networkInterface) else {
+            let message = String(cString: SCErrorString(SCError()))
+            reply(false, "无法刷新网络接口：\(message)")
+            return
+        }
+
+        reply(true, nil)
+    }
+
     func purgeInactiveMemory(reply: @escaping (Bool, String?) -> Void) {
         do {
             try runCommand(at: "/usr/sbin/purge", arguments: [])

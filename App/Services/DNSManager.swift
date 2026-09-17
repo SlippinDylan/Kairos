@@ -396,6 +396,32 @@ final class DNSManager {
         }
     }
 
+    func refreshNetworkInterface(_ interface: String) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            performHelperRequest(
+                operation: "刷新网络接口",
+                invoke: { proxy, reply in
+                    proxy.refreshNetworkInterface(interface: interface) { success, message in
+                        reply((success, message))
+                    }
+                }
+            ) { result in
+                switch result {
+                case .success(let (success, message)):
+                    if success {
+                        continuation.resume()
+                    } else {
+                        continuation.resume(
+                            throwing: HelperServiceError.operationFailed(message ?? "network interface refresh")
+                        )
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
     func purgeInactiveMemory() async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             performHelperRequest(

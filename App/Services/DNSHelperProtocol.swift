@@ -38,6 +38,12 @@ protocol DNSHelperProtocol {
     /// - Parameter reply: 回调，返回是否成功和错误信息
     func clearARPCache(reply: @escaping (Bool, String?) -> Void)
 
+    /// 请求网络配置代理立即刷新指定接口
+    /// - Parameters:
+    ///   - interface: BSD 接口名称
+    ///   - reply: 回调，返回是否成功和错误信息
+    func refreshNetworkInterface(interface: String, reply: @escaping (Bool, String?) -> Void)
+
     /// 清理非活跃内存
     /// - Parameter reply: 回调，返回是否成功和错误信息
     func purgeInactiveMemory(reply: @escaping (Bool, String?) -> Void)

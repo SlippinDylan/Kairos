@@ -7,7 +7,6 @@
 
 import Foundation
 import CoreWLAN
-import SystemConfiguration
 
 /// 网络维护服务
 ///
@@ -20,8 +19,8 @@ import SystemConfiguration
 /// - **最小 shell 原则**: 只在无原生 API 时使用 shell
 /// - **原生 API 优先**:
 ///   - WiFi 控制 → CoreWLAN.framework
-///   - 网络接口 → SystemConfiguration.framework
 ///   - 文件操作 → FileManager
+///   - 网络接口刷新 → Helper 中的 SystemConfiguration.framework
 /// - **必要的 shell**:
 ///   - DNS 缓存清理（无公开 API）
 ///   - ARP 清理（sysctl 过于复杂）
@@ -39,7 +38,7 @@ final class NetworkMaintenanceService {
     enum MaintenanceError: LocalizedError {
         case wifiInterfaceNotFound
         case wifiControlFailed(String)
-        case networkInterfaceError(String)
+        case wifiRecoveryFailed(operation: String, recovery: String)
         case helperUnavailable
 
         var errorDescription: String? {
@@ -48,8 +47,8 @@ final class NetworkMaintenanceService {
                 return "未找到 WiFi 网卡"
             case .wifiControlFailed(let message):
                 return "WiFi 控制失败: \(message)"
-            case .networkInterfaceError(let message):
-                return "网络接口错误: \(message)"
+            case .wifiRecoveryFailed(let operation, let recovery):
+                return "网络维护失败且 WiFi 恢复失败。维护错误: \(operation)；恢复错误: \(recovery)"
             case .helperUnavailable:
                 return "DNS Helper 未启用，请先在设置中注册并批准 Helper"
             }
@@ -67,11 +66,12 @@ final class NetworkMaintenanceService {
     /// 深度清理
     ///
     /// ## 实现说明（方案 C）
-    /// 1. ✅ [Swift] CoreWLAN 关闭 WiFi
+    /// 1. ✅ [Swift] 记录 WiFi 状态，并在开启时暂时关闭
     /// 2. ⚠️ [Helper] 刷新 DNS 缓存（无公开 API）
-    /// 4. ✅ [Swift] SystemConfiguration 重置网络接口
-    /// 4. ⚠️ [Helper] 清除 ARP 缓存
-    /// 6. ✅ [Swift] CoreWLAN 开启 WiFi
+    /// 3. ⚠️ [Helper] 清除 ARP 缓存
+    /// 4. ✅ [Swift] 等待网络维护完成
+    /// 5. ✅ [Swift] 恢复 WiFi 原始状态
+    /// 6. ✅ [Helper] SystemConfiguration 请求 DHCP 立即刷新
     /// 7. ✅ [Swift] FileManager 清理浏览器缓存
     /// 8. ⚠️ [Helper] 刷新 DNS 并清理非活跃内存
     ///
@@ -87,30 +87,40 @@ final class NetworkMaintenanceService {
             throw MaintenanceError.helperUnavailable
         }
 
-        // 1. ✅ [Swift] 关闭 WiFi
-        AppLogger.debug("步骤 1/8: 关闭 WiFi（CoreWLAN）")
-        try await disableWiFi()
+        let wifiState = try await prepareWiFiForMaintenance()
 
-        // 2. ⚠️ [Shell] 清理 DNS 缓存（无原生 API）
-        AppLogger.debug("步骤 2/8: 通过 Helper 清理 DNS 缓存")
-        try await DNSManager.shared.flushDNSCacheForMaintenance()
+        do {
+            AppLogger.debug("步骤 2/8: 通过 Helper 清理 DNS 缓存")
+            try await DNSManager.shared.flushDNSCacheForMaintenance()
 
-        // 3. ✅ [Swift] 重置网络接口（SystemConfiguration）
-        AppLogger.debug("步骤 3/8: 重置网络接口（SystemConfiguration）")
-        try await resetNetworkInterfaceNative()
+            AppLogger.debug("步骤 3/8: 通过 Helper 清除 ARP 缓存")
+            try await DNSManager.shared.clearARPCache()
+            RouterInfoService.shared.clearMACCache()
 
-        // 4. ⚠️ [Shell] 清除 ARP 缓存（技术上可用 sysctl，但过于复杂）
-        AppLogger.debug("步骤 4/8: 通过 Helper 清除 ARP 缓存")
-        try await DNSManager.shared.clearARPCache()
-        RouterInfoService.shared.clearMACCache()
+            AppLogger.debug("步骤 4/8: 等待 2 秒")
+            try await Task.sleep(nanoseconds: 2_000_000_000)
+        } catch {
+            let operationError = error
+            do {
+                try await restoreWiFiIfNeeded(wifiState)
+            } catch {
+                throw MaintenanceError.wifiRecoveryFailed(
+                    operation: operationError.localizedDescription,
+                    recovery: error.localizedDescription
+                )
+            }
+            throw operationError
+        }
 
-        // 5. 等待 2 秒
-        AppLogger.debug("步骤 5/8: 等待 2 秒")
-        try await Task.sleep(nanoseconds: 2_000_000_000)
+        AppLogger.debug("步骤 5/8: 恢复 WiFi 原始状态（CoreWLAN）")
+        try await restoreWiFiIfNeeded(wifiState)
 
-        // 6. ✅ [Swift] 开启 WiFi
-        AppLogger.debug("步骤 6/8: 开启 WiFi（CoreWLAN）")
-        try await enableWiFi()
+        if wifiState.wasPoweredOn {
+            AppLogger.debug("步骤 6/8: 通过 Helper 刷新网络接口")
+            try await DNSManager.shared.refreshNetworkInterface(wifiState.interfaceName)
+        } else {
+            AppLogger.debug("步骤 6/8: WiFi 原本已关闭，跳过网络接口刷新")
+        }
 
         // 7. ✅ [Swift] 清理浏览器缓存（FileManager）
         AppLogger.debug("步骤 7/8: 清理浏览器缓存（FileManager）")
@@ -133,23 +143,37 @@ final class NetworkMaintenanceService {
     /// - 调用 setPower(false) 关闭
     ///
     /// - Throws: MaintenanceError.wifiInterfaceNotFound, MaintenanceError.wifiControlFailed
-    private nonisolated func disableWiFi() async throws {
+    private struct WiFiState: Sendable {
+        let interfaceName: String
+        let wasPoweredOn: Bool
+    }
+
+    private nonisolated func prepareWiFiForMaintenance() async throws -> WiFiState {
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
-                // 获取 WiFi 客户端
                 let client = CWWiFiClient.shared()
 
-                // 获取默认接口（通常是 en0）
-                guard let interface = client.interface() else {
+                guard let interface = client.interface(),
+                      let interfaceName = interface.interfaceName else {
                     continuation.resume(throwing: MaintenanceError.wifiInterfaceNotFound)
                     return
                 }
 
-                // 关闭 WiFi
+                let wasPoweredOn = interface.powerOn()
+                guard wasPoweredOn else {
+                    AppLogger.debug("WiFi 原本已关闭: \(interfaceName)")
+                    continuation.resume(
+                        returning: WiFiState(interfaceName: interfaceName, wasPoweredOn: false)
+                    )
+                    return
+                }
+
                 do {
                     try interface.setPower(false)
-                    AppLogger.debug("WiFi 已关闭: \(interface.interfaceName ?? "unknown")")
-                    continuation.resume()
+                    AppLogger.debug("WiFi 已关闭: \(interfaceName)")
+                    continuation.resume(
+                        returning: WiFiState(interfaceName: interfaceName, wasPoweredOn: true)
+                    )
                 } catch {
                     continuation.resume(throwing: MaintenanceError.wifiControlFailed(error.localizedDescription))
                 }
@@ -160,73 +184,24 @@ final class NetworkMaintenanceService {
     /// 开启 WiFi（使用 CoreWLAN.framework）
     ///
     /// - Throws: MaintenanceError.wifiInterfaceNotFound, MaintenanceError.wifiControlFailed
-    private nonisolated func enableWiFi() async throws {
+    private nonisolated func restoreWiFiIfNeeded(_ state: WiFiState) async throws {
+        guard state.wasPoweredOn else { return }
+
         return try await withCheckedThrowingContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
                 let client = CWWiFiClient.shared()
 
-                guard let interface = client.interface() else {
+                guard let interface = client.interface(withName: state.interfaceName) else {
                     continuation.resume(throwing: MaintenanceError.wifiInterfaceNotFound)
                     return
                 }
 
                 do {
                     try interface.setPower(true)
-                    AppLogger.debug("WiFi 已开启: \(interface.interfaceName ?? "unknown")")
+                    AppLogger.debug("WiFi 已恢复: \(state.interfaceName)")
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: MaintenanceError.wifiControlFailed(error.localizedDescription))
-                }
-            }
-        }
-    }
-
-    // MARK: - Private Methods - Network Interface (SystemConfiguration)
-
-    /// 重置网络接口（使用 SystemConfiguration.framework）
-    ///
-    /// ## 实现说明
-    /// - 使用 SCNetworkInterfaceGetBSDName 获取接口名
-    /// - 使用 IOKit 控制接口状态
-    /// - 比 shell `ifconfig` 更精细的错误处理
-    ///
-    /// - Throws: MaintenanceError.networkInterfaceError
-    private nonisolated func resetNetworkInterfaceNative() async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                // 获取所有网络接口
-                guard let interfaces = SCNetworkInterfaceCopyAll() as? [SCNetworkInterface] else {
-                    continuation.resume(throwing: MaintenanceError.networkInterfaceError("无法获取网络接口列表"))
-                    return
-                }
-
-                // 查找以太网接口（en0）
-                var found = false
-                for interface in interfaces {
-                    if let bsdName = SCNetworkInterfaceGetBSDName(interface) as String?,
-                       bsdName == "en0" {
-                        found = true
-                        AppLogger.debug("找到网络接口: \(bsdName)")
-
-                        // 注意：SystemConfiguration 只能查询接口状态，不能直接控制 up/down
-                        // 对于接口重置，仍需使用受信任的方式
-                        // 这里我们通过重新配置接口来达到重置效果
-
-                        // 创建临时配置存储
-                        if let prefs = SCPreferencesCreate(nil, "com.kairos.maintenance" as CFString, nil) {
-                            // 应用配置变更（触发接口重新初始化）
-                            SCPreferencesCommitChanges(prefs)
-                            SCPreferencesApplyChanges(prefs)
-                            AppLogger.debug("网络接口已重置: \(bsdName)")
-                        }
-                        break
-                    }
-                }
-
-                if found {
-                    continuation.resume()
-                } else {
-                    continuation.resume(throwing: MaintenanceError.networkInterfaceError("未找到 en0 接口"))
                 }
             }
         }

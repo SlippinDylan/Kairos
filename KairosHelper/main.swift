@@ -129,6 +129,16 @@ class DNSHelper: NSObject, DNSHelperProtocol {
     /// - 未找到匹配的网络服务 → 返回错误
     /// - 配置应用失败 → 返回错误
     func setDNS(interface: String, primaryDNS: String, secondaryDNS: String?, reply: @escaping (Bool, String?) -> Void) {
+        guard isValidIPAddress(primaryDNS) else {
+            reply(false, "主 DNS 地址无效")
+            return
+        }
+        if let secondaryDNS, !secondaryDNS.isEmpty,
+           !isValidIPAddress(secondaryDNS) {
+            reply(false, "备用 DNS 地址无效")
+            return
+        }
+
         // 创建网络配置首选项
         guard let prefs = SCPreferencesCreate(nil, "KairosHelper" as CFString, nil) else {
             reply(false, "无法创建网络配置")
@@ -331,6 +341,16 @@ class DNSHelper: NSObject, DNSHelperProtocol {
         reply(version)
     }
 
+    private func isValidIPAddress(_ address: String) -> Bool {
+        var ipv4Address = in_addr()
+        if inet_pton(AF_INET, address, &ipv4Address) == 1 {
+            return true
+        }
+
+        var ipv6Address = in6_addr()
+        return inet_pton(AF_INET6, address, &ipv6Address) == 1
+    }
+
     private func runCommand(at path: String, arguments: [String]) throws {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: path)
@@ -340,11 +360,11 @@ class DNSHelper: NSObject, DNSHelperProtocol {
         task.standardError = errorPipe
 
         try task.run()
+        let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
         task.waitUntilExit()
 
         guard task.terminationStatus == 0 else {
-            let data = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            let message = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let message = String(data: errorData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
             throw HelperCommandError.failed(
                 path: path,
                 status: task.terminationStatus,

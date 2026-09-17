@@ -290,6 +290,16 @@ final class DNSManager {
         secondaryDNS: String?,
         completion: @escaping (Bool, String?) -> Void
     ) {
+        guard NetworkValidator.isValidIP(primaryDNS) else {
+            completion(false, "主 DNS 地址无效")
+            return
+        }
+        if let secondaryDNS, !secondaryDNS.isEmpty,
+           !NetworkValidator.isValidIP(secondaryDNS) {
+            completion(false, "备用 DNS 地址无效")
+            return
+        }
+
         guard isHelperInstalled else {
             completion(false, "Helper 未安装")
             return

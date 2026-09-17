@@ -102,7 +102,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 - macOS 26.0 Tahoe or later
 - Apple Silicon (arm64)
 
-For a local build, use macOS 26 or later with Xcode 26 or later. Open `Kairos.xcodeproj`, choose your development team, update the reciprocal XPC code-signing requirements in `App/Services/DNSManager.swift` and `KairosHelper/main.swift` to use that team's identity, then build the `Kairos` scheme.
+For a local build, use macOS 26 or later with Xcode 26 or later. Open `Kairos.xcodeproj`, choose your development team, then build the `Kairos` scheme. Kairos derives the reciprocal XPC code-signing requirements from the selected team's signature at runtime.
 
 ## License
 

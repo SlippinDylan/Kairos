@@ -7,6 +7,7 @@
 
 import Foundation
 import Observation
+import Security
 import ServiceManagement
 import SystemConfiguration
 
@@ -22,7 +23,6 @@ final class DNSManager {
 
     private let helperIdentifier = "studio.slippindylan.BrewKit.Kairos.helper"
     private let daemonPlistName = "studio.slippindylan.BrewKit.Kairos.helper.plist"
-    private let helperCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Kairos.helper\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var helperConnection: NSXPCConnection?
 
     private var helperService: SMAppService {
@@ -150,6 +150,14 @@ final class DNSManager {
             return
         }
 
+        guard let helperCodeSigningRequirement = Self.peerCodeSigningRequirement(
+            identifier: helperIdentifier
+        ) else {
+            AppLogger.error("无法读取当前 App 的签名团队，拒绝连接 Helper")
+            completion(nil)
+            return
+        }
+
         let connection = NSXPCConnection(machServiceName: helperIdentifier, options: .privileged)
         connection.remoteObjectInterface = NSXPCInterface(with: DNSHelperProtocol.self)
         connection.setCodeSigningRequirement(helperCodeSigningRequirement)
@@ -169,6 +177,33 @@ final class DNSManager {
         helperConnection = connection
         connection.resume()
         completion(connection)
+    }
+
+    private static func peerCodeSigningRequirement(identifier: String) -> String? {
+        guard let teamIdentifier = currentTeamIdentifier() else { return nil }
+        return "identifier \"\(identifier)\" and anchor apple generic "
+            + "and certificate leaf[subject.OU] = \"\(teamIdentifier)\""
+    }
+
+    private static func currentTeamIdentifier() -> String? {
+        var code: SecCode?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code else { return nil }
+
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess,
+              let staticCode else {
+            return nil
+        }
+
+        var signingInformation: CFDictionary?
+        let flags = SecCSFlags(rawValue: kSecCSSigningInformation)
+        guard SecCodeCopySigningInformation(staticCode, flags, &signingInformation) == errSecSuccess,
+              let information = signingInformation as? [String: Any],
+              let teamIdentifier = information[kSecCodeInfoTeamIdentifier as String] as? String,
+              !teamIdentifier.isEmpty else {
+            return nil
+        }
+        return teamIdentifier
     }
 
     private func invalidateHelperConnection() {

@@ -8,6 +8,7 @@
 //
 
 import Foundation
+import Security
 import SystemConfiguration
 
 /// Helper Tool 主程序入口
@@ -18,11 +19,17 @@ import SystemConfiguration
 /// - 仅接受满足 Kairos App 签名要求的 XPC 客户端
 /// - 保持运行并等待 launchd Mach service 连接
 class HelperToolMain: NSObject {
-    private let appCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Kairos\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var listener: NSXPCListener?
     private var connections = [NSXPCConnection]()
 
     func run() {
+        guard let appCodeSigningRequirement = Self.peerCodeSigningRequirement(
+            identifier: "studio.slippindylan.BrewKit.Kairos"
+        ) else {
+            NSLog("Unable to determine the Helper signing team; refusing to accept XPC connections")
+            exit(EXIT_FAILURE)
+        }
+
         // 防止系统突然终止（参考 ClashX.Meta）
         ProcessInfo.processInfo.disableSuddenTermination()
 
@@ -37,6 +44,33 @@ class HelperToolMain: NSObject {
         // 保持运行，等待 XPC 连接
         // 注意：不设置超时退出，避免 launchd throttling
         RunLoop.current.run()
+    }
+
+    private static func peerCodeSigningRequirement(identifier: String) -> String? {
+        guard let teamIdentifier = currentTeamIdentifier() else { return nil }
+        return "identifier \"\(identifier)\" and anchor apple generic "
+            + "and certificate leaf[subject.OU] = \"\(teamIdentifier)\""
+    }
+
+    private static func currentTeamIdentifier() -> String? {
+        var code: SecCode?
+        guard SecCodeCopySelf([], &code) == errSecSuccess, let code else { return nil }
+
+        var staticCode: SecStaticCode?
+        guard SecCodeCopyStaticCode(code, [], &staticCode) == errSecSuccess,
+              let staticCode else {
+            return nil
+        }
+
+        var signingInformation: CFDictionary?
+        let flags = SecCSFlags(rawValue: kSecCSSigningInformation)
+        guard SecCodeCopySigningInformation(staticCode, flags, &signingInformation) == errSecSuccess,
+              let information = signingInformation as? [String: Any],
+              let teamIdentifier = information[kSecCodeInfoTeamIdentifier as String] as? String,
+              !teamIdentifier.isEmpty else {
+            return nil
+        }
+        return teamIdentifier
     }
 }
 

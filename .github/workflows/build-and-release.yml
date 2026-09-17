@@ -341,8 +341,8 @@ jobs:
           grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$app_signature"
           grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$helper_signature"
 
-          helper_requirement='identifier "studio.slippindylan.BrewKit.Kairos.helper" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
-          app_requirement='identifier "studio.slippindylan.BrewKit.Kairos" and anchor apple generic and certificate leaf[subject.CN] = "Apple Development: slippindylan@sent.com (K7623V57QS)" and certificate 1[field.1.2.840.113635.100.6.2.1] exists'
+          helper_requirement="identifier \"studio.slippindylan.BrewKit.Kairos.helper\" and anchor apple generic and certificate leaf[subject.OU] = \"$SIGNING_TEAM_ID\""
+          app_requirement="identifier \"studio.slippindylan.BrewKit.Kairos\" and anchor apple generic and certificate leaf[subject.OU] = \"$SIGNING_TEAM_ID\""
           codesign --verify --strict --all-architectures -R="$helper_requirement" "$helper"
           codesign --verify --strict --all-architectures -R="$app_requirement" "$app"
 

@@ -102,7 +102,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 - macOS 26.0 Tahoe или новее
 - Apple Silicon (arm64)
 
-Для локальной сборки нужны macOS 26 или новее и Xcode 26 или новее. Откройте `Kairos.xcodeproj`, выберите свою команду разработчика, замените взаимные требования подписи кода XPC в `App/Services/DNSManager.swift` и `KairosHelper/main.swift` на идентификатор этой команды, затем соберите scheme `Kairos`.
+Для локальной сборки нужны macOS 26 или новее и Xcode 26 или новее. Откройте `Kairos.xcodeproj`, выберите свою команду разработчика и соберите scheme `Kairos`. Kairos во время выполнения формирует взаимные требования подписи кода XPC из подписи выбранной команды.
 
 ## Лицензия
 

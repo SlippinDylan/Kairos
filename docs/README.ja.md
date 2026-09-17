@@ -102,7 +102,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 - macOS 26.0 Tahoe 以降
 - Apple Silicon（arm64）
 
-ローカルビルドには macOS 26 以降と Xcode 26 以降が必要です。`Kairos.xcodeproj` を開き、自分の開発チームを選択します。次に `App/Services/DNSManager.swift` と `KairosHelper/main.swift` の相互 XPC コード署名 requirement をそのチームの ID に変更し、`Kairos` scheme をビルドしてください。
+ローカルビルドには macOS 26 以降と Xcode 26 以降が必要です。`Kairos.xcodeproj` を開いて自分の開発チームを選択し、`Kairos` scheme をビルドしてください。Kairos は実行時に、選択したチームの署名から相互 XPC コード署名要件を生成します。
 
 ## ライセンス
 

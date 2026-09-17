@@ -102,7 +102,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 - macOS 26.0 Tahoe 或更高版本
 - Apple Silicon（arm64）
 
-本機建置需要 macOS 26+ 和 Xcode 26+。開啟 `Kairos.xcodeproj`，選擇自己的開發團隊，將 `App/Services/DNSManager.swift` 與 `KairosHelper/main.swift` 中相互驗證的 XPC 程式碼簽署 requirement 改為該團隊的身分，然後建置 `Kairos` scheme。
+本機建置需要 macOS 26+ 和 Xcode 26+。開啟 `Kairos.xcodeproj`，選擇自己的開發團隊，然後建置 `Kairos` scheme。Kairos 會在執行階段依據所選團隊的簽章產生雙向 XPC 程式碼簽署要求。
 
 ## 授權條款
 

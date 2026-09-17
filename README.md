@@ -3,8 +3,6 @@
   <h1>Kairos</h1>
 </div>
 
----
-
 <div align="center">
   <p>A native macOS menu-bar app for network scenes, DNS work, IP lookups, and Mihomo kernel maintenance.</p>
   <p>

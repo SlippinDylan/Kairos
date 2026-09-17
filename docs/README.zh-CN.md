@@ -3,8 +3,6 @@
   <h1>Kairos</h1>
 </div>
 
----
-
 <div align="center">
   <p>用于网络场景、DNS 操作、IP 查询和 Mihomo 内核维护的原生 macOS 菜单栏应用。</p>
   <p>

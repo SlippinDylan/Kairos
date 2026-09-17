@@ -3,8 +3,6 @@
   <h1>Kairos</h1>
 </div>
 
----
-
 <div align="center">
   <p>ネットワークシーン、DNS 操作、IP 検索、Mihomo カーネル保守のための macOS ネイティブなメニューバーアプリです。</p>
   <p>

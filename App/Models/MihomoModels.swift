@@ -119,7 +119,7 @@ enum MihomoError: LocalizedError {
     case backupAlreadyExists            // 备份已存在
     case backupNotFound                 // 备份不存在
     case fileOperationFailed(String)    // 文件操作失败
-    case permissionDenied               // 权限不足
+    case permissionDenied               // 目标不在当前支持的可写范围
     case invalidFilePath                // 无效的文件路径
     case shellCommandFailed(String)     // Shell 命令执行失败
 
@@ -140,7 +140,7 @@ enum MihomoError: LocalizedError {
         case .fileOperationFailed(let reason):
             return "文件操作失败: \(reason)"
         case .permissionDenied:
-            return "权限不足，需要管理员权限"
+            return "当前仅支持用户主目录内可写的内核文件，不支持受保护位置或 App Bundle 内的文件"
         case .invalidFilePath:
             return "无效的文件路径"
         case .shellCommandFailed(let reason):

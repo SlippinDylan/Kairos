@@ -58,7 +58,7 @@ The deep-clean tool temporarily disconnects Wi-Fi while it clears DNS and ARP ca
 
 DNS changes and the deep-clean operation require Kairos's separately installed `SMAppService` LaunchDaemon. Register it in Settings, enter an administrator password when macOS asks, and approve it in System Settings if approval is required. The Helper can set or clear DNS servers, flush the DNS cache, and perform the privileged maintenance steps.
 
-Accessibility permission is needed when an app-control scene must quit another app. Kairos can still monitor the network without it. Replacing a protected Mihomo kernel may also prompt for macOS file-operation authorization.
+Accessibility permission is needed when an app-control scene must quit another app. Kairos can still monitor the network without it. Kairos can replace Mihomo kernels only at user-writable paths outside app bundles; protected locations require manual handling.
 
 ## Mihomo
 

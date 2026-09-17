@@ -58,7 +58,7 @@ App 會顯示用於比對的閘道資訊，方便複製到你信任網路的規�
 
 變更 DNS 和執行深度清理需要安裝 Kairos 獨立的 `SMAppService` LaunchDaemon。請在設定中註冊它；macOS 要求時輸入管理員密碼，如需核准則依提示前往系統設定。Helper 可以設定或清除 DNS 伺服器、重新整理 DNS 快取，並執行需要特權的維護步驟。
 
-App 控制情境需要結束其他 App 時，必須授予輔助使用權限；沒有該權限時，Kairos 仍可監聽網路。替換受保護的 Mihomo 核心時，macOS 也可能要求授權檔案操作。
+App 控制情境需要結束其他 App 時，必須授予輔助使用權限；沒有該權限時，Kairos 仍可監聽網路。Kairos 僅支援自動替換使用者可寫且不位於 App Bundle 內的 Mihomo 核心；受保護的位置需要手動處理。
 
 ## Mihomo
 

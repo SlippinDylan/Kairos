@@ -57,7 +57,7 @@ App 功能和 arm64 建置檢查已完成。main push 與 Pull Request 都會執
 | 處理器 | Apple Silicon（arm64） |
 | App 類型 | 選單列 LSUIElement App，不使用沙盒 |
 | 特權元件 | 用於系統 DNS 操作的 `SMAppService` LaunchDaemon |
-| 發佈方式 | GitHub Releases 提供一個經 Apple Development 簽署、未經公證的 DMG |
+| 發佈方式 | 版本控管的 GitHub Releases、已簽署的 Sparkle appcast 與 Homebrew Cask |
 
 ## 安裝與發佈
 
@@ -67,11 +67,21 @@ App 功能和 arm64 建置檢查已完成。main push 與 Pull Request 都會執
 sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
+下一個接入 Sparkle 的 Beta Release 發佈並同步簽名中繼資料後，可以透過 Homebrew 安裝：
+
+```bash
+brew tap slippindylan/tap
+brew trust --tap slippindylan/tap
+brew install --cask kairos@beta
+```
+
 需要管理系統 DNS 時，請在 Kairos 設定中註冊 Helper，並依 macOS 提示在系統設定中核准 LaunchDaemon。
+
+Kairos 會自動檢查已簽署的更新來源，也可以在選單列和關於頁面選擇「檢查更新」。Sparkle 只更新 `Kairos.app`；Helper 的註冊與特權生命週期仍由 Kairos 設定管理。
 
 main push 與 Pull Request 一律執行輕量發佈自動化檢查。修改 `README.md`、`docs/`、`LICENSE` 和 `AGENTS.md` 以外的內容時，還會建置並驗證未簽署的 arm64 App、Helper 和 LaunchDaemon bundle；啟用發佈也會強制執行這項完整檢查。只有 main CI 成功、發佈設定中的 `release` 為 `true`、版本尚未發佈，而且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章節時，Release workflow 才會簽署、封裝及發佈 DMG。
 
-支援 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 後綴用於 tag、Release、DMG 和 Changelog；App 與 Helper 使用對應的純數字 `x.y.z` 行銷版本。
+支援 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 後綴用於 tag、Release、DMG 和 Changelog；App 與 Helper 使用對應的純數字 `x.y.z` 行銷版本。Release 發佈後，已簽署的 appcast 與相應渠道的 Homebrew Cask 會同步至 [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap)。
 
 ## 從原始碼建置
 

@@ -129,6 +129,11 @@ jobs:
           test "$(vtool -show-build "$binary" | grep -c 'minos 26.0')" -eq 1
           test "$(vtool -show-build "$helper" | grep -c 'minos 26.0')" -eq 1
           test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$app/Contents/Info.plist")" = 'https://slippindylan.github.io/homebrew-tap/kairos/appcast.xml'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$app/Contents/Info.plist")" = '98kALzdb5GsBg0TUOrp5XpiKOeQRnfAscsy1A66jbWE='
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SURequireSignedFeed' "$app/Contents/Info.plist")" = 'true'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SUVerifyUpdateBeforeExtraction' "$app/Contents/Info.plist")" = 'true'
+          test -d "$app/Contents/Frameworks/Sparkle.framework"
           test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper'
           test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Kairos\.helper' raw -o - "$daemon_plist")" = 'true'
 

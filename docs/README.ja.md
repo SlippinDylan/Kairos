@@ -57,7 +57,7 @@ Kairos は、日常的なネットワーク操作を 1 つのメニューバー�
 | CPU | Apple Silicon（arm64） |
 | アプリ形式 | 非サンドボックスのメニューバー LSUIElement アプリ |
 | 特権コンポーネント | システム DNS 操作用の `SMAppService` LaunchDaemon |
-| 配布形式 | Apple Development 署名済み、未公証の DMG を GitHub Releases で配布 |
+| 配布形式 | バージョン管理された GitHub Releases、署名済み Sparkle appcast、Homebrew Cask |
 
 ## インストールとリリース
 
@@ -67,11 +67,21 @@ Kairos は、日常的なネットワーク操作を 1 つのメニューバー�
 sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
+Sparkle 対応の次回ベータリリースで署名済みメタデータが公開された後、Homebrew からインストールできます。
+
+```bash
+brew tap slippindylan/tap
+brew trust --tap slippindylan/tap
+brew install --cask kairos@beta
+```
+
 システム DNS を管理する場合は、Kairos の設定から Helper を登録し、macOS の案内に従ってシステム設定で LaunchDaemon を承認します。
+
+Kairos は署名済み更新フィードを自動確認し、メニューバーと「このアプリケーションについて」からも「アップデートを確認」を選べます。Sparkle が更新するのは `Kairos.app` のみで、Helper の登録と特権ライフサイクルは引き続き Kairos の設定で管理されます。
 
 main への push と Pull Request では、軽量なリリース自動化チェックを常に実行します。`README.md`、`docs/`、`LICENSE`、`AGENTS.md` 以外の変更では、未署名の arm64 App、Helper、LaunchDaemon bundle もビルドして検証します。公開を有効にした場合も、この完全なチェックを強制します。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](../CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
 
-バージョン形式は `x.y.z`、`x.y.z-alpha.n`、`x.y.z-beta.n` に対応しています。Alpha/Beta 接尾辞は tag、Release、DMG、Changelog に使用され、App と Helper のマーケティングバージョンには対応する `x.y.z` が使われます。
+バージョン形式は `x.y.z`、`x.y.z-alpha.n`、`x.y.z-beta.n` に対応しています。Alpha/Beta 接尾辞は tag、Release、DMG、Changelog に使用され、App と Helper のマーケティングバージョンには対応する `x.y.z` が使われます。Release 公開後、署名済み appcast とチャンネル別 Homebrew Cask は [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap) に同期されます。
 
 ## ソースからのビルド
 

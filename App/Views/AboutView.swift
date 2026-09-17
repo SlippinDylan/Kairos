@@ -50,6 +50,11 @@ struct AboutView: View {
                     Text("版本 \(appVersion)")
                         .font(.system(size: DesignSystem.FontSize.body))
                         .foregroundStyle(.secondary)
+
+                    Button("检查更新") {
+                        ApplicationUpdateController.shared.checkForUpdates()
+                    }
+                    .disabled(!ApplicationUpdateController.shared.canCheckForUpdates)
                 }
 
                 VStack(spacing: DesignSystem.Spacing.medium) {

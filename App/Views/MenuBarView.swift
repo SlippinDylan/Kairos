@@ -52,6 +52,14 @@ struct MenuBarView: View {
             Divider()
                 .padding(.vertical, 4)
 
+            Button("检查更新") {
+                ApplicationUpdateController.shared.checkForUpdates()
+            }
+            .disabled(!ApplicationUpdateController.shared.canCheckForUpdates)
+
+            Divider()
+                .padding(.vertical, 4)
+
             // 退出按钮
             quitButton
         }

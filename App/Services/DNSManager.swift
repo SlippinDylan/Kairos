@@ -24,9 +24,14 @@ final class DNSManager {
     private let daemonPlistName = "studio.slippindylan.BrewKit.Kairos.helper.plist"
     private let helperCodeSigningRequirement = "identifier \"studio.slippindylan.BrewKit.Kairos.helper\" and anchor apple generic and certificate leaf[subject.CN] = \"Apple Development: slippindylan@sent.com (K7623V57QS)\" and certificate 1[field.1.2.840.113635.100.6.2.1] exists"
     private var helperConnection: NSXPCConnection?
+    private var helperHealthCheckID: UUID?
 
     private var helperService: SMAppService {
         .daemon(plistName: daemonPlistName)
+    }
+
+    var helperRequiresApproval: Bool {
+        helperService.status == .requiresApproval
     }
 
     private init() {
@@ -94,6 +99,8 @@ final class DNSManager {
         } catch {
             if helperService.status == .requiresApproval {
                 SMAppService.openSystemSettingsLoginItems()
+                finishHelperOperation(.failure(HelperServiceError.requiresApproval), completion: completion)
+                return
             }
             checkHelperStatus()
             completion(false, error)
@@ -166,6 +173,71 @@ final class DNSManager {
     private func invalidateHelperConnection() {
         helperConnection?.invalidate()
         helperConnection = nil
+    }
+
+    func checkHelperHealth(completion: @escaping (Result<String, Error>) -> Void) {
+        let checkID = UUID()
+        helperHealthCheckID = checkID
+
+        connectToHelper { [weak self] connection in
+            guard let self else { return }
+            guard let connection else {
+                finishHelperHealthCheck(
+                    checkID,
+                    result: .failure(HelperServiceError.unavailable),
+                    completion: completion
+                )
+                return
+            }
+
+            guard let proxy = connection.remoteObjectProxyWithErrorHandler({ [weak self] error in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    invalidateHelperConnection()
+                    finishHelperHealthCheck(
+                        checkID,
+                        result: .failure(error),
+                        completion: completion
+                    )
+                }
+            }) as? DNSHelperProtocol else {
+                finishHelperHealthCheck(
+                    checkID,
+                    result: .failure(HelperServiceError.unavailable),
+                    completion: completion
+                )
+                return
+            }
+
+            proxy.getVersion { [weak self] version in
+                Task { @MainActor [weak self] in
+                    self?.finishHelperHealthCheck(
+                        checkID,
+                        result: .success(version),
+                        completion: completion
+                    )
+                }
+            }
+        }
+
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+            self?.finishHelperHealthCheck(
+                checkID,
+                result: .failure(HelperServiceError.healthCheckTimedOut),
+                completion: completion
+            )
+        }
+    }
+
+    private func finishHelperHealthCheck(
+        _ checkID: UUID,
+        result: Result<String, Error>,
+        completion: @escaping (Result<String, Error>) -> Void
+    ) {
+        guard helperHealthCheckID == checkID else { return }
+        helperHealthCheckID = nil
+        completion(result)
     }
 
     private func getHelperProxy(completion: @escaping (DNSHelperProtocol?) -> Void) {
@@ -343,6 +415,7 @@ private enum HelperServiceError: LocalizedError {
     case registrationDidNotEnableService
     case unknownStatus
     case unavailable
+    case healthCheckTimedOut
     case operationFailed(String)
 
     var errorDescription: String? {
@@ -359,6 +432,8 @@ private enum HelperServiceError: LocalizedError {
             return "Helper 返回未知的服务状态"
         case .unavailable:
             return "Helper 未启用或无法连接"
+        case .healthCheckTimedOut:
+            return "Helper 健康检查超时"
         case .operationFailed(let message):
             return "Helper 操作失败：\(message)"
         }

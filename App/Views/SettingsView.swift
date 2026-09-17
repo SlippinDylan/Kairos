@@ -487,6 +487,7 @@ struct SettingsView: View {
 ///
 /// ## 功能
 /// - 根据安装状态显示「安装 Helper」或「卸载 Helper」按钮
+/// - 在已安装状态下检查 Helper 版本和 XPC 连接
 /// - 显示操作进度和结果反馈
 /// - 操作成功后自动刷新权限状态
 /// - 安装成功后触发 DNS 场景匹配
@@ -495,51 +496,68 @@ private struct HelperActionButton: View {
     let networkMonitor: NetworkMonitor
     let isInstalled: Bool
 
-    @State private var isProcessing: Bool = false
+    @State private var operation: Operation?
+
+    private enum Operation {
+        case install
+        case healthCheck
+        case uninstall
+    }
 
     var body: some View {
         Group {
             if isInstalled {
-                Button(role: .destructive) {
-                    uninstallHelper()
-                } label: {
-                    buttonLabel
+                HStack(spacing: DesignSystem.Spacing.small) {
+                    Button {
+                        checkHelperHealth()
+                    } label: {
+                        actionLabel("检查 Helper", isActive: operation == .healthCheck)
+                    }
+                    .buttonStyle(.glassProminent)
+
+                    Button(role: .destructive) {
+                        uninstallHelper()
+                    } label: {
+                        actionLabel("卸载 Helper", isActive: operation == .uninstall)
+                    }
+                    .buttonStyle(.glass)
                 }
-                .buttonStyle(.glass)
             } else {
                 Button {
                     installHelper()
                 } label: {
-                    buttonLabel
+                    actionLabel("安装 Helper", isActive: operation == .install)
                 }
                 .buttonStyle(.glassProminent)
             }
         }
         .controlSize(.small)
-        .disabled(isProcessing)
+        .disabled(operation != nil)
     }
 
     @ViewBuilder
-    private var buttonLabel: some View {
-        if isProcessing {
+    private func actionLabel(_ title: String, isActive: Bool) -> some View {
+        if isActive {
             ProgressView()
                 .controlSize(.small)
                 .padding(.horizontal, 8)
         } else {
-            Text(isInstalled ? "卸载 Helper" : "安装 Helper")
+            Text(title)
         }
     }
 
     private func installHelper() {
-        isProcessing = true
+        operation = .install
         dnsManager.installHelper { success, error in
             DispatchQueue.main.async {
-                isProcessing = false
+                operation = nil
 
                 if success {
                     Toast.success("DNS Helper 已成功安装")
                     // 触发 DNS 场景匹配，确保已开启的场景立即生效
                     networkMonitor.refreshDNSSceneMatching()
+                } else if dnsManager.helperRequiresApproval {
+                    Toast.info("Helper 已注册，请在系统设置的登录项中批准")
                 } else {
                     let message = error?.localizedDescription ?? "安装失败，请重试"
                     Toast.error(message)
@@ -551,11 +569,29 @@ private struct HelperActionButton: View {
         }
     }
 
+    private func checkHelperHealth() {
+        operation = .healthCheck
+        dnsManager.checkHelperHealth { result in
+            DispatchQueue.main.async {
+                operation = nil
+
+                switch result {
+                case .success(let version):
+                    Toast.success("Helper 连接正常，版本：\(version)")
+                case .failure(let error):
+                    Toast.error(error.localizedDescription)
+                }
+
+                PermissionManager.shared.refresh()
+            }
+        }
+    }
+
     private func uninstallHelper() {
-        isProcessing = true
+        operation = .uninstall
         dnsManager.uninstallHelper { success, error in
             DispatchQueue.main.async {
-                isProcessing = false
+                operation = nil
 
                 if success {
                     Toast.success("DNS Helper 已成功卸载")

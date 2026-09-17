@@ -57,7 +57,7 @@ Kairos 把常用的网络操作集中到一个菜单栏应用中。它可以根�
 | 处理器 | Apple Silicon（arm64） |
 | 应用类型 | 菜单栏 LSUIElement 应用，不使用沙盒 |
 | 特权组件 | 用于系统 DNS 操作的 `SMAppService` LaunchDaemon |
-| 发布方式 | GitHub Releases 提供一个经过 Apple Development 签名、未经公证的 DMG |
+| 发布方式 | 版本门控的 GitHub Releases、已签名的 Sparkle appcast 和 Homebrew Cask |
 
 ## 安装与发布
 
@@ -67,11 +67,21 @@ Kairos 把常用的网络操作集中到一个菜单栏应用中。它可以根�
 sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
+下一个接入 Sparkle 的 Beta Release 发布并同步签名元数据后，可以通过 Homebrew 安装：
+
+```bash
+brew tap slippindylan/tap
+brew trust --tap slippindylan/tap
+brew install --cask kairos@beta
+```
+
 需要管理系统 DNS 时，请在 Kairos 设置中注册 Helper，并按 macOS 提示在系统设置中批准 LaunchDaemon。
+
+Kairos 会自动检查已签名的更新源，也可以在菜单栏和关于页面选择“检查更新”。Sparkle 只更新 `Kairos.app`；Helper 的注册和特权生命周期仍由 Kairos 设置管理。
 
 main push 和 Pull Request 始终运行轻量发布自动化检查。修改 `README.md`、`docs/`、`LICENSE` 和 `AGENTS.md` 以外的内容时，还会构建并验证未签名的 arm64 App、Helper 和 LaunchDaemon bundle；启用发布也会强制执行这项完整检查。只有 main CI 成功、发布配置中的 `release` 为 `true`、版本尚未发布，并且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章节时，Release workflow 才会签名、打包和发布 DMG。
 
-支持 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 后缀用于 tag、Release、DMG 和 Changelog；App 与 Helper 使用对应的纯数字 `x.y.z` 营销版本。
+支持 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 后缀用于 tag、Release、DMG 和 Changelog；App 与 Helper 使用对应的纯数字 `x.y.z` 营销版本。Release 发布后，已签名的 appcast 与对应渠道的 Homebrew Cask 会同步到 [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap)。
 
 ## 从源码构建
 

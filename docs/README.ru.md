@@ -57,7 +57,7 @@ Kairos объединяет повседневные сетевые операц
 | Процессор | Apple Silicon (arm64) |
 | Тип приложения | Несандбоксированное приложение LSUIElement для строки меню |
 | Привилегированный компонент | LaunchDaemon на основе `SMAppService` для управления системным DNS |
-| Распространение | Один подписанный Apple Development, но не нотариально заверенный DMG в GitHub Releases |
+| Распространение | Версионные GitHub Releases, подписанный Sparkle appcast и Homebrew Cask |
 
 ## Установка и выпуски
 
@@ -67,11 +67,21 @@ Kairos объединяет повседневные сетевые операц
 sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
+После следующего бета-релиза с поддержкой Sparkle и публикации подписанных метаданных приложение можно установить через Homebrew:
+
+```bash
+brew tap slippindylan/tap
+brew trust --tap slippindylan/tap
+brew install --cask kairos@beta
+```
+
 Для управления системным DNS зарегистрируйте Helper в настройках Kairos и подтвердите LaunchDaemon в Системных настройках по запросу macOS.
+
+Kairos автоматически проверяет подписанный канал обновлений; пункт «Проверить обновления» также доступен в строке меню и на странице «О программе». Sparkle обновляет только `Kairos.app`, а регистрация Helper и его привилегированный жизненный цикл по-прежнему управляются в настройках Kairos.
 
 Push в main и pull request всегда запускают лёгкие проверки автоматизации релиза. Изменения за пределами `README.md`, `docs/`, `LICENSE` и `AGENTS.md` дополнительно собирают и проверяют неподписанные arm64 App, Helper и LaunchDaemon bundle; включение публикации также принудительно запускает эту полную проверку. DMG публикуется только после успешного CI в main, при `release: true`, для ещё не опубликованной версии и при наличии единственного непустого раздела той же версии в [`CHANGELOG.md`](../CHANGELOG.md).
 
-Поддерживаются версии `x.y.z`, `x.y.z-alpha.n` и `x.y.z-beta.n`. Суффиксы Alpha/Beta используются в tag, Release, DMG и Changelog; App и Helper получают соответствующую числовую маркетинговую версию `x.y.z`.
+Поддерживаются версии `x.y.z`, `x.y.z-alpha.n` и `x.y.z-beta.n`. Суффиксы Alpha/Beta используются в tag, Release, DMG и Changelog; App и Helper получают соответствующую числовую маркетинговую версию `x.y.z`. После публикации Release подписанный appcast и Homebrew Cask соответствующего канала синхронизируются с [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap).
 
 ## Сборка из исходного кода
 

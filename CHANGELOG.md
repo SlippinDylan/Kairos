@@ -8,6 +8,18 @@ All notable changes to Kairos releases are recorded here.
 
 - Added Feishu notifications when CI starts and when a release enters the packaging stage.
 
+## [0.2.0-beta.1] - 2026-09-17
+
+### Added
+
+- Added Sparkle 2 signed automatic updates with manual checks from the menu bar and About page.
+- Added signed appcast generation and channel-specific Homebrew Cask publishing through the shared personal tap.
+
+### Distribution
+
+- Keeps privileged DNS Helper registration and upgrades under Kairos control rather than Sparkle.
+- Rejects appcast and Cask downgrades and retries concurrent shared-tap updates safely.
+
 ## [0.1.0-beta.1] - 2026-09-16
 
 ### Added

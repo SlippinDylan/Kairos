@@ -22,6 +22,9 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Properties
 
+    /// App-scoped Sparkle controller. The privileged Helper remains independently managed.
+    private let applicationUpdater = ApplicationUpdateController.shared
+
     /// 网络监控服务（从 KairosApp 传递）
     private var networkMonitor: NetworkMonitor?
 
@@ -65,6 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// - Parameter notification: 启动通知
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.info("应用启动完成")
+        _ = applicationUpdater
 
         // 必须在主线程同步配置，确保代理提早设置完毕
         NotificationManager.shared.configure()

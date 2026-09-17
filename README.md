@@ -57,7 +57,7 @@ The application features and arm64 build checks are implemented. Pushes to main 
 | Architecture | Apple Silicon (arm64) |
 | App type | Menu-bar LSUIElement app, non-sandboxed |
 | Privileged component | `SMAppService` LaunchDaemon for system DNS operations |
-| Distribution | Version-gated GitHub Releases with one Apple Development-signed, non-notarized DMG |
+| Distribution | Version-gated GitHub Releases, signed Sparkle appcasts, and Homebrew Casks |
 
 ## Installation and Releases
 
@@ -67,11 +67,21 @@ Each GitHub Release contains one `Kairos-<version>.dmg`. Open the DMG and drag `
 sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 ```
 
+After the next Sparkle-enabled beta release publishes its signed metadata, install it through Homebrew:
+
+```bash
+brew tap slippindylan/tap
+brew trust --tap slippindylan/tap
+brew install --cask kairos@beta
+```
+
 Open Kairos and register the Helper from Settings when you want to manage system DNS. Approve its LaunchDaemon in System Settings when macOS asks.
+
+Kairos checks the signed update feed automatically and also offers **Check for Updates** from the menu bar and About page. Sparkle updates `Kairos.app` only; Helper registration and its privileged lifecycle remain managed by Kairos Settings.
 
 Pushes to main and pull requests always run lightweight release-automation checks. Changes outside `README.md`, `docs/`, `LICENSE`, and `AGENTS.md` additionally build and verify the unsigned arm64 App, Helper, and LaunchDaemon bundle; enabling publishing also forces this full check. Release configuration lives in [`Config/Release/manifest.json`](Config/Release/manifest.json). A DMG is signed, packaged, and published only after main CI succeeds, `release` is `true`, the version is unpublished, and [`CHANGELOG.md`](CHANGELOG.md) contains one unique, non-empty section with the same version.
 
-Supported versions are `x.y.z`, `x.y.z-alpha.n`, and `x.y.z-beta.n`. Alpha and beta suffixes are used by the tag, Release, DMG, and Changelog; the App and Helper use the matching numeric `x.y.z` marketing version.
+Supported versions are `x.y.z`, `x.y.z-alpha.n`, and `x.y.z-beta.n`. Alpha and beta suffixes are used by the tag, Release, DMG, and Changelog; the App and Helper use the matching numeric `x.y.z` marketing version. Once a Release is published, its signed appcast and channel-specific Homebrew Cask are synchronized to [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap).
 
 ## Build from Source
 

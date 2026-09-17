@@ -2,6 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>KairosUpdateChannel</key>
+	<string>$(KAIROS_UPDATE_CHANNEL)</string>
+	<key>KairosUpdaterEnabled</key>
+	<string>$(KAIROS_UPDATER_ENABLED)</string>
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
@@ -11,5 +15,17 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://slippindylan.github.io/homebrew-tap/kairos/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>98kALzdb5GsBg0TUOrp5XpiKOeQRnfAscsy1A66jbWE=</string>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
 </dict>
 </plist>

@@ -30,6 +30,7 @@ jobs:
       publish: ${{ steps.plan.outputs.publish || 'false' }}
       version: ${{ steps.manifest.outputs.version }}
       marketing_version: ${{ steps.manifest.outputs.marketing_version }}
+      channel: ${{ steps.manifest.outputs.channel }}
       tag: ${{ steps.manifest.outputs.tag }}
       prerelease: ${{ steps.manifest.outputs.prerelease }}
       dmg_name: ${{ steps.manifest.outputs.dmg_name }}
@@ -95,6 +96,7 @@ jobs:
     env:
       VERSION: ${{ needs.plan.outputs.version }}
       MARKETING_VERSION: ${{ needs.plan.outputs.marketing_version }}
+      CHANNEL: ${{ needs.plan.outputs.channel }}
       TAG: ${{ needs.plan.outputs.tag }}
       PRERELEASE: ${{ needs.plan.outputs.prerelease }}
       DMG_NAME: ${{ needs.plan.outputs.dmg_name }}
@@ -222,6 +224,7 @@ jobs:
             ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$MARKETING_VERSION" \
             CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            KAIROS_UPDATE_CHANNEL="$CHANNEL" \
             CODE_SIGNING_ALLOWED=YES \
             CODE_SIGNING_REQUIRED=YES \
             CODE_SIGN_STYLE=Manual \
@@ -230,7 +233,56 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER='' \
             OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/kairos-signing.keychain-db"
 
-      - name: Verify signed app and Helper
+      - name: Sign embedded Sparkle components
+        env:
+          SIGNING_IDENTITY: ${{ steps.signing.outputs.identity }}
+        run: |
+          set -euo pipefail
+          app="$RUNNER_TEMP/DerivedData/Build/Products/Release/Kairos.app"
+          framework="$app/Contents/Frameworks/Sparkle.framework"
+          keychain="$RUNNER_TEMP/kairos-signing.keychain-db"
+          metadata_dir="$RUNNER_TEMP/sparkle-signing-metadata"
+          components=(
+            "$framework/Versions/B/XPCServices/Installer.xpc"
+            "$framework/Versions/B/XPCServices/Downloader.xpc"
+            "$framework/Versions/B/Autoupdate"
+            "$framework/Versions/B/Updater.app"
+          )
+
+          test -d "$framework"
+          mkdir -p "$metadata_dir"
+          # Sparkle 2.10's IPC peers verify their own identities and entitlements.
+          # Re-sign from the innermost services outward and retain that metadata.
+          for component in "${components[@]}"; do
+            name="$(basename "$component")"
+            codesign --display --verbose=4 "$component" 2>&1 \
+              | sed -n 's/^Identifier=//p' > "$metadata_dir/$name.identifier"
+            test -s "$metadata_dir/$name.identifier"
+            codesign --display --entitlements :- "$component" \
+              > "$metadata_dir/$name.entitlements" 2>/dev/null || true
+          done
+
+          for component in "${components[@]}"; do
+            codesign --force --sign "$SIGNING_IDENTITY" --options runtime --keychain "$keychain" \
+              --preserve-metadata=identifier,entitlements "$component"
+          done
+          codesign --force --sign "$SIGNING_IDENTITY" --options runtime --keychain "$keychain" \
+            "$framework"
+          codesign --force --sign "$SIGNING_IDENTITY" --options runtime --keychain "$keychain" \
+            --preserve-metadata=identifier,entitlements,flags,runtime \
+            "$app"
+
+          for component in "${components[@]}"; do
+            name="$(basename "$component")"
+            codesign --verify --strict --all-architectures --verbose=2 "$component"
+            test "$(codesign --display --verbose=4 "$component" 2>&1 | sed -n 's/^Identifier=//p')" \
+              = "$(cat "$metadata_dir/$name.identifier")"
+            codesign --display --entitlements :- "$component" \
+              > "$metadata_dir/$name.current-entitlements" 2>/dev/null || true
+            cmp "$metadata_dir/$name.entitlements" "$metadata_dir/$name.current-entitlements"
+          done
+
+      - name: Verify signed app, Sparkle, and Helper
         env:
           SIGNING_TEAM_ID: ${{ steps.signing.outputs.team_id }}
         run: |
@@ -253,6 +305,12 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$MARKETING_VERSION"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist")" = '${{ github.run_number }}'
           test "$(/usr/libexec/PlistBuddy -c 'Print :LSUIElement' "$app/Contents/Info.plist")" = 'true'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :KairosUpdateChannel' "$app/Contents/Info.plist")" = "$CHANNEL"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SUFeedURL' "$app/Contents/Info.plist")" = 'https://slippindylan.github.io/homebrew-tap/kairos/appcast.xml'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' "$app/Contents/Info.plist")" = '98kALzdb5GsBg0TUOrp5XpiKOeQRnfAscsy1A66jbWE='
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SURequireSignedFeed' "$app/Contents/Info.plist")" = 'true'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :SUVerifyUpdateBeforeExtraction' "$app/Contents/Info.plist")" = 'true'
+          test -d "$app/Contents/Frameworks/Sparkle.framework"
           test "$(plutil -extract BundleProgram raw -o - "$daemon_plist")" = 'Contents/Resources/studio.slippindylan.BrewKit.Kairos.helper'
           test "$(plutil -extract 'MachServices.studio\.slippindylan\.BrewKit\.Kairos\.helper' raw -o - "$daemon_plist")" = 'true'
 
@@ -263,6 +321,17 @@ jobs:
 
           codesign --verify --strict --all-architectures --verbose=2 "$helper"
           codesign --verify --strict --all-architectures --verbose=2 "$app"
+          for component in \
+            "$app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Installer.xpc" \
+            "$app/Contents/Frameworks/Sparkle.framework/Versions/B/XPCServices/Downloader.xpc" \
+            "$app/Contents/Frameworks/Sparkle.framework/Versions/B/Autoupdate" \
+            "$app/Contents/Frameworks/Sparkle.framework/Versions/B/Updater.app" \
+            "$app/Contents/Frameworks/Sparkle.framework"; do
+            codesign --verify --strict --all-architectures --verbose=2 "$component"
+            component_signature="$RUNNER_TEMP/$(basename "$component").signature.txt"
+            codesign --display --verbose=4 "$component" > /dev/null 2> "$component_signature"
+            grep -Fq "TeamIdentifier=$SIGNING_TEAM_ID" "$component_signature"
+          done
           codesign --display --verbose=4 "$app" > /dev/null 2> "$app_signature"
           codesign --display --verbose=4 "$helper" > /dev/null 2> "$helper_signature"
           cat "$app_signature"
@@ -300,6 +369,8 @@ jobs:
           test "$(lipo -archs "$binary")" = 'arm64'
           test "$(lipo -archs "$helper")" = 'arm64'
           codesign --verify --strict --all-architectures "$mount_point/Kairos.app"
+          codesign --verify --strict --all-architectures \
+            "$mount_point/Kairos.app/Contents/Frameworks/Sparkle.framework"
           cleanup_mount
           trap - EXIT
 
@@ -379,6 +450,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+
+      - name: Dispatch distribution metadata update
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          jq -n \
+            --arg tag "$TAG" \
+            '{event_type: "distribution_metadata_requested", client_payload: {tag: $tag}}' \
+            | gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input -
 
       - name: Dispatch release notification
         continue-on-error: true

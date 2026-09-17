@@ -1,7 +1,12 @@
 <div align="center">
   <img src="docs/images/readme/app-icon.png" width="160" height="160" alt="Kairos app icon">
   <h1>Kairos</h1>
-  <p>A native macOS menu-bar utility that automates network scenes, DNS, IP intelligence, and Mihomo configuration.</p>
+</div>
+
+---
+
+<div align="center">
+  <p>A native macOS menu-bar app for network scenes, DNS work, IP lookups, and Mihomo kernel maintenance.</p>
   <p>
     <a href="docs/README.zh-CN.md">简体中文</a> ·
     <a href="docs/README.zh-TW.md">繁體中文</a> ·
@@ -11,63 +16,72 @@
   </p>
 </div>
 
-## What It Is
+Kairos watches the active network and puts a few network tasks in one place. It is for people who regularly move between known networks and want predictable DNS or app actions, alongside IP and resolver tools.
 
-Kairos brings routine network operations into one menu-bar app. It can recognize the current environment from Wi-Fi names, IP ranges, and DNS characteristics, then apply the matching proxy, DNS, and application actions automatically. It also provides DNS tools, multi-source IP lookup, privacy-risk checks, and focused Mihomo utilities.
+## Network scenes
 
-**Kairos does not replace macOS network settings or your proxy client.** It coordinates the tools you already use and keeps common diagnostics close at hand.
+Kairos observes network-path changes and reads the default gateway's IP address and MAC address. A scene matches only when both values exactly match the enabled rule.
 
-## Features
+- An app-control scene can close its listed apps when the rule becomes active, then reopen apps that are no longer controlled after the scene changes.
+- A DNS scene can apply its configured primary and optional secondary resolver to the current interface. It uses the privileged DNS Helper for this operation.
+- A scene is not a proxy profile. Kairos does not create, edit, select, or apply proxy settings. Use your proxy client for that.
+
+The matching values are visible in the app, so they can be copied into a rule for a network you trust.
+
+## What is included
 
 <table>
   <tr>
     <td width="32%">
       <strong>Network automation</strong><br><br>
-      See the current Wi-Fi, gateway, and DNS at a glance. Scene rules can coordinate application actions and DNS changes as the network environment changes.
+      View active interfaces and the current gateway, then create separate app-control and DNS scenes for that gateway.
     </td>
-    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Kairos network overview with application and DNS scene controls"></td>
+    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Kairos network overview with app and DNS scene controls"></td>
   </tr>
   <tr>
     <td>
       <strong>Network tools</strong><br><br>
-      Run DNS cleanup, look up an IP address, test a resolver, or start a broader IP-quality check from one workspace.
+      Look up an IP, measure DNS response time over UDP, check public-IP characteristics, or run the guided deep-clean operation.
     </td>
-    <td><img src="docs/images/readme/network-tools.png" alt="Kairos network tools for DNS cleanup, IP lookup, DNS testing, and IP quality"></td>
+    <td><img src="docs/images/readme/network-tools.png" alt="Kairos tools for DNS cleanup, IP lookup, DNS testing, and IP quality"></td>
   </tr>
   <tr>
     <td>
-      <strong>Mihomo management</strong><br><br>
-      Check the linked application's kernel status, back up or restore the current kernel, replace it from GitHub Releases, and keep download settings in one place.
+      <strong>Mihomo kernel maintenance</strong><br><br>
+      Associate your own client and kernel file, inspect its state, back it up, restore it, or download a matching kernel from GitHub Releases.
     </td>
-    <td><img src="docs/images/readme/mihomo-management.png" alt="Kairos Mihomo kernel status, replacement, recovery, and configuration"></td>
+    <td><img src="docs/images/readme/mihomo-management.png" alt="Kairos Mihomo kernel status, replacement, recovery, and download settings"></td>
   </tr>
 </table>
 
-## Status
+The deep-clean tool temporarily disconnects Wi-Fi while it clears DNS and ARP caches, resets the interface, clears Chrome and Firefox caches, and performs the final system cleanup. Expect a short interruption of roughly 2–5 seconds.
 
-> **The first public beta is being prepared**
+## DNS Helper and permissions
 
-The application features and arm64 build checks are implemented. Pushes to main and pull requests run lightweight automation checks. Changes limited to `README.md`, `docs/`, `LICENSE`, or `AGENTS.md` skip the macOS build while publishing is disabled; all other changes run the unsigned App and Helper build. The initial `0.1.0-beta.1` release remains disabled.
+DNS changes and the deep-clean operation require Kairos's separately installed `SMAppService` LaunchDaemon. Register it in Settings, enter an administrator password when macOS asks, and approve it in System Settings if approval is required. The Helper can set or clear DNS servers, flush the DNS cache, and perform the privileged maintenance steps.
 
-## Platform
+Accessibility permission is needed when an app-control scene must quit another app. Kairos can still monitor the network without it. Replacing a protected Mihomo kernel may also prompt for macOS file-operation authorization.
 
-| Property | Value |
-|---|---|
-| Deployment target | macOS 26.0 (Tahoe) or later |
-| Architecture | Apple Silicon (arm64) |
-| App type | Menu-bar LSUIElement app, non-sandboxed |
-| Privileged component | `SMAppService` LaunchDaemon for system DNS operations |
-| Distribution | Version-gated GitHub Releases, signed Sparkle appcasts, and Homebrew Casks |
+## Mihomo
 
-## Installation and Releases
+Kairos does not include a Mihomo client or manage proxy rules. You choose the host app and its kernel file yourself. Kairos can back up and restore that file, or download the latest prerelease asset that matches the configured filename template from a GitHub Releases URL (the default is `vernesong/mihomo`). It asks you to quit the associated app before changing its kernel.
 
-Each GitHub Release contains one `Kairos-<version>.dmg`. Open the DMG and drag `Kairos.app` into `Applications`. Releases are signed with an Apple Development certificate but are not notarized. Before the first launch, remove the download quarantine attribute:
+## IP data and API keys
 
-```bash
-sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
-```
+An IP lookup entered in the app is sent to [ipapi.is](https://ipapi.is). The IP-quality check first discovers the public IP through `api64.ipify.org`, `checkip.amazonaws.com`, or `icanhazip.com`, then sends that IP to the sources below in parallel. A DNS benchmark sends the selected domain names directly to the resolver being tested.
 
-After the next Sparkle-enabled beta release publishes its signed metadata, install it through Homebrew:
+| Source | Without a key | With your key |
+|---|---|---|
+| IPinfo, ipapi.is, DB-IP, IPWHOIS | Kairos uses their available free endpoint. | Kairos uses the provider's keyed endpoint when applicable; IPinfo's token endpoint is a fallback if its widget endpoint fails. |
+| AbuseIPDB, IP2Location, ipregistry | Skipped. | Included in the IP-quality check. |
+
+Configure keys in Settings only if you want the keyed sources or their higher limits. Kairos stores them in local `UserDefaults`; it does not provide its own relay service. A settings export (`.kairos`) includes API keys as well as scenes and Mihomo settings, so treat that file as sensitive and do not share it.
+
+Provider responses are used to show location, ASN/organization, network type, and available privacy or abuse signals. Results can differ between providers and should not be treated as a security verdict.
+
+## Install
+
+### Homebrew
 
 ```bash
 brew tap slippindylan/tap
@@ -75,43 +89,22 @@ brew trust --tap slippindylan/tap
 brew install --cask kairos@beta
 ```
 
-Open Kairos and register the Helper from Settings when you want to manage system DNS. Approve its LaunchDaemon in System Settings when macOS asks.
+### DMG
 
-Kairos checks the signed update feed automatically and also offers **Check for Updates** from the menu bar and About page. Sparkle updates `Kairos.app` only; Helper registration and its privileged lifecycle remain managed by Kairos Settings.
+The current public builds are beta releases. Download the latest DMG from [GitHub Releases](https://github.com/SlippinDylan/Kairos/releases), open it, and drag `Kairos.app` to `Applications`.
 
-Pushes to main and pull requests always run lightweight release-automation checks. Changes outside `README.md`, `docs/`, `LICENSE`, and `AGENTS.md` additionally build and verify the unsigned arm64 App, Helper, and LaunchDaemon bundle; enabling publishing also forces this full check. Release configuration lives in [`Config/Release/manifest.json`](Config/Release/manifest.json). A DMG is signed, packaged, and published only after main CI succeeds, `release` is `true`, the version is unpublished, and [`CHANGELOG.md`](CHANGELOG.md) contains one unique, non-empty section with the same version.
+The release is signed with an Apple Development certificate but is not notarized by Apple. Apps downloaded from the internet receive macOS's quarantine attribute; Gatekeeper may therefore block the first launch. If you trust the release, remove that attribute after copying the app:
 
-Supported versions are `x.y.z`, `x.y.z-alpha.n`, and `x.y.z-beta.n`. Alpha and beta suffixes are used by the tag, Release, DMG, and Changelog; the App and Helper use the matching numeric `x.y.z` marketing version. Once a Release is published, its signed appcast and channel-specific Homebrew Cask are synchronized to [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap).
+```bash
+sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
+```
 
-## Build from Source
+## Requirements and source build
 
-Requirements:
+- macOS 26.0 Tahoe or later
+- Apple Silicon (arm64)
 
-- macOS 26.0 or later
-- Xcode 26 or later
-- An Apple ID
-
-Open `Kairos.xcodeproj`, select your development team, then update the XPC code-signing requirements in `App/Services/DNSManager.swift` and `KairosHelper/main.swift` to match your Team ID. Build and run the `Kairos` scheme.
-
-## API Keys
-
-IP lookup and privacy checks aggregate several external providers. Basic functionality works without configuring every provider; higher-volume use may require your own API keys in Settings.
-
-| Service | Free allowance | Purpose |
-|---|---|---|
-| [IPinfo](https://ipinfo.io) | 50,000 requests/month | IP ownership and location |
-| [ipapi.is](https://ipapi.is) | 1,000 requests/day | IP intelligence |
-| [AbuseIPDB](https://www.abuseipdb.com) | 1,000 requests/day | Abuse and risk scoring |
-| [IP2Location](https://www.ip2location.com) | Free plan available | Precise IP location |
-| [ipregistry](https://ipregistry.co) | 10,000 free requests | Aggregated IP details |
-
-## Key Design Decisions
-
-- **Native macOS UI:** SwiftUI and AppKit provide the menu-bar shell and system integrations.
-- **Rule-driven automation:** Scene matching is separated from monitoring and side effects so network rules remain explicit.
-- **Privileged boundary:** System DNS changes run through a separately signed Helper with reciprocal code-signing requirements.
-- **Local configuration:** Scenes, DNS profiles, API keys, and exported settings remain under user control on the Mac.
-- **Fail-closed releases:** Publishing requires tested source, an explicit manifest switch, matching release notes, and verified App, Helper, and DMG artifacts.
+For a local build, use macOS 26 or later with Xcode 26 or later. Open `Kairos.xcodeproj`, choose your development team, update the reciprocal XPC code-signing requirements in `App/Services/DNSManager.swift` and `KairosHelper/main.swift` to use that team's identity, then build the `Kairos` scheme.
 
 ## License
 

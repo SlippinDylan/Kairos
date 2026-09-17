@@ -1,7 +1,12 @@
 <div align="center">
   <img src="images/readme/app-icon.png" width="160" height="160" alt="Kairos 应用图标">
   <h1>Kairos</h1>
-  <p>一款原生 macOS 菜单栏工具，用来自动切换网络场景、管理 DNS、查询 IP，并配置 Mihomo。</p>
+</div>
+
+---
+
+<div align="center">
+  <p>用于网络场景、DNS 操作、IP 查询和 Mihomo 内核维护的原生 macOS 菜单栏应用。</p>
   <p>
     <strong>简体中文</strong> ·
     <a href="README.zh-TW.md">繁體中文</a> ·
@@ -11,63 +16,72 @@
   </p>
 </div>
 
-## Kairos 是什么
+Kairos 监听当前网络，把一些常用网络任务放进菜单栏。它适合经常在固定网络间切换、希望自动执行明确 DNS 或应用操作的人，也提供 IP 与 DNS 工具。
 
-Kairos 把常用的网络操作集中到一个菜单栏应用中。它可以根据 Wi-Fi 名称、IP 网段和 DNS 特征识别当前网络环境，再自动执行对应的代理、DNS 和应用控制动作。同时还提供 DNS 工具、多数据源 IP 查询、隐私风险检测和 Mihomo 配置。
+## 网络场景
 
-**Kairos 不会替代 macOS 网络设置或你的代理客户端。** 它调用这些现有工具，并提供统一的诊断入口。
+Kairos 监听网络路径变化，读取默认网关的 IP 地址和 MAC 地址。仅当这两个值都与已启用规则完全一致时，场景才会匹配。
 
-## 功能
+- 应用控制场景会在规则生效时退出列出的应用；场景变化后，已不再受控制的应用会重新启动。
+- DNS 场景会为当前接口应用配置的主 DNS 和可选备用 DNS，由特权 DNS Helper 执行。
+- 场景不是代理配置。Kairos 不会创建、编辑、选择或应用代理设置；请使用你的代理客户端完成这些工作。
+
+应用会显示用于匹配的网关信息，方便复制到你信任网络的规则中。
+
+## 包含的功能
 
 <table>
   <tr>
     <td width="32%">
       <strong>网络自动化</strong><br><br>
-      集中显示当前 Wi-Fi、网关和 DNS。网络环境变化时，场景规则可以联动应用控制与 DNS 切换。
+      查看活跃接口和当前网关，并为该网关分别建立应用控制与 DNS 场景。
     </td>
-    <td width="68%"><img src="images/readme/network-automation.png" alt="Kairos 当前网络、应用控制与 DNS 场景界面"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="Kairos 网络概览、应用控制与 DNS 场景"></td>
   </tr>
   <tr>
     <td>
       <strong>网络工具</strong><br><br>
-      在同一个页面执行 DNS 深度清理、IP 查询、DNS 测试和 IP 质量检测。
+      查询 IP、通过 UDP 测量 DNS 响应时间、检查公网 IP 特征，或运行引导式深度清理。
     </td>
     <td><img src="images/readme/network-tools.png" alt="Kairos DNS 清理、IP 查询、DNS 测试与 IP 质量工具"></td>
   </tr>
   <tr>
     <td>
-      <strong>Mihomo 管理</strong><br><br>
-      查看关联应用和内核状态，备份或恢复当前内核，也可以从 GitHub Releases 下载并替换内核。
+      <strong>Mihomo 内核维护</strong><br><br>
+      关联自己的客户端和内核文件，查看状态、备份、恢复，或从 GitHub Releases 下载匹配的内核。
     </td>
-    <td><img src="images/readme/mihomo-management.png" alt="Kairos Mihomo 内核状态、替换、恢复与下载配置"></td>
+    <td><img src="images/readme/mihomo-management.png" alt="Kairos Mihomo 内核状态、替换、恢复与下载设置"></td>
   </tr>
 </table>
 
-## 当前状态
+深度清理会临时断开 Wi-Fi，并清理 DNS 与 ARP 缓存、重置接口、清理 Chrome 和 Firefox 缓存，再执行最终系统清理。网络通常会中断约 2–5 秒。
 
-> **正在准备第一个公开 Beta 版本**
+## DNS Helper 与权限
 
-应用功能和 arm64 构建检查已经完成。main push 和 Pull Request 都会运行轻量自动化检查；仅修改 `README.md`、`docs/`、`LICENSE` 或 `AGENTS.md` 且发布关闭时，会跳过 macOS 构建，其他变更会构建未签名的 App 和 Helper。当前 `0.1.0-beta.1` 的发布开关保持关闭。
+修改 DNS 和运行深度清理需要安装 Kairos 独立的 `SMAppService` LaunchDaemon。请在设置中注册它；macOS 要求时输入管理员密码，如需批准则按提示前往系统设置。Helper 可以设置或清除 DNS 服务器、刷新 DNS 缓存，并执行需要特权的维护步骤。
 
-## 系统要求
+应用控制场景需要退出其他应用时，必须授予辅助功能权限；没有该权限时，Kairos 仍可监听网络。替换受保护的 Mihomo 内核时，macOS 也可能要求授权文件操作。
 
-| 项目 | 要求 |
-|---|---|
-| 最低系统 | macOS 26.0 Tahoe |
-| 处理器 | Apple Silicon（arm64） |
-| 应用类型 | 菜单栏 LSUIElement 应用，不使用沙盒 |
-| 特权组件 | 用于系统 DNS 操作的 `SMAppService` LaunchDaemon |
-| 发布方式 | 版本门控的 GitHub Releases、已签名的 Sparkle appcast 和 Homebrew Cask |
+## Mihomo
 
-## 安装与发布
+Kairos 不包含 Mihomo 客户端，也不管理代理规则。客户端和内核文件均由你选择。Kairos 可以备份或恢复该文件，也可以从 GitHub Releases URL 下载与文件名模板匹配的最新预发布内核（默认地址为 `vernesong/mihomo`）。修改内核前，它会要求你退出关联应用。
 
-每个 GitHub Release 包含一个 `Kairos-<版本号>.dmg`。打开 DMG，把 `Kairos.app` 拖进 `Applications`。当前版本使用 Apple Development 证书签名，但没有经过 Apple 公证。首次打开前需要移除下载隔离属性：
+## IP 数据与 API Key
 
-```bash
-sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
-```
+在应用中输入的 IP 查询会发送给 [ipapi.is](https://ipapi.is)。IP 质量检测先通过 `api64.ipify.org`、`checkip.amazonaws.com` 或 `icanhazip.com` 获取公网 IP，再并发将该 IP 发送给下列来源。DNS 测试会将选定域名直接发送给正在测试的解析器。
 
-下一个接入 Sparkle 的 Beta Release 发布并同步签名元数据后，可以通过 Homebrew 安装：
+| 来源 | 未配置 Key | 配置自己的 Key |
+|---|---|---|
+| IPinfo、ipapi.is、DB-IP、IPWHOIS | 使用各服务可用的免费端点。 | 在适用时使用服务商的带 Key 端点；IPinfo 的 token 端点只会在 widget 端点失败时作为回退。 |
+| AbuseIPDB、IP2Location、ipregistry | 跳过。 | 纳入 IP 质量检测。 |
+
+只有需要带 Key 的数据源或更高额度时，才需在设置中填写 Key。Kairos 将它们存储在本机 `UserDefaults` 中，不提供自己的中转服务。导出的 `.kairos` 设置文件同时包含 API Key、场景和 Mihomo 设置，请将其视为敏感文件，不要分享。
+
+服务商返回的数据用于显示位置、ASN/组织、网络类型以及可用的隐私或滥用信号。不同服务商的结果可能不同，不应把它当作安全结论。
+
+## 安装
+
+### Homebrew
 
 ```bash
 brew tap slippindylan/tap
@@ -75,37 +89,22 @@ brew trust --tap slippindylan/tap
 brew install --cask kairos@beta
 ```
 
-需要管理系统 DNS 时，请在 Kairos 设置中注册 Helper，并按 macOS 提示在系统设置中批准 LaunchDaemon。
+### DMG
 
-Kairos 会自动检查已签名的更新源，也可以在菜单栏和关于页面选择“检查更新”。Sparkle 只更新 `Kairos.app`；Helper 的注册和特权生命周期仍由 Kairos 设置管理。
+当前公开版本仍是 Beta。请从 [GitHub Releases](https://github.com/SlippinDylan/Kairos/releases) 下载最新 DMG，打开后将 `Kairos.app` 拖入 `Applications`。
 
-main push 和 Pull Request 始终运行轻量发布自动化检查。修改 `README.md`、`docs/`、`LICENSE` 和 `AGENTS.md` 以外的内容时，还会构建并验证未签名的 arm64 App、Helper 和 LaunchDaemon bundle；启用发布也会强制执行这项完整检查。只有 main CI 成功、发布配置中的 `release` 为 `true`、版本尚未发布，并且 [`CHANGELOG.md`](../CHANGELOG.md) 存在唯一且非空的同名版本章节时，Release workflow 才会签名、打包和发布 DMG。
+该版本使用 Apple Development 证书签名，但未经过 Apple 公证。从互联网下载的应用会被 macOS 添加隔离属性，因此 Gatekeeper 可能阻止首次打开。确认信任该版本后，可在复制应用后移除该属性：
 
-支持 `x.y.z`、`x.y.z-alpha.n` 和 `x.y.z-beta.n`。Alpha/Beta 后缀用于 tag、Release、DMG 和 Changelog；App 与 Helper 使用对应的纯数字 `x.y.z` 营销版本。Release 发布后，已签名的 appcast 与对应渠道的 Homebrew Cask 会同步到 [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap)。
+```bash
+sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
+```
 
-## 从源码构建
+## 系统要求与源码构建
 
-需要 macOS 26.0+、Xcode 26+ 和 Apple ID。打开 `Kairos.xcodeproj`，选择自己的开发团队，再将 `App/Services/DNSManager.swift` 和 `KairosHelper/main.swift` 中的 XPC 签名 requirement 更新为自己的 Team ID，最后构建 `Kairos` scheme。
+- macOS 26.0 Tahoe 或更高版本
+- Apple Silicon（arm64）
 
-## API Key
-
-IP 查询和隐私检测会聚合多个外部数据源。基础功能不要求配置所有服务；查询量较大时，可以在设置中填写自己的 API Key。
-
-| 服务 | 免费额度 | 用途 |
-|---|---|---|
-| [IPinfo](https://ipinfo.io) | 5 万次/月 | IP 归属与位置 |
-| [ipapi.is](https://ipapi.is) | 1000 次/天 | IP 信息 |
-| [AbuseIPDB](https://www.abuseipdb.com) | 1000 次/天 | 滥用与风险评分 |
-| [IP2Location](https://www.ip2location.com) | 提供免费套餐 | IP 精确定位 |
-| [ipregistry](https://ipregistry.co) | 1 万次免费请求 | 综合 IP 信息 |
-
-## 主要设计
-
-- 使用原生 SwiftUI 与 AppKit 构建菜单栏界面和系统集成。
-- 场景匹配、网络监控和实际操作分开实现，规则定义与执行互不混杂。
-- 系统 DNS 修改通过单独签名的 Helper 执行，App 与 Helper 使用双向代码签名 requirement。
-- 场景、DNS 配置、API Key 和导出设置由用户在本机管理。
-- 发布必须通过 CI、显式 manifest 开关、对应版本说明，以及 App、Helper 和 DMG 制品验证。
+本地构建需要 macOS 26+ 与 Xcode 26+。打开 `Kairos.xcodeproj`，选择自己的开发团队，将 `App/Services/DNSManager.swift` 与 `KairosHelper/main.swift` 中相互校验的 XPC 代码签名 requirement 改为该团队的身份，然后构建 `Kairos` scheme。
 
 ## 许可证
 

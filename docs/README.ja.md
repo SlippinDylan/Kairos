@@ -1,7 +1,12 @@
 <div align="center">
   <img src="images/readme/app-icon.png" width="160" height="160" alt="Kairos のアプリアイコン">
   <h1>Kairos</h1>
-  <p>ネットワーク環境、DNS、IP 情報、Mihomo 設定をまとめて扱う、macOS ネイティブのメニューバーアプリです。</p>
+</div>
+
+---
+
+<div align="center">
+  <p>ネットワークシーン、DNS 操作、IP 検索、Mihomo カーネル保守のための macOS ネイティブなメニューバーアプリです。</p>
   <p>
     <a href="README.zh-CN.md">简体中文</a> ·
     <a href="README.zh-TW.md">繁體中文</a> ·
@@ -11,63 +16,72 @@
   </p>
 </div>
 
-## Kairos について
+Kairos は現在のネットワークを監視し、よく使うネットワーク作業をメニューバーにまとめます。決まったネットワーク間を行き来し、DNS やアプリの操作を明確なルールで自動化したい人向けです。IP と DNS のツールも使えます。
 
-Kairos は、日常的なネットワーク操作を 1 つのメニューバーアプリにまとめます。Wi-Fi 名、IP 範囲、DNS の特徴から現在の環境を判定し、対応するプロキシ、DNS、アプリの起動・終了操作を自動で実行できます。DNS ツール、複数サービスを使った IP 検索、プライバシーリスク検査、Mihomo 設定も利用できます。
+## ネットワークシーン
 
-**Kairos は macOS のネットワーク設定やプロキシクライアントを置き換えるものではありません。** 既存のツールを連携させ、よく使う診断機能へすぐアクセスできるようにします。
+Kairos はネットワークパスの変化を監視し、デフォルトゲートウェイの IP アドレスと MAC アドレスを取得します。有効なルールと両方の値が完全に一致したときだけ、シーンが一致します。
 
-## 機能
+- アプリ制御シーンは、ルールが有効になったときに指定したアプリを終了します。シーンの変更後に制御対象でなくなったアプリは再起動します。
+- DNS シーンは、現在のインターフェースに設定済みのプライマリ DNS と任意のセカンダリ DNS を適用します。実行するのは特権 DNS Helper です。
+- シーンはプロキシプロファイルではありません。Kairos はプロキシ設定の作成、編集、選択、適用を行いません。プロキシクライアント側で設定してください。
+
+照合に使うゲートウェイ情報はアプリに表示され、信頼するネットワークのルールへコピーできます。
+
+## 主な機能
 
 <table>
   <tr>
     <td width="32%">
       <strong>ネットワーク自動化</strong><br><br>
-      現在の Wi-Fi、ゲートウェイ、DNS をまとめて確認できます。環境が変わると、シーンルールに従ってアプリ操作と DNS 切り替えを実行します。
+      使用中のインターフェースと現在のゲートウェイを確認し、そのゲートウェイ用のアプリ制御シーンと DNS シーンを作成できます。
     </td>
-    <td width="68%"><img src="images/readme/network-automation.png" alt="現在のネットワーク、アプリ操作、DNS シーンを表示する Kairos"></td>
+    <td width="68%"><img src="images/readme/network-automation.png" alt="ネットワーク概要、アプリ制御、DNS シーンを表示する Kairos"></td>
   </tr>
   <tr>
     <td>
       <strong>ネットワークツール</strong><br><br>
-      DNS のクリーンアップ、IP 検索、DNS テスト、IP 品質検査を 1 つの画面から実行できます。
+      IP 検索、UDP による DNS 応答時間の計測、グローバル IP の特性確認、ガイド付きディープクリーンを実行できます。
     </td>
-    <td><img src="images/readme/network-tools.png" alt="DNS クリーンアップ、IP 検索、DNS テスト、IP 品質検査を表示する Kairos"></td>
+    <td><img src="images/readme/network-tools.png" alt="DNS クリーンアップ、IP 検索、DNS テスト、IP 品質を表示する Kairos"></td>
   </tr>
   <tr>
     <td>
-      <strong>Mihomo 管理</strong><br><br>
-      連携アプリとカーネルの状態確認、現在のカーネルのバックアップや復元、GitHub Releases からの置き換えを行えます。
+      <strong>Mihomo カーネル保守</strong><br><br>
+      自分のクライアントとカーネルファイルを関連付け、状態確認、バックアップ、復元、GitHub Releases からの一致するカーネルの取得を行えます。
     </td>
     <td><img src="images/readme/mihomo-management.png" alt="Mihomo カーネルの状態、置き換え、復元、ダウンロード設定を表示する Kairos"></td>
   </tr>
 </table>
 
-## 開発状況
+ディープクリーンは一時的に Wi-Fi を切断し、DNS と ARP のキャッシュ削除、インターフェースのリセット、Chrome と Firefox のキャッシュ削除、最後のシステムクリーンアップを実行します。通常、ネットワークは約 2～5 秒中断します。
 
-> **最初の公開ベータを準備しています**
+## DNS Helper と権限
 
-アプリの機能と arm64 ビルド検証は実装済みです。main への push と Pull Request では軽量な自動化チェックを実行します。変更が `README.md`、`docs/`、`LICENSE`、`AGENTS.md` のみに限られ、公開が無効な場合は macOS ビルドを省略し、それ以外では未署名の App と Helper をビルドします。現在、`0.1.0-beta.1` の公開は無効です。
+DNS の変更とディープクリーンには、Kairos が別途インストールする `SMAppService` LaunchDaemon が必要です。Settings から登録し、macOS に求められたら管理者パスワードを入力してください。承認が必要な場合は、案内に従ってシステム設定で許可します。Helper は DNS サーバーの設定・解除、DNS キャッシュのフラッシュ、特権が必要な保守処理を行います。
 
-## 動作環境
+アプリ制御シーンで別のアプリを終了するにはアクセシビリティ権限が必要です。この権限がなくても、Kairos はネットワークを監視できます。保護された Mihomo カーネルを置き換えるときは、macOS からファイル操作の認証を求められることがあります。
 
-| 項目 | 内容 |
-|---|---|
-| 最低 OS | macOS 26.0 Tahoe |
-| CPU | Apple Silicon（arm64） |
-| アプリ形式 | 非サンドボックスのメニューバー LSUIElement アプリ |
-| 特権コンポーネント | システム DNS 操作用の `SMAppService` LaunchDaemon |
-| 配布形式 | バージョン管理された GitHub Releases、署名済み Sparkle appcast、Homebrew Cask |
+## Mihomo
 
-## インストールとリリース
+Kairos には Mihomo クライアントは含まれず、プロキシルールも管理しません。クライアントとカーネルファイルは自分で選びます。Kairos はそのファイルをバックアップ・復元でき、GitHub Releases URL からファイル名テンプレートに一致する最新のプレリリースカーネルをダウンロードできます（既定値は `vernesong/mihomo`）。変更前には関連付けたアプリの終了を求めます。
 
-各 GitHub Release には `Kairos-<バージョン>.dmg` が 1 つ含まれます。DMG を開き、`Kairos.app` を `Applications` にドラッグしてください。現在のリリースは Apple Development 証明書で署名されていますが、Apple の公証は受けていません。初回起動前にダウンロード隔離属性を削除してください。
+## IP データと API キー
 
-```bash
-sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
-```
+アプリに入力した IP 検索は [ipapi.is](https://ipapi.is) に送信されます。IP 品質チェックは最初に `api64.ipify.org`、`checkip.amazonaws.com`、`icanhazip.com` のいずれかでグローバル IP を取得し、その IP を次のソースへ並行して送信します。DNS テストは、選んだドメイン名をテスト対象のリゾルバーへ直接送信します。
 
-Sparkle 対応の次回ベータリリースで署名済みメタデータが公開された後、Homebrew からインストールできます。
+| ソース | キーなし | 自分のキーあり |
+|---|---|---|
+| IPinfo、ipapi.is、DB-IP、IPWHOIS | 各サービスで利用できる無料エンドポイントを使用します。 | 該当する場合はキー付きエンドポイントを使用します。IPinfo のトークンエンドポイントは widget エンドポイントが失敗したときだけのフォールバックです。 |
+| AbuseIPDB、IP2Location、ipregistry | スキップします。 | IP 品質チェックに含めます。 |
+
+キー付きのソースや上限の拡張が必要な場合だけ、Settings にキーを入力してください。Kairos はキーをローカルの `UserDefaults` に保存し、独自の中継サービスは持ちません。エクスポートした `.kairos` 設定ファイルには API キー、シーン、Mihomo 設定が含まれます。機密ファイルとして扱い、共有しないでください。
+
+プロバイダーからの応答は、位置情報、ASN・組織、ネットワーク種別、利用可能なプライバシーまたは不正利用シグナルの表示に使います。結果はプロバイダーごとに異なる場合があり、セキュリティ上の判定として扱うべきではありません。
+
+## インストール
+
+### Homebrew
 
 ```bash
 brew tap slippindylan/tap
@@ -75,37 +89,22 @@ brew trust --tap slippindylan/tap
 brew install --cask kairos@beta
 ```
 
-システム DNS を管理する場合は、Kairos の設定から Helper を登録し、macOS の案内に従ってシステム設定で LaunchDaemon を承認します。
+### DMG
 
-Kairos は署名済み更新フィードを自動確認し、メニューバーと「このアプリケーションについて」からも「アップデートを確認」を選べます。Sparkle が更新するのは `Kairos.app` のみで、Helper の登録と特権ライフサイクルは引き続き Kairos の設定で管理されます。
+現在公開されているビルドはベータ版です。[GitHub Releases](https://github.com/SlippinDylan/Kairos/releases) から最新の DMG をダウンロードし、開いて `Kairos.app` を `Applications` へドラッグします。
 
-main への push と Pull Request では、軽量なリリース自動化チェックを常に実行します。`README.md`、`docs/`、`LICENSE`、`AGENTS.md` 以外の変更では、未署名の arm64 App、Helper、LaunchDaemon bundle もビルドして検証します。公開を有効にした場合も、この完全なチェックを強制します。main CI の成功、`release: true`、未公開のバージョン、対応する一意で空ではない [`CHANGELOG.md`](../CHANGELOG.md) セクションが揃った場合にのみ DMG が公開されます。
+このリリースは Apple Development 証明書で署名されていますが、Apple の公証は受けていません。インターネットからダウンロードしたアプリには macOS が quarantine 属性を付けるため、Gatekeeper が初回起動を止めることがあります。リリースを信頼できる場合は、アプリをコピーした後でこの属性を削除してください。
 
-バージョン形式は `x.y.z`、`x.y.z-alpha.n`、`x.y.z-beta.n` に対応しています。Alpha/Beta 接尾辞は tag、Release、DMG、Changelog に使用され、App と Helper のマーケティングバージョンには対応する `x.y.z` が使われます。Release 公開後、署名済み appcast とチャンネル別 Homebrew Cask は [`SlippinDylan/homebrew-tap`](https://github.com/SlippinDylan/homebrew-tap) に同期されます。
+```bash
+sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
+```
 
-## ソースからのビルド
+## 動作環境とソースからのビルド
 
-macOS 26.0 以降、Xcode 26 以降、Apple ID が必要です。`Kairos.xcodeproj` を開き、開発チームを選択したうえで、`App/Services/DNSManager.swift` と `KairosHelper/main.swift` の XPC signing requirement を自分の Team ID に合わせて更新し、`Kairos` scheme をビルドしてください。
+- macOS 26.0 Tahoe 以降
+- Apple Silicon（arm64）
 
-## API キー
-
-IP 検索とプライバシー検査では複数の外部サービスを利用します。すべてのサービスを設定しなくても基本機能は利用できますが、利用量が多い場合は設定画面で自分の API キーを追加できます。
-
-| サービス | 無料枠 | 用途 |
-|---|---|---|
-| [IPinfo](https://ipinfo.io) | 月 50,000 回 | IP の所有者と所在地 |
-| [ipapi.is](https://ipapi.is) | 1 日 1,000 回 | IP 情報 |
-| [AbuseIPDB](https://www.abuseipdb.com) | 1 日 1,000 回 | 不正利用とリスク評価 |
-| [IP2Location](https://www.ip2location.com) | 無料プランあり | IP の詳細な位置情報 |
-| [ipregistry](https://ipregistry.co) | 10,000 回無料 | 総合 IP 情報 |
-
-## 主な設計方針
-
-- SwiftUI と AppKit を使用したネイティブのメニューバー UI とシステム連携。
-- シーン判定、ネットワーク監視、実際の操作を分離した明確な自動化ルール。
-- 相互のコード署名 requirement を持つ、システム DNS 操作用の独立した Helper。
-- シーン、DNS 設定、API キー、エクスポート設定はユーザーが Mac 上で管理。
-- CI、明示的な manifest、対応するリリースノート、App・Helper・DMG の検証をすべて通過した場合のみ公開。
+ローカルビルドには macOS 26 以降と Xcode 26 以降が必要です。`Kairos.xcodeproj` を開き、自分の開発チームを選択します。次に `App/Services/DNSManager.swift` と `KairosHelper/main.swift` の相互 XPC コード署名 requirement をそのチームの ID に変更し、`Kairos` scheme をビルドしてください。
 
 ## ライセンス
 

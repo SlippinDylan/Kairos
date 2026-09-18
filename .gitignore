@@ -98,3 +98,6 @@ iOSInjectionProject/
 *.old
 *.tmp
 *~
+
+# Project-local agent memory
+.engramory-memory/

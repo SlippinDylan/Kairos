@@ -12,13 +12,10 @@ import SwiftUI
 /// 设计规范：
 /// - 符合 macOS 26 Liquid Glass 设计语言
 /// - 使用 SF Symbols 图标（优先符号而非文字）
-/// - 提供快捷键支持（Cmd+1 到 Cmd+6）
+/// - 退出支持 Cmd+Q 快捷键
 ///
 /// 菜单结构：
-/// - 功能菜单项（6个）
-/// - 分隔线
-/// - 开机自启动 Toggle
-/// - 分隔线
+/// - 功能菜单项（3个）
 /// - 退出按钮
 ///
 /// ## 架构职责（重构版）
@@ -32,35 +29,13 @@ struct MenuBarView: View {
     @Environment(\.dismissWindow) private var dismissWindow
     @Environment(WindowCoordinator.self) private var windowCoordinator
 
-    // MARK: - State
-
-    @State private var loginItemManager = LoginItemManager.shared
-
-    // MARK: - Body
-
     var body: some View {
         VStack(spacing: 0) {
-            // 功能菜单项
             functionalMenuItems
 
             Divider()
                 .padding(.vertical, 4)
 
-            // 开机自启动
-            loginItemToggle
-
-            Divider()
-                .padding(.vertical, 4)
-
-            Button("检查更新") {
-                ApplicationUpdateController.shared.checkForUpdates()
-            }
-            .disabled(!ApplicationUpdateController.shared.canCheckForUpdates)
-
-            Divider()
-                .padding(.vertical, 4)
-
-            // 退出按钮
             quitButton
         }
         .padding(8)
@@ -87,66 +62,26 @@ struct MenuBarView: View {
 
     // MARK: - Functional Menu Items
 
-    /// 功能菜单项（5个功能入口）
+    /// 功能菜单项（3个功能入口）
     private var functionalMenuItems: some View {
         Group {
             MenuButton(
                 title: "网络控制",
-                tab: 0,
-                shortcut: "1"
+                systemImage: "globe",
+                tab: 0
             )
 
             MenuButton(
                 title: "网络工具",
-                tab: 1,
-                shortcut: "2"
+                systemImage: "wrench.and.screwdriver",
+                tab: 1
             )
 
             MenuButton(
                 title: "Mihomo",
-                tab: 2,
-                shortcut: "3"
+                systemImage: "shippingbox",
+                tab: 2
             )
-
-            MenuButton(
-                title: "日志",
-                tab: 3,
-                shortcut: "4"
-            )
-
-            MenuButton(
-                title: "设置",
-                tab: 4,
-                shortcut: "5"
-            )
-
-            Button("关于 Kairos") {
-                AppLogger.info("菜单栏点击：关于 Kairos")
-                windowCoordinator.requestShow(tab: 5)
-            }
-            .keyboardShortcut("6", modifiers: .command)
-        }
-    }
-
-    // MARK: - Login Item Toggle
-
-    /// 开机自启动 Button（带 ✓ 标记）
-    private var loginItemToggle: some View {
-        Button(action: {
-            do {
-                try loginItemManager.toggle()
-                AppLogger.info("开机自启动状态已切换为: \(loginItemManager.isEnabled)")
-            } catch {
-                AppLogger.error("切换开机自启动失败", error: error)
-                // 恢复状态
-                loginItemManager.refreshStatus()
-            }
-        }) {
-            if loginItemManager.isEnabled {
-                Label("登录时启动", systemImage: "checkmark")
-            } else {
-                Text("登录时启动")
-            }
         }
     }
 
@@ -154,9 +89,11 @@ struct MenuBarView: View {
 
     /// 退出按钮（直接退出）
     private var quitButton: some View {
-        Button("退出") {
+        Button {
             AppLogger.info("用户从菜单栏退出应用")
             NSApp.terminate(nil)
+        } label: {
+            Label("退出", systemImage: "power")
         }
         .keyboardShortcut("q", modifiers: .command)
     }
@@ -211,31 +148,31 @@ struct MenuBarView: View {
 /// 职责：
 /// - 显示功能入口
 /// - 处理点击事件：请求显示窗口并切换 Tab
-/// - 提供快捷键支持
 private struct MenuButton: View {
     let title: String
+    let systemImage: String
     let tab: Int
-    let shortcut: String
 
     @Environment(WindowCoordinator.self) private var windowCoordinator
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        Button(title) {
+        Button {
             AppLogger.info("菜单栏点击：\(title)")
-            
+
             // 直接使用 AppKit 唤醒，消除状态驱动带来的延迟
             NSApp.activate(ignoringOtherApps: true)
-            
+
             if let existingWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }) {
                 existingWindow.makeKeyAndOrderFront(nil)
             } else {
                 openWindow(id: "main")
             }
-            
+
             windowCoordinator.switchTab(tab)
+        } label: {
+            Label(title, systemImage: systemImage)
         }
-        .keyboardShortcut(KeyEquivalent(Character(shortcut)), modifiers: .command)
     }
 }
 

@@ -39,6 +39,7 @@ CI 的轻量检查可在任意支持 Bash 和 Node.js 的环境执行：
 bash -n Scripts/create-dmg.sh
 Scripts/create-dmg.sh --help >/dev/null
 node .github/scripts/release-manifest.mjs validate
+node .github/scripts/sync-version.mjs --check
 node --test .github/scripts/*.test.mjs
 ```
 
@@ -68,14 +69,14 @@ node --test .github/scripts/*.test.mjs
 
 发布是两阶段流水线，不应从本地直接仿造或绕过：
 
-1. 在 `Config/Release/manifest.json` 设置新版本，并仅在有意发版时将 `release` 改为 `true`；`CHANGELOG.md` 必须存在完全匹配且非空的版本章节。
+1. 在 `Config/Release/manifest.json` 设置新版本，并运行 `node .github/scripts/sync-version.mjs` 更新受版本控制的 Xcode 配置；仅在有意发版时将 `release` 改为 `true`，且 `CHANGELOG.md` 必须存在完全匹配且非空的版本章节。
 2. 该提交进入 `main`，并通过同一 commit 的 CI。
 3. `.github/workflows/build-and-release.yml` 由成功的 main push CI 触发，拒绝版本倒退或重复发布，使用 Apple Development 证书构建 app 与 Helper。
 4. 流水线从内到外重新签名 Sparkle 组件，验证签名、entitlements、Helper 内嵌 Info.plist、XPC trust requirement 和 artifact contract。
 5. `Scripts/create-dmg.sh` 生成拖放式 DMG；验证挂载内容后先创建并检查 draft GitHub Release，再正式发布。
 6. 发布完成后 dispatch `.github/workflows/publish-distribution-metadata.yml`，从不可变 Release 产物生成签名 appcast 和对应 stable/beta/alpha Homebrew Cask，并提交到共享 tap。
 
-版本格式由 `.github/scripts/release-manifest.mjs` 定义，支持 stable、`-alpha.N` 和 `-beta.N`。`Config/Release/manifest.json` 是发布请求，Xcode 工程中的默认 marketing/build version 不是发布历史来源。
+版本格式由 `.github/scripts/release-manifest.mjs` 定义，支持 stable、`-alpha.N` 和 `-beta.N`。`Config/Release/manifest.json` 是版本号和发布开关的唯一人工编辑入口；`Config/Generated/Version.xcconfig` 由同步脚本生成并提交，供 app 与 Helper 的普通 Xcode 构建读取，CI 使用 `--check` 阻止两者漂移。应用运行时只从 Bundle 读取版本信息。构建号仍由 Xcode 默认值或发布流水线的 GitHub run number 提供。
 
 当前公开产物使用 Apple Development 证书签名但未公证。不要在文档或发布说明中声称已经 notarize。签名证书、密码、Sparkle 私钥和 tap token 只存在于 CI secret 或外部安全位置，禁止写入仓库、日志或 Memory。
 

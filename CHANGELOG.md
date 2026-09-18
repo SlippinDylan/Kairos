@@ -4,6 +4,14 @@ All notable changes to Kairos releases are recorded here.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-18
+
+### 调整
+
+- 精简菜单栏，只保留带图标的网络控制、网络工具、Mihomo 和退出入口。
+- 移除页面导航快捷键，仅保留退出应用的 `Command-Q`。
+- 统一由发布清单生成 app 与 Helper 的 Xcode 版本和更新频道配置。
+
 ## [0.3.0-beta.1] - 2026-09-17
 
 ### Added

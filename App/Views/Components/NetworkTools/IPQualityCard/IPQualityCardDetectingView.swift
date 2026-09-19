@@ -24,26 +24,12 @@ struct IPQualityCardDetectingView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 16) {
-            // 当前任务描述
-            Text(currentTask)
-                .font(.headline)
-                .fontWeight(.medium)
-                .foregroundStyle(.primary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            // 进度百分比
-            Text("\(Int(progress * 100))%")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            // 线性进度条
-            ProgressView(value: progress, total: 1.0)
-                .progressViewStyle(.linear)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        Text("\(currentTask) · \(Int(progress * 100))%")
+            .font(.subheadline)
+            .foregroundStyle(.white.opacity(0.9))
+            .monospacedDigit()
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
     }
 }
 

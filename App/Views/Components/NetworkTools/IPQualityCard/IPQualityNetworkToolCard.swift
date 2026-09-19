@@ -34,11 +34,21 @@ struct IPQualityNetworkToolCard: View {
     // MARK: - State
 
     @State private var viewModel = IPQualityViewModel.shared
+    let onResultAvailable: () -> Void
+    let onShowResult: () -> Void
+
+    init(
+        onResultAvailable: @escaping () -> Void = {},
+        onShowResult: @escaping () -> Void = {}
+    ) {
+        self.onResultAvailable = onResultAvailable
+        self.onShowResult = onShowResult
+    }
 
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
+        Group {
             switch viewModel.detectionState {
             case .idle:
                 IPQualityCardIdleView(onStart: startDetection)
@@ -50,15 +60,17 @@ struct IPQualityNetworkToolCard: View {
                 )
 
             case .completed:
-                if let result = viewModel.result {
-                    IPQualityCardCompletedView(
-                        result: result,
-                        onRetest: resetDetection
-                    )
-                }
+                completedView
             }
         }
         .frame(maxWidth: .infinity)
+        .background {
+            ProgressCardBackground(
+                progress: viewModel.detectionState == .detecting
+                    ? viewModel.currentProgress
+                    : nil
+            )
+        }
         .animation(.easeInOut(duration: 0.3), value: viewModel.detectionState)
         .onDisappear {
             viewModel.cancelDetection()
@@ -73,9 +85,25 @@ struct IPQualityNetworkToolCard: View {
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                         viewModel.detectionState = .completed
                     }
+                    onResultAvailable()
                 }
             }
         }
+    }
+
+    private var completedView: some View {
+        HStack(spacing: DesignSystem.Spacing.small) {
+            Spacer()
+
+            Button("查看结果", action: onShowResult)
+                .buttonStyle(.glass)
+
+            Button("重新检测", action: resetDetection)
+                .buttonStyle(.glassProminent)
+
+            Spacer()
+        }
+        .frame(height: 64)
     }
 
     // MARK: - Private Methods
@@ -90,13 +118,8 @@ struct IPQualityNetworkToolCard: View {
 
     /// 重置检测状态
     private func resetDetection() {
-        // 异步调度动画，避免阻塞主线程
-        Task { @MainActor in
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                viewModel.detectionState = .idle
-                viewModel.result = nil
-                viewModel.errorMessage = nil
-            }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            viewModel.resetDetection()
         }
     }
 }

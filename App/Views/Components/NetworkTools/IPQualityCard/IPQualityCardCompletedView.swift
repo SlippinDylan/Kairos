@@ -25,15 +25,11 @@ struct IPQualityCardCompletedView: View {
     // MARK: - Properties
 
     let result: IPQualityResult
-    let onRetest: () -> Void
 
     // MARK: - Body
 
     var body: some View {
         VStack(spacing: DesignSystem.Spacing.standard) {
-            // 顶部按钮 + 检测时间
-            headerSection
-
             // 风险评分大卡片
             riskScoreBigCard
 
@@ -66,22 +62,6 @@ struct IPQualityCardCompletedView: View {
             Spacer(minLength: 20)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Header Section
-
-    private var headerSection: some View {
-        HStack {
-            Spacer()
-            Button(action: onRetest) {
-                Label("重新检测", systemImage: "arrow.clockwise")
-            }
-            .buttonStyle(.glassProminent)
-            Text(formattedDate(result.detectedAt))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
     }
 
     // MARK: - Risk Score Big Card
@@ -438,18 +418,6 @@ struct IPQualityCardCompletedView: View {
         }
     }
 
-    // MARK: - Helper Methods
-
-    private func formattedDate(_ date: Date) -> String {
-        return date.formatted(
-            .dateTime
-            .year()
-            .month(.twoDigits)
-            .day(.twoDigits)
-            .hour(.twoDigits(amPM: .omitted))
-            .minute(.twoDigits)
-        )
-    }
 }
 
 // MARK: - Streaming Service Row
@@ -625,10 +593,7 @@ private struct RiskLevelTag: View {
 
 #Preview {
     ScrollView {
-        IPQualityCardCompletedView(
-            result: IPQualityResult(),
-            onRetest: {}
-        )
+        IPQualityCardCompletedView(result: IPQualityResult())
         .padding()
     }
     .frame(width: 800, height: 600)

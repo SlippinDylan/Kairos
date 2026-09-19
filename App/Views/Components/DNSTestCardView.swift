@@ -16,115 +16,136 @@ import SwiftUI
 /// - 保持三段式状态机：Input → Testing → Result
 /// - 复用 DNSTestViewModel.shared 单例
 struct DNSTestCardView: View {
+    enum Mode {
+        case compact
+        case result
+    }
+
     // MARK: - State
 
     @State private var viewModel = DNSTestViewModel.shared
+    let mode: Mode
+    let onResultAvailable: () -> Void
+    let onShowResult: () -> Void
+    let onRetest: () -> Void
+
+    init(
+        mode: Mode = .compact,
+        onResultAvailable: @escaping () -> Void = {},
+        onShowResult: @escaping () -> Void = {},
+        onRetest: @escaping () -> Void = {}
+    ) {
+        self.mode = mode
+        self.onResultAvailable = onResultAvailable
+        self.onShowResult = onShowResult
+        self.onRetest = onRetest
+    }
 
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 0) {
+        Group {
+            if mode == .result {
+                resultView
+            } else {
+                compactCard
+            }
+        }
+        .onChange(of: viewModel.state) { _, state in
+            if mode == .compact, state == .result {
+                onResultAvailable()
+            }
+        }
+    }
+
+    private var compactCard: some View {
+        Group {
             switch viewModel.state {
             case .input:
                 inputView
             case .testing:
                 testingView
             case .result:
-                resultView
+                completedView
             }
         }
+        .frame(maxWidth: .infinity)
+        .background {
+            ProgressCardBackground(
+                progress: viewModel.state == .testing
+                    ? viewModel.currentProgress?.overallProgress ?? 0
+                    : nil
+            )
+        }
         .animation(.easeInOut(duration: 0.3), value: viewModel.state)
+    }
+
+    private var completedView: some View {
+        HStack(spacing: DesignSystem.Spacing.small) {
+            Spacer()
+
+            Button("查看结果", action: onShowResult)
+                .buttonStyle(.glass)
+
+            Button("重新测试") {
+                viewModel.resetTest()
+            }
+            .buttonStyle(.glassProminent)
+
+            Spacer()
+        }
+        .frame(height: 64)
     }
 
     // MARK: - State A: Input View
 
     /// 输入状态视图（紧凑布局，适配卡片）
     private var inputView: some View {
-        VStack(spacing: 20) {
-            // DNS 输入框
-            HStack(spacing: 12) {
-                // 输入框（带清空按钮）
-                ZStack(alignment: .trailing) {
-                    TextField("例如: 223.5.5.5", text: $viewModel.dnsServer)
-                        .textFieldStyle(.plain)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .padding(.trailing, viewModel.dnsServer.isEmpty ? 0 : 28)  // 为清空按钮留空间
-                        .background(Color(nsColor: .textBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
-                                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                        )
-                        .disabled(viewModel.state == .testing)
-
-                    // 清空按钮（仅在有内容时显示）
-                    if !viewModel.dnsServer.isEmpty {
-                        Button(action: {
-                            viewModel.dnsServer = ""
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(.secondary)
-                                .imageScale(.medium)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.trailing, 8)
-                        .help("清空")
-                    }
-                }
-
-                // 测试按钮
-                Button {
-                    viewModel.startTest()
-                } label: {
-                    Text("测试")
-                }
-                .buttonStyle(.glassProminent)
-                .disabled(viewModel.dnsServer.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-        }
+        CapsuleActionTextField(
+            placeholder: "例如: 223.5.5.5",
+            text: $viewModel.dnsServer,
+            actionTitle: "测试",
+            loadingTitle: nil,
+            isLoading: false,
+            isActionDisabled: viewModel.dnsServer.trimmingCharacters(in: .whitespaces).isEmpty,
+            onClear: {},
+            action: viewModel.startTest
+        )
+        .padding(.horizontal, DesignSystem.Spacing.medium)
+        .frame(height: 64)
     }
 
     // MARK: - State B: Testing View
 
-    /// 测试状态视图（进度条 + 当前域名提示 + 取消按钮）
+    /// 测试状态视图（进度背景 + 当前进度提示 + 取消按钮）
     private var testingView: some View {
-        VStack(spacing: 16) {
-            // 当前测试域名
-            Text(viewModel.currentProgress?.currentDomain ?? L10n.string("准备中..."))
-                .font(.headline)
-                .fontWeight(.medium)
-                .foregroundStyle(.primary)
-
-            // 详细进度描述 + 百分比
+        ZStack {
             if let progress = viewModel.currentProgress {
-                HStack(spacing: 8) {
-                    Text(progress.description)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Text("\(Int(progress.overallProgress * 100))%")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                Text("\(progress.description) · \(Int(progress.overallProgress * 100))%")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.9))
+                    .monospacedDigit()
+            } else {
+                Text("准备中...")
+                    .font(.subheadline)
+                    .foregroundStyle(.white.opacity(0.9))
             }
 
-            // 进度条 + 取消按钮
-            HStack(alignment: .center, spacing: 12) {
-                ProgressView(value: viewModel.currentProgress?.overallProgress ?? 0.0, total: 1.0)
-                    .progressViewStyle(.linear)
+            HStack {
+                Spacer()
 
-                // 取消按钮
                 Button {
                     viewModel.cancelTest()
                 } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                    Text("取消")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glassProminent)
+                .tint(.red)
                 .help("取消测试")
             }
         }
+        .padding(.horizontal, DesignSystem.Spacing.large)
+        .frame(height: 64)
     }
 
     // MARK: - State C: Result View
@@ -149,6 +170,7 @@ struct DNSTestCardView: View {
                 // 重新测试按钮
                 Button {
                     viewModel.resetTest()
+                    onRetest()
                 } label: {
                     HStack(spacing: 4) {
                         Image(systemName: "arrow.clockwise")

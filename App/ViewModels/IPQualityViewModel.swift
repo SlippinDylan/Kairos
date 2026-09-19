@@ -99,6 +99,14 @@ final class IPQualityViewModel {
         isLoading = false
     }
 
+    func resetDetection() {
+        cancelDetection()
+        detectionState = .idle
+        result = nil
+        errorMessage = nil
+        progressCoordinator.reset()
+    }
+
     private func runDetection() async {
         AppLogger.debug("开始IP质量检测")
         isLoading = true

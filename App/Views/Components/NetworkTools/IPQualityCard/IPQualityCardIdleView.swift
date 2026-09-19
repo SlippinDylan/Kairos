@@ -24,16 +24,13 @@ struct IPQualityCardIdleView: View {
     var body: some View {
         HStack {
             Spacer()
-            Label("开始检测", systemImage: "play.fill")
-                .font(.headline)
-                .foregroundStyle(.blue)
+
+            Button("开始检测", action: onStart)
+                .buttonStyle(.glassProminent)
+
             Spacer()
         }
-        .padding(.vertical, 16)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onStart()
-        }
+        .frame(height: 64)
     }
 }
 

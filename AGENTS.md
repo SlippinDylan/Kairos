@@ -16,7 +16,7 @@ Kairos 是面向 macOS 26+、Apple Silicon 的原生菜单栏网络工具。主�
 ## 仓库地图
 
 - `App/KairosApp.swift`、`App/AppDelegate.swift`：应用入口、生命周期、菜单栏与主窗口。
-- `App/Views/`：SwiftUI 页面与组件；`ContentView.swift` 是六个主页面的导航容器。
+- `App/Views/`：SwiftUI 页面与组件；`ContentView.swift` 是五个主页面的导航容器，关于页面位于设置分类中。
 - `App/ViewModels/`：页面状态与异步操作编排。
 - `App/Services/`：网络监控、DNS、IP 数据源、Mihomo、持久化和设置导入导出。
 - `App/Services/NetworkMonitor/`：网关读取、场景匹配和应用控制的拆分服务。

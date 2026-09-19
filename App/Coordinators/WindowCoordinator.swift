@@ -39,7 +39,7 @@ final class WindowCoordinator {
 
     // MARK: - Published State
 
-    /// 当前选中的 Tab 索引 (0-7)
+    /// 当前选中的 Tab 索引 (0-4)
     var selectedTab: Int = 0
 
     /// 是否存在尚未处理的显示请求
@@ -83,14 +83,14 @@ final class WindowCoordinator {
 
     /// 请求显示主窗口并切换到指定 Tab
     ///
-    /// - Parameter tab: Tab 索引 (0-7)
+    /// - Parameter tab: Tab 索引 (0-4)
     ///
     /// ## 实现说明
     /// 1. 更新状态 (selectedTab, shouldShowWindow)
     /// 2. 设置待处理请求标记（确保 ContentView 挂载后能处理）
     /// 3. 激活应用
     func requestShow(tab: Int) {
-        guard tab >= 0 && tab <= 7 else {
+        guard tab >= 0 && tab <= 4 else {
             AppLogger.warning("尝试切换到无效的 Tab 索引: \(tab)")
             return
         }
@@ -206,12 +206,12 @@ final class WindowCoordinator {
 
     /// 切换到指定 Tab（窗口已显示时）
     ///
-    /// - Parameter tab: Tab 索引 (0-7)
+    /// - Parameter tab: Tab 索引 (0-4)
     ///
     /// ## 功能说明
     /// 仅更新 selectedTab 状态，不改变窗口可见性
     func switchTab(_ tab: Int) {
-        guard tab >= 0 && tab <= 7 else {
+        guard tab >= 0 && tab <= 4 else {
             AppLogger.warning("尝试切换到无效的 Tab 索引: \(tab)")
             return
         }

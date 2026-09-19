@@ -16,8 +16,7 @@ struct NavigationSidebar: View {
 
     private let utilityDestinations = [
         Destination(id: 4, title: "设置", systemImage: "gearshape", selectedSystemImage: "gearshape.fill"),
-        Destination(id: 3, title: "日志", systemImage: "doc.text", selectedSystemImage: "doc.text.fill"),
-        Destination(id: 5, title: "关于", systemImage: "info.circle", selectedSystemImage: "info.circle.fill")
+        Destination(id: 3, title: "日志", systemImage: "doc.text", selectedSystemImage: "doc.text.fill")
     ]
 
     var body: some View {
@@ -31,7 +30,6 @@ struct NavigationSidebar: View {
         .padding(.horizontal, DesignSystem.Spacing.small)
         .padding(.vertical, DesignSystem.Spacing.medium)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle("Kairos")
     }
 
     private func destinationGroup(_ destinations: [Destination]) -> some View {

@@ -45,26 +45,19 @@ struct ContentView: View {
             NavigationSidebar(selectedTab: selectedTab)
                 .navigationSplitViewColumnWidth(min: 210, ideal: 210, max: 210)
         } detail: {
-            GeometryReader { proxy in
-                selectedContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(
-                        .top,
-                        usesWindowToolbar
-                            ? 0
-                            : DesignSystem.Spacing.small - proxy.safeAreaInsets.top
-                    )
-            }
+            selectedContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay(alignment: .top) {
+                    if selectedTab.wrappedValue != 5 {
+                        Divider()
+                    }
+                }
         }
-        .navigationSplitViewStyle(.balanced)
+        .navigationSplitViewStyle(.prominentDetail)
         .frame(minHeight: 720)
         .buttonBorderShape(.capsule)
-        .toolbar(removing: .title)
         .toolbar(removing: .sidebarToggle)
-        .toolbarBackgroundVisibility(
-            usesWindowToolbar ? .visible : .hidden,
-            for: .windowToolbar
-        )
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .overlay(alignment: .top) {
             // 全局 Toast 提示（在 Toolbar 下方显示）
             ToastOverlay()
@@ -82,15 +75,6 @@ struct ContentView: View {
         }
     }
 
-    private var usesWindowToolbar: Bool {
-        switch selectedTab.wrappedValue {
-        case 3, 5:
-            return true
-        default:
-            return false
-        }
-    }
-
     @ViewBuilder
     private var selectedContent: some View {
         switch selectedTab.wrappedValue {
@@ -104,8 +88,6 @@ struct ContentView: View {
             LogView()
         case 4:
             SettingsView()
-        case 5:
-            AboutView()
         default:
             NetworkMonitorView()
         }

@@ -59,7 +59,6 @@ struct KairosApp: App {
                 .environment(networkMonitor)  // 注入网络监控器
                 .environment(mihomoViewModel)  // 注入 Mihomo 视图模型
                 .environment(windowCoordinator)  // 注入窗口协调器
-                .navigationTitle("")
                 .frame(minWidth: 1080, minHeight: 720)
                 .task {
                     appDelegate.setNetworkMonitor(networkMonitor)

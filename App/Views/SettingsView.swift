@@ -14,6 +14,34 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+private enum SettingsPane: String, CaseIterable {
+    case general
+    case services
+    case data
+    case permissions
+    case about
+
+    var title: String {
+        switch self {
+        case .general: L10n.string("通用")
+        case .services: L10n.string("settings.pane.services")
+        case .data: L10n.string("settings.pane.data")
+        case .permissions: L10n.string("权限")
+        case .about: L10n.string("关于")
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .general: L10n.string("应用基本行为")
+        case .services: L10n.string("settings.pane.services.description")
+        case .data: L10n.string("settings.pane.data.description")
+        case .permissions: L10n.string("Kairos 所需的系统权限")
+        case .about: L10n.string("极简、高效、智能的网络自动化工具")
+        }
+    }
+}
+
 struct SettingsView: View {
     @Environment(NetworkMonitor.self) private var networkMonitor
     @Environment(MihomoViewModel.self) private var mihomoViewModel
@@ -29,28 +57,31 @@ struct SettingsView: View {
     @State private var showImportConfirmAlert = false
     @State private var importedData: KairosExportData?
     @State private var showLanguageRestartAlert = false
+    @AppStorage("settings.selectedPane") private var selectedPane: SettingsPane = .general
+    @Namespace private var paneSelectorNamespace
 
     var body: some View {
-        KairosScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // 通用设置
-                generalSettingsSection
-
-                // Mihomo 关联应用
-                mihomoHostAppSection
-
-                // IP 质量检测 API 配置
-                apiKeySettingsSection
-
-                // 配置导出/导入
-                exportImportSection
-
-                // 权限状态
-                permissionsSection
+        Group {
+            if selectedPane == .about {
+                AboutView()
+            } else {
+                KairosScrollView {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.large) {
+                        paneHeader
+                        selectedPaneContent
+                    }
+                    .frame(maxWidth: 800)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
             }
-            .frame(maxWidth: 960)
-            .frame(maxWidth: .infinity)
-            .padding()
+        }
+        .toolbar(removing: .title)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                paneSelector
+            }
+            .sharedBackgroundVisibility(.hidden)
         }
         .onAppear {
             permissionManager.refresh()
@@ -77,6 +108,75 @@ struct SettingsView: View {
             Button("language.restart.later", role: .cancel) {}
         } message: {
             Text("language.restart.message")
+        }
+    }
+
+    private var paneSelector: some View {
+        GlassEffectContainer(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(SettingsPane.allCases, id: \.self) { pane in
+                    paneButton(for: pane)
+                }
+            }
+            .padding(3)
+            .glassEffect(.regular.interactive(), in: Capsule())
+        }
+        .frame(maxWidth: 480)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func paneButton(for pane: SettingsPane) -> some View {
+        let isSelected = selectedPane == pane
+
+        return Button {
+            withAnimation(.smooth(duration: 0.25)) {
+                selectedPane = pane
+            }
+        } label: {
+            Text(pane.title)
+                .font(.callout.weight(isSelected ? .semibold : .medium))
+                .foregroundStyle(isSelected ? Color.white : Color.primary)
+                .padding(.horizontal, DesignSystem.Spacing.small)
+                .frame(minWidth: 80, minHeight: 32)
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .background {
+            if isSelected {
+                Color.clear
+                    .glassEffect(.regular.tint(.accentColor).interactive(), in: Capsule())
+                    .glassEffectID("settings-pane-selection", in: paneSelectorNamespace)
+            }
+        }
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var paneHeader: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+            Text(selectedPane.title)
+                .font(.title2.weight(.semibold))
+            Text(selectedPane.description)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var selectedPaneContent: some View {
+        switch selectedPane {
+        case .general:
+            generalSettingsSection
+        case .services:
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.large) {
+                mihomoHostAppSection
+                apiKeySettingsSection
+            }
+        case .data:
+            exportImportSection
+        case .permissions:
+            permissionsSection
+        case .about:
+            EmptyView()
         }
     }
 
@@ -113,6 +213,7 @@ struct SettingsView: View {
                     ))
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .controlSize(.mini)
                 }
                 .padding(DesignSystem.Spacing.standard)
 
@@ -143,17 +244,11 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .frame(width: 150)
+                    .controlSize(.small)
                 }
                 .padding(DesignSystem.Spacing.standard)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
-            SectionHeader(
-                title: "通用",
-                icon: "gearshape",
-                iconColor: .gray,
-                description: "应用基本行为"
-            )
         }
     }
 
@@ -206,10 +301,8 @@ struct SettingsView: View {
             }
             .padding(DesignSystem.Spacing.standard)
         } label: {
-            SectionHeader(
+            SettingsSectionHeader(
                 title: "Mihomo 关联应用",
-                icon: "cube.fill",
-                iconColor: .purple,
                 description: "内核替换功能依赖的宿主应用"
             )
         }
@@ -275,13 +368,6 @@ struct SettingsView: View {
                 }
             }
             .padding(DesignSystem.Spacing.standard)
-        } label: {
-            SectionHeader(
-                title: "配置管理",
-                icon: "square.and.arrow.up.on.square",
-                iconColor: .purple,
-                description: "导出和导入应用配置"
-            )
         }
     }
 
@@ -445,20 +531,12 @@ struct SettingsView: View {
                         helpURL: "https://ipregistry.co/"
                     )
                 }
-            }
-            .padding(DesignSystem.Spacing.standard)
-        } label: {
-            HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
-                SectionHeader(
-                    title: "IP 质量数据源",
-                    icon: "network",
-                    iconColor: .blue,
-                    description: "配置第三方数据源凭据；未配置时使用免费版或跳过付费源"
-                )
 
-                Spacer()
+                Divider()
 
                 HStack(spacing: DesignSystem.Spacing.small) {
+                    Spacer()
+
                     Button("清除全部") {
                         apiKeyManager.clearAllAPIKeys()
                     }
@@ -470,8 +548,13 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.glassProminent)
                 }
-                .padding(.bottom, DesignSystem.Spacing.small)
             }
+            .padding(DesignSystem.Spacing.standard)
+        } label: {
+            SettingsSectionHeader(
+                title: "IP 质量数据源",
+                description: "配置第三方数据源凭据；未配置时使用免费版或跳过付费源"
+            )
         }
     }
 
@@ -524,14 +607,23 @@ struct SettingsView: View {
                 }
             }
             .padding(DesignSystem.Spacing.standard)
-        } label: {
-            SectionHeader(
-                title: "权限",
-                icon: "lock.shield",
-                iconColor: permissionManager.allRequiredGranted ? .green : .orange,
-                description: "Kairos 所需的系统权限"
-            )
         }
+    }
+}
+
+private struct SettingsSectionHeader: View {
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+            Text(L10n.string(title))
+                .font(.headline)
+            Text(L10n.string(description))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.bottom, DesignSystem.Spacing.extraSmall)
     }
 }
 
@@ -567,7 +659,7 @@ private struct HelperActionButton: View {
                     } label: {
                         actionLabel("检查 Helper", isActive: operation == .healthCheck)
                     }
-                    .buttonStyle(.glassProminent)
+                    .buttonStyle(.glass)
 
                     Button(role: .destructive) {
                         uninstallHelper()

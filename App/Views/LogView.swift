@@ -106,6 +106,7 @@ struct LogView: View {
         }
         .padding(DesignSystem.Spacing.standard)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .toolbar(removing: .title)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 toolbarContent

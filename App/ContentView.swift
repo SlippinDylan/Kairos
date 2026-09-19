@@ -25,6 +25,7 @@ struct ContentView: View {
     /// - 管理窗口状态和 Tab 切换
     /// - 替代原 AppCoordinator，解决 P1-2 架构问题
     @Environment(WindowCoordinator.self) var windowCoordinator
+    @Environment(\.openWindow) private var openWindow
 
     // MARK: - Global Coordinator
 
@@ -69,23 +70,14 @@ struct ContentView: View {
             ToastOverlay()
                 .padding(.top, 8)
         }
-        .overlay {
-            // 退出确认提示（居中显示）
-            QuitConfirmationOverlay()
+        .background {
+            WindowAccessor { window in
+                windowCoordinator.mainWindowDidAppear(window)
+            }
         }
         .onAppear {
-            // ✅ 设置窗口 identifier（用于 MenuBarView 查找窗口）
-            // 必须在窗口创建后设置，所以放在 onAppear 中
-            if let window = NSApp.keyWindow {
-                window.identifier = NSUserInterfaceItemIdentifier("main")
-                AppLogger.debug("主窗口 identifier 已设置: main")
-            } else {
-                AppLogger.warning("未找到 keyWindow，尝试从所有窗口查找")
-                // 备用方案：查找所有窗口中最后创建的窗口
-                if let window = NSApp.windows.last {
-                    window.identifier = NSUserInterfaceItemIdentifier("main")
-                    AppLogger.debug("主窗口 identifier 已设置（通过 windows.last）: main")
-                }
+            windowCoordinator.registerOpenWindowAction {
+                openWindow(id: "main")
             }
         }
     }

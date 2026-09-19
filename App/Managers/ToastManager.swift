@@ -11,7 +11,7 @@
 //  - 队列机制确保多个 Toast 按序显示
 //
 //  ## 架构参考
-//  - 复用 QuitConfirmationCoordinator 的设计模式
+//  - Queue transient app-wide feedback without blocking interaction
 //  - 使用 @Observable 实现响应式状态管理
 //
 

@@ -11,7 +11,7 @@
 //  - 优雅的进入/退出动画
 //
 //  ## 架构参考
-//  - 复用 QuitConfirmationOverlay 的设计模式
+//  - Present queued app-wide feedback above the main content
 //  - 使用 macOS 26 原生 Liquid Glass
 //
 

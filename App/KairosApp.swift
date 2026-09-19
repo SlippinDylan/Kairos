@@ -53,19 +53,6 @@ struct KairosApp: App {
     // MARK: - Scene
 
     var body: some Scene {
-        // 菜单栏入口
-        MenuBarExtra("Kairos", systemImage: "wifi.router") {
-            MenuBarView()
-                .environment(windowCoordinator)
-                .task {
-                    // ✅ 在 MenuBarView 加载时初始化监控
-                    // MenuBarExtra 总是会在应用启动时创建，确保监控启动
-                    await MainActor.run {
-                        appDelegate.setNetworkMonitor(networkMonitor)
-                    }
-                }
-        }
-
         // 主窗口
         WindowGroup(id: "main") {
             ContentView()
@@ -74,8 +61,19 @@ struct KairosApp: App {
                 .environment(windowCoordinator)  // 注入窗口协调器
                 .navigationTitle("")
                 .frame(minWidth: 1080, minHeight: 720)
+                .task {
+                    appDelegate.setNetworkMonitor(networkMonitor)
+                }
         }
         .defaultSize(width: 1080, height: 720)
-        .commandsRemoved()  // ✅ 移除 "File > New Window" 菜单（防止用户手动创建多窗口）
+        .commands {
+            CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .appTermination) {
+                Button(L10n.string("关闭窗口")) {
+                    WindowCoordinator.shared.hideMainWindow()
+                }
+                .keyboardShortcut("q", modifiers: .command)
+            }
+        }
     }
 }

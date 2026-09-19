@@ -11,10 +11,6 @@ final class ApplicationRelaunchController {
         self.applicationURL = applicationURL
     }
 
-    var shouldTerminateImmediately: Bool {
-        relaunchRequested
-    }
-
     func requestRelaunch() {
         guard !relaunchRequested else { return }
         relaunchRequested = true

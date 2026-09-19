@@ -12,8 +12,7 @@ import Observation
 /// 窗口协调器 - 统一管理窗口状态
 ///
 /// ## 架构设计（精简版）
-/// - **单一职责**: 仅管理窗口状态（Tab 选择、Dock 图标）
-/// - **不操作窗口**: 窗口的显示/隐藏由 MenuBarView 处理
+/// - **单一职责**: 管理主窗口状态、显示与前置
 /// - **@MainActor**: 所有操作在主线程，确保线程安全
 /// - **Observable**: SwiftUI 可观察对象，状态自动触发刷新
 ///
@@ -43,22 +42,31 @@ final class WindowCoordinator {
     /// 当前选中的 Tab 索引 (0-7)
     var selectedTab: Int = 0
 
-    /// 是否请求显示窗口（触发标志，由 MenuBarView 监听）
+    /// 是否存在尚未处理的显示请求
     var shouldShowWindow: Bool = false
 
-    /// 是否请求隐藏窗口（触发标志，由 MenuBarView 监听）
+    /// 是否存在尚未处理的隐藏请求
     var shouldHideWindow: Bool = false
 
-    /// 待处理的显示请求（用于 MenuBarView 尚未挂载时的请求缓存）
+    /// 待处理的显示请求（用于 SwiftUI openWindow action 尚未注册时的请求缓存）
     ///
     /// ## 设计说明
-    /// 应用启动时，AppDelegate 可能在 MenuBarView 完成挂载前就调用 requestShow()。
+    /// 应用启动时，AppDelegate 可能在 ContentView 完成挂载前就调用 requestShow()。
     /// 此时 .onChange 监听器尚未生效，请求会丢失。
-    /// 通过此标记，MenuBarView 在 .onAppear 时可以检查并执行待处理的请求。
+    /// 通过此标记，ContentView 在 .onAppear 时可以检查并执行待处理的请求。
     var hasPendingShowRequest: Bool = false
 
     /// 待处理请求的目标 Tab
     var pendingTab: Int = 0
+
+    @ObservationIgnored
+    private var openMainWindow: (() -> Void)?
+
+    @ObservationIgnored
+    private var isOpeningMainWindow = false
+
+    @ObservationIgnored
+    private weak var mainWindow: NSWindow?
 
     // MARK: - Initialization
 
@@ -79,10 +87,8 @@ final class WindowCoordinator {
     ///
     /// ## 实现说明
     /// 1. 更新状态 (selectedTab, shouldShowWindow)
-    /// 2. 设置待处理请求标记（确保 MenuBarView 挂载后能处理）
-    /// 3. 显示 Dock 图标
-    /// 4. 激活应用
-    /// 5. MenuBarView 通过 @Environment 监听 shouldShowWindow 变化
+    /// 2. 设置待处理请求标记（确保 ContentView 挂载后能处理）
+    /// 3. 激活应用
     func requestShow(tab: Int) {
         guard tab >= 0 && tab <= 7 else {
             AppLogger.warning("尝试切换到无效的 Tab 索引: \(tab)")
@@ -95,14 +101,78 @@ final class WindowCoordinator {
         selectedTab = tab
         shouldShowWindow = true
 
-        // 2. 设置待处理请求（确保 MenuBarView.onAppear 时能处理）
+        // 2. Cache the request until ContentView registers openWindow.
         hasPendingShowRequest = true
         pendingTab = tab
 
         // 3. 激活应用
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
 
         AppLogger.debug("主窗口显示请求已设置: Tab=\(tab), hasPendingShowRequest=true")
+    }
+
+    func registerOpenWindowAction(_ action: @escaping () -> Void) {
+        openMainWindow = action
+        processPendingRequestIfPossible()
+    }
+
+    func mainWindowDidAppear(_ window: NSWindow) {
+        window.identifier = NSUserInterfaceItemIdentifier("main")
+        mainWindow = window
+
+        let shouldPresentOpenedWindow = isOpeningMainWindow
+        isOpeningMainWindow = false
+        if shouldPresentOpenedWindow {
+            present(window)
+        }
+
+        processPendingRequestIfPossible()
+    }
+
+    func showMainWindow(tab: Int? = nil) {
+        if let tab {
+            switchTab(tab)
+        }
+
+        if let window = mainWindow {
+            present(window)
+            return
+        }
+
+        guard !isOpeningMainWindow else { return }
+        guard let openMainWindow else {
+            requestShow(tab: tab ?? selectedTab)
+            return
+        }
+
+        isOpeningMainWindow = true
+        openMainWindow()
+    }
+
+    func hideMainWindow() {
+        isOpeningMainWindow = false
+        mainWindow?.orderOut(nil)
+        resetFlags()
+    }
+
+    private func present(_ window: NSWindow) {
+        NSApp.activate()
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func processPendingRequestIfPossible() {
+        if shouldHideWindow, mainWindow != nil {
+            hideMainWindow()
+            return
+        }
+
+        guard hasPendingShowRequest, let mainWindow else { return }
+        selectedTab = pendingTab
+        present(mainWindow)
+        resetFlags()
     }
 
     /// 请求隐藏主窗口
@@ -110,7 +180,6 @@ final class WindowCoordinator {
     /// ## 实现说明
     /// 1. 更新状态 (shouldHideWindow)
     /// 2. 隐藏 Dock 图标
-    /// 3. MenuBarView 通过 @Environment 监听 shouldHideWindow 变化
     func requestHide() {
         AppLogger.info("请求隐藏主窗口")
 
@@ -126,14 +195,12 @@ final class WindowCoordinator {
     /// 切换主窗口可见性
     ///
     /// ## 功能说明
-    /// 根据窗口当前状态自动切换（需要 MenuBarView 提供当前状态）
+    /// 根据窗口当前状态自动切换
     func toggle() {
-        // 查找主窗口
-        if let mainWindow = NSApp.windows.first(where: { $0.identifier?.rawValue == "main" }),
-           mainWindow.isVisible {
-            requestHide()
+        if mainWindow?.isVisible == true {
+            hideMainWindow()
         } else {
-            requestShow(tab: selectedTab)
+            showMainWindow()
         }
     }
 
@@ -156,7 +223,7 @@ final class WindowCoordinator {
     /// 重置触发标志
     ///
     /// ## 功能说明
-    /// MenuBarView 处理完窗口操作后调用，重置触发标志
+    /// 窗口请求处理完成后调用，重置触发标志
     func resetFlags() {
         shouldShowWindow = false
         shouldHideWindow = false

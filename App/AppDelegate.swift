@@ -28,6 +28,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 网络监控服务（从 KairosApp 传递）
     private var networkMonitor: NetworkMonitor?
 
+    private var statusBarController: StatusBarController?
+
     // MARK: - Public Methods
 
     /// 设置网络监控服务
@@ -68,6 +70,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// - Parameter notification: 启动通知
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.info("应用启动完成")
+        NSApp.setActivationPolicy(.accessory)
+        statusBarController = StatusBarController(
+            onShowTab: { tab in
+                WindowCoordinator.shared.showMainWindow(tab: tab)
+            },
+            onQuit: { [weak self] in
+                self?.requestExplicitQuit()
+            }
+        )
         _ = applicationUpdater
         DNSManager.shared.validateHelperIfNeeded()
 
@@ -91,10 +102,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             WindowCoordinator.shared.requestHide()
         } else {
             AppLogger.info("应用手动启动，请求显示主窗口")
-            // ✅ 手动启动 → 立即请求显示窗口
-            // 窗口协调器会设置 hasPendingShowRequest 标记
-            // MenuBarView.onAppear 时会检查并执行此请求
-            // 无需延迟，因为请求会被缓存直到 MenuBarView 准备好
+            // The request is retained until ContentView registers SwiftUI's openWindow action.
             WindowCoordinator.shared.requestShow(tab: 0)
         }
     }
@@ -107,8 +115,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 这是核心逻辑：关闭窗口时，应用继续在菜单栏运行
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         AppLogger.info("最后一个窗口已关闭，隐藏窗口但不退出应用")
-        // ✅ 使用 WindowCoordinator 请求隐藏窗口
-        WindowCoordinator.shared.requestHide()
         return false
     }
 
@@ -118,30 +124,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         AppLogger.info("应用即将退出")
         ApplicationRelaunchController.shared.relaunchIfRequested()
-    }
-
-    /// 拦截应用退出请求（实现双击 Cmd+Q 退出）
-    ///
-    /// - Parameter sender: NSApplication 实例
-    /// - Returns: 退出响应类型
-    ///
-    /// 技术实现：
-    /// - 第一次按 Cmd+Q：显示确认提示，返回 .terminateCancel 阻止退出
-    /// - 第二次按 Cmd+Q（2秒内）：返回 .terminateNow 允许退出
-    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if ApplicationRelaunchController.shared.shouldTerminateImmediately {
-            AppLogger.info("应用因语言变更重新启动")
-            return .terminateNow
-        }
-
-        let shouldQuit = QuitConfirmationCoordinator.shared.requestQuit()
-        if shouldQuit {
-            AppLogger.info("用户确认退出应用（双击 Cmd+Q）")
-            return .terminateNow
-        } else {
-            AppLogger.debug("等待用户确认退出（再按一次 Cmd+Q）")
-            return .terminateCancel
-        }
     }
 
     // MARK: - Private Methods
@@ -162,5 +144,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                          event.paramDescriptor(forKeyword: keyAEPropData)?.enumCodeValue == keyAELaunchedAsLogInItem
 
         return isLoginItem
+    }
+
+    private func requestExplicitQuit() {
+        NSApp.terminate(nil)
     }
 }

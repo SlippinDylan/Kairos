@@ -17,7 +17,7 @@ const translations = [
   ['设置', 'Settings', '设置', '設定'],
   ['关于', 'About', '关于', '關於'],
   ['退出', 'Quit', '退出', '結束'],
-  ['再按一次 ⌘Q 退出', 'Press ⌘Q again to quit', '再按一次 ⌘Q 退出', '再按一次 ⌘Q 結束'],
+  ['关闭窗口', 'Close Window', '关闭窗口', '關閉視窗'],
   ['通用', 'General', '通用', '一般'],
   ['应用基本行为', 'Basic app behavior', '应用基本行为', 'App 基本行為'],
   ['登录时自动启动', 'Launch at Login', '登录时自动启动', '登入時自動啟動'],

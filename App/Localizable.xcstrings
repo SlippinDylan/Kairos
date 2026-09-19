@@ -265,24 +265,24 @@
         }
       }
     },
-    "再按一次 ⌘Q 退出": {
+    "关闭窗口": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Press ⌘Q again to quit"
+            "value": "Close Window"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "再按一次 ⌘Q 退出"
+            "value": "关闭窗口"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "再按一次 ⌘Q 結束"
+            "value": "關閉視窗"
           }
         }
       }

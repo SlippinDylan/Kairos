@@ -284,6 +284,24 @@ function buildRelease(event) {
   };
 }
 
+function buildReleaseDispatch(event) {
+  const repoUrl = repositoryUrl(event);
+  const payload = event.client_payload ?? {};
+  return {
+    title: `${productName(event)} ${payload.version ?? '未知版本'} 发布成功`,
+    details: releaseDetails(event, {
+      prerelease: payload.prerelease,
+      dmgName: payload.dmg_name,
+      highlights: extractReleaseHighlights(payload.changelog),
+    }),
+    button: { text: '查看版本', url: safeGitHubUrl(payload.release_url, repoUrl) },
+    secondaryButton: payload.download_url
+      ? { text: '下载 DMG', url: safeGitHubUrl(payload.download_url, repoUrl) }
+      : null,
+    color: 'green',
+  };
+}
+
 function buildReleaseStarted(event) {
   const repoUrl = repositoryUrl(event);
   const payload = event.client_payload ?? {};
@@ -303,7 +321,9 @@ function buildReleaseStarted(event) {
 }
 
 function buildRepositoryDispatch(event) {
-  return event.action === 'release_started' ? buildReleaseStarted(event) : null;
+  if (event.action === 'release_started') return buildReleaseStarted(event);
+  if (event.action === 'release_published') return buildReleaseDispatch(event);
+  return null;
 }
 
 const BUILDERS = {

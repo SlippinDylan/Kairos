@@ -139,6 +139,27 @@ test('builds release and packaging notifications with Kairos product facts', () 
   assert.ok(packaging.details.includes('组件：Kairos.app + DNS Helper'));
 });
 
+test('builds a release-published dispatch with Kairos product facts', () => {
+  const notification = buildNotification('repository_dispatch', {
+    repository,
+    sender,
+    action: 'release_published',
+    client_payload: {
+      version: '0.2.0-beta.1',
+      prerelease: true,
+      dmg_name: 'Kairos-0.2.0-beta.1.dmg',
+      changelog: '- Added automation.',
+      release_url: 'https://github.com/owner/Kairos/releases/tag/v0.2.0-beta.1',
+      download_url: 'https://github.com/owner/Kairos/releases/download/v0.2.0-beta.1/Kairos-0.2.0-beta.1.dmg',
+    },
+  });
+  const payload = buildDiscordPayload(notification, 'Kairos');
+  assert.equal(notification.title, 'Kairos 0.2.0-beta.1 发布成功');
+  assert.equal(notification.color, 'green');
+  assert.ok(notification.details.includes('组件：Kairos.app + DNS Helper'));
+  assert.match(payload.embeds[0].description, /\[下载 DMG\]/);
+});
+
 test('builds one safe Discord embed with title URL, actions, colors, and disabled mentions', () => {
   const notification = buildNotification('release', { repository, sender, release });
   const payload = buildDiscordPayload(notification, 'Kairos');

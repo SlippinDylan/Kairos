@@ -99,22 +99,25 @@ final class AppControlService {
 
                     group.addTask {
                         try? await Task.sleep(for: .seconds(5))
-                        return AppControlResult(success: false, message: "启动超时")
+                        return AppControlResult(success: false, message: L10n.string("启动超时"))
                     }
 
-                    let result = await group.next() ?? AppControlResult(success: false, message: "启动失败")
+                    let result = await group.next() ?? AppControlResult(
+                        success: false,
+                        message: L10n.string("启动失败")
+                    )
                     group.cancelAll()
                     return result
                 }
             } else {
-                let message = "找不到应用"
+                let message = L10n.string("找不到应用")
                 AppLogger.warning("找不到应用: \(appName)")
                 return AppControlResult(success: false, message: message)
             }
         } else {
             AppLogger.debug("应用 \(appName) 已在运行，跳过启动")
             // 应用已运行也视为成功（目标已达成）
-            return AppControlResult(success: true, message: "已在运行")
+            return AppControlResult(success: true, message: L10n.string("已在运行"))
         }
     }
 
@@ -203,7 +206,7 @@ final class AppControlService {
         // 检查是否有辅助功能权限（Preview 环境中跳过权限检查）
         if let manager = permissionManager {
             guard manager.checkAccessibility() else {
-                let message = "缺少辅助功能权限"
+                let message = L10n.string("缺少辅助功能权限")
                 AppLogger.warning("无法退出应用 \(appName)：\(message)")
                 return AppControlResult(success: false, message: message)
             }
@@ -218,7 +221,7 @@ final class AppControlService {
                 // 优雅退出，会自动处理所有子进程和 Helper 进程
                 let success = app.terminate()
                 if !success {
-                    let message = "terminate()返回false"
+                    let message = L10n.string("terminate()返回false")
                     AppLogger.warning("退出应用失败: \(appName) - \(message)")
                     return AppControlResult(success: false, message: message)
                 } else {
@@ -228,7 +231,7 @@ final class AppControlService {
         }
 
         // 循环结束未找到应用，说明应用未运行
-        let message = "应用未运行"
+        let message = L10n.string("应用未运行")
         AppLogger.debug("应用 \(appName) 未在运行")
         // 应用未运行也视为成功（目标已达成）
         return AppControlResult(success: true, message: message)

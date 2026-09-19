@@ -498,17 +498,17 @@ final class DNSManager {
         completion: @escaping (Bool, String?) -> Void
     ) {
         guard NetworkValidator.isValidIP(primaryDNS) else {
-            completion(false, "主 DNS 地址无效")
+            completion(false, L10n.string("主 DNS 地址无效"))
             return
         }
         if let secondaryDNS, !secondaryDNS.isEmpty,
            !NetworkValidator.isValidIP(secondaryDNS) {
-            completion(false, "备用 DNS 地址无效")
+            completion(false, L10n.string("备用 DNS 地址无效"))
             return
         }
 
         guard isHelperInstalled else {
-            completion(false, "Helper 未安装")
+            completion(false, L10n.string("Helper 未安装"))
             return
         }
 
@@ -529,7 +529,7 @@ final class DNSManager {
                 if success {
                     self?.getCurrentDNS(interface: interface) { _ in }
                 }
-                completion(success, error)
+                completion(success, Self.localizedHelperMessage(error))
             case .failure(let error):
                 completion(false, error.localizedDescription)
             }
@@ -538,7 +538,7 @@ final class DNSManager {
 
     func clearDNS(interface: String, completion: @escaping (Bool, String?) -> Void) {
         guard isHelperInstalled else {
-            completion(false, "Helper 未安装")
+            completion(false, L10n.string("Helper 未安装"))
             return
         }
 
@@ -555,7 +555,7 @@ final class DNSManager {
                 if success {
                     self?.getCurrentDNS(interface: interface) { _ in }
                 }
-                completion(success, error)
+                completion(success, Self.localizedHelperMessage(error))
             case .failure(let error):
                 completion(false, error.localizedDescription)
             }
@@ -638,7 +638,9 @@ final class DNSManager {
                         continuation.resume()
                     } else {
                         continuation.resume(
-                            throwing: HelperServiceError.operationFailed(message ?? "ARP cache clear")
+                            throwing: HelperServiceError.operationFailed(
+                                Self.localizedHelperMessage(message) ?? "ARP cache clear"
+                            )
                         )
                     }
                 case .failure(let error):
@@ -664,7 +666,9 @@ final class DNSManager {
                         continuation.resume()
                     } else {
                         continuation.resume(
-                            throwing: HelperServiceError.operationFailed(message ?? "network interface refresh")
+                            throwing: HelperServiceError.operationFailed(
+                                Self.localizedHelperMessage(message) ?? "network interface refresh"
+                            )
                         )
                     }
                 case .failure(let error):
@@ -691,7 +695,9 @@ final class DNSManager {
                         continuation.resume()
                     } else {
                         continuation.resume(
-                            throwing: HelperServiceError.operationFailed(message ?? "memory purge")
+                            throwing: HelperServiceError.operationFailed(
+                                Self.localizedHelperMessage(message) ?? "memory purge"
+                            )
                         )
                     }
                 case .failure(let error):
@@ -699,6 +705,35 @@ final class DNSManager {
                 }
             }
         }
+    }
+
+    private static func localizedHelperMessage(_ message: String?) -> String? {
+        guard let message else { return nil }
+
+        switch message {
+        case "主 DNS 地址无效", "备用 DNS 地址无效", "无法创建网络配置",
+             "无法获取网络服务", "无法应用 DNS 配置更改", "无法设置 DNS 协议配置",
+             "无法清除 DNS 协议配置":
+            return L10n.string(message)
+        default:
+            if let interface = message.removingPrefix("未找到匹配的网络服务：") {
+                return L10n.format("未找到匹配的网络服务：%@", interface)
+            }
+            if let interface = message.removingPrefix("未找到网络接口：") {
+                return L10n.format("未找到网络接口：%@", interface)
+            }
+            if let detail = message.removingPrefix("无法刷新网络接口：") {
+                return L10n.format("无法刷新网络接口：%@", detail)
+            }
+            return message
+        }
+    }
+}
+
+private extension String {
+    func removingPrefix(_ prefix: String) -> String? {
+        guard hasPrefix(prefix) else { return nil }
+        return String(dropFirst(prefix.count))
     }
 }
 
@@ -716,23 +751,23 @@ private enum HelperServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingBundledHelper(let path):
-            return "Bundle 内缺少 Helper：\(path)"
+            return L10n.format("Bundle 内缺少 Helper：%@", path)
         case .missingLaunchDaemonPlist(let path):
-            return "Bundle 内缺少 LaunchDaemon plist：\(path)"
+            return L10n.format("Bundle 内缺少 LaunchDaemon plist：%@", path)
         case .requiresApproval:
-            return "Helper 已注册，请在系统设置的登录项中批准"
+            return L10n.string("Helper 已注册，请在系统设置的登录项中批准")
         case .registrationDidNotEnableService:
-            return "Helper 注册完成，但服务尚未启用"
+            return L10n.string("Helper 注册完成，但服务尚未启用")
         case .unknownStatus:
-            return "Helper 返回未知的服务状态"
+            return L10n.string("Helper 返回未知的服务状态")
         case .unavailable:
-            return "Helper 未启用或无法连接"
+            return L10n.string("Helper 未启用或无法连接")
         case .xpcRequestFailed(let message):
-            return "Helper 通信失败：\(message)"
+            return L10n.format("Helper 通信失败：%@", message)
         case .requestTimedOut(let operation):
-            return "Helper \(operation)超时，操作结果未知"
+            return L10n.format("Helper %@超时，操作结果未知", L10n.string(operation))
         case .operationFailed(let message):
-            return "Helper 操作失败：\(message)"
+            return L10n.format("Helper 操作失败：%@", message)
         }
     }
 }

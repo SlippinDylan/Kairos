@@ -4,6 +4,13 @@ All notable changes to Kairos releases are recorded here.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-19
+
+### 新增
+
+- 支持跟随系统、English、简体中文和繁體中文界面语言。
+- 可在设置的通用区域选择应用语言，并立即重启应用语言配置。
+
 ## [0.4.0] - 2026-09-18
 
 ### 调整

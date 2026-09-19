@@ -48,7 +48,7 @@ final class IPQueryViewModel {
             errorMessage = error.errorDescription
             AppLogger.error("IP查询失败: \(trimmedIP), 错误: \(error.errorDescription ?? "未知错误")")
         } catch {
-            errorMessage = "查询失败: \(error.localizedDescription)"
+            errorMessage = L10n.format("查询失败: %@", error.localizedDescription)
             AppLogger.error("IP查询失败: \(trimmedIP), 错误: \(error.localizedDescription)")
         }
 

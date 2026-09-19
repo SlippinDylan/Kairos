@@ -91,7 +91,7 @@ struct DNSTestCardView: View {
     private var testingView: some View {
         VStack(spacing: 16) {
             // 当前测试域名
-            Text(viewModel.currentProgress?.currentDomain ?? "准备中...")
+            Text(viewModel.currentProgress?.currentDomain ?? L10n.string("准备中..."))
                 .font(.headline)
                 .fontWeight(.medium)
                 .foregroundStyle(.primary)
@@ -295,7 +295,7 @@ struct CompactStatisticCard: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            Text(title)
+            Text(L10n.string(title))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
 
@@ -304,7 +304,7 @@ struct CompactStatisticCard: View {
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundStyle(color)
-                Text(unit)
+                Text(L10n.string(unit))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -59,7 +59,7 @@ struct InfoRow: View {
 
     var body: some View {
         HStack {
-            Text(label)
+            Text(L10n.string(label))
                 .foregroundStyle(.secondary)
 
             Spacer()

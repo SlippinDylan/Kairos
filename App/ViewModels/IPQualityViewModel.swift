@@ -119,7 +119,7 @@ final class IPQualityViewModel {
         } catch is CancellationError {
             AppLogger.info("IP质量检测已取消")
         } catch {
-            errorMessage = "检测失败: \(error.localizedDescription)"
+            errorMessage = L10n.format("检测失败: %@", error.localizedDescription)
             AppLogger.error("IP质量检测失败: \(error.localizedDescription)")
         }
 

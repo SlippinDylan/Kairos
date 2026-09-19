@@ -44,13 +44,13 @@ final class NetworkMaintenanceService {
         var errorDescription: String? {
             switch self {
             case .wifiInterfaceNotFound:
-                return "未找到 WiFi 网卡"
+                return L10n.string("未找到 WiFi 网卡")
             case .wifiControlFailed(let message):
-                return "WiFi 控制失败: \(message)"
+                return L10n.format("WiFi 控制失败: %@", message)
             case .wifiRecoveryFailed(let operation, let recovery):
-                return "网络维护失败且 WiFi 恢复失败。维护错误: \(operation)；恢复错误: \(recovery)"
+                return L10n.format("网络维护失败且 WiFi 恢复失败。维护错误: %@；恢复错误: %@", operation, recovery)
             case .helperUnavailable:
-                return "DNS Helper 未启用，请先在设置中注册并批准 Helper"
+                return L10n.string("DNS Helper 未启用，请先在设置中注册并批准 Helper")
             }
         }
     }

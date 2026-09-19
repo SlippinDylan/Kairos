@@ -16,6 +16,8 @@
 
 Kairos watches the active network and puts a few network tasks in one place. It is for people who regularly move between known networks and want predictable DNS or app actions, alongside IP and resolver tools.
 
+The app interface supports English, Simplified Chinese, and Traditional Chinese. It follows the macOS language by default, or you can choose a language under Settings → General; changing it takes effect after Kairos restarts.
+
 ## Network scenes
 
 Kairos observes network-path changes and reads the default gateway's IP address and MAC address. A scene matches only when both values exactly match the enabled rule.

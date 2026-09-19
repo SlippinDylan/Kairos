@@ -50,6 +50,7 @@ Kairos 是面向 macOS 26+、Apple Silicon 的原生菜单栏网络工具。主�
 bash -n Scripts/create-dmg.sh
 Scripts/create-dmg.sh --help >/dev/null
 node .github/scripts/release-manifest.mjs validate
+node .github/scripts/sync-localization.mjs --check
 node .github/scripts/sync-version.mjs --check
 node --test .github/scripts/*.test.mjs
 

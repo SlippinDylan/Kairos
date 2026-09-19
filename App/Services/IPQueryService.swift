@@ -138,15 +138,15 @@ enum IPQueryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidIPAddress:
-            return "无效的IP地址格式"
+            return L10n.string("无效的IP地址格式")
         case .invalidURL:
-            return "无效的URL"
+            return L10n.string("无效的URL")
         case .invalidResponse:
-            return "无效的服务器响应"
+            return L10n.string("无效的服务器响应")
         case .httpError(let statusCode):
-            return "HTTP错误: \(statusCode)"
+            return L10n.format("HTTP错误: %lld", statusCode)
         case .decodingError(let error):
-            return "数据解析失败: \(error.localizedDescription)"
+            return L10n.format("数据解析失败: %@", error.localizedDescription)
         }
     }
 }

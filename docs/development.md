@@ -39,11 +39,14 @@ CI 的轻量检查可在任意支持 Bash 和 Node.js 的环境执行：
 bash -n Scripts/create-dmg.sh
 Scripts/create-dmg.sh --help >/dev/null
 node .github/scripts/release-manifest.mjs validate
+node .github/scripts/sync-localization.mjs --check
 node .github/scripts/sync-version.mjs --check
 node --test .github/scripts/*.test.mjs
 ```
 
 当前仓库没有 XCTest target。Swift 行为变更以相关 target 编译和必要的手动功能验证为主；不要把 Node 自动化测试描述为应用逻辑测试。
+
+本地化资源由 `App/Localizable.xcstrings` 和 `App/InfoPlist.xcstrings` 提供。修改 `.github/scripts/sync-localization.mjs` 中的受支持字符串后运行同名脚本更新主 Catalog；CI 使用 `--check` 验证生成结果，并由 Node 测试确保 English、简体中文和繁體中文都有完整译文。
 
 按改动选择最小验证：
 

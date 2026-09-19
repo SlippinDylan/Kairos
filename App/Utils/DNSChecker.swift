@@ -29,7 +29,11 @@ class DNSChecker {
         case unknown = "-"
 
         var displayName: String {
-            return self.rawValue
+            switch self {
+            case .native: L10n.string("原生")
+            case .dns: "DNS"
+            case .unknown: "-"
+            }
         }
     }
 

@@ -63,7 +63,7 @@ final class MihomoViewModel {
     func saveConfig() {
         AppLogger.debug("保存 Mihomo 配置")
         configService.saveConfig(config)
-        Toast.success("配置已保存")
+        Toast.success(L10n.string("配置已保存"))
         AppLogger.info("Mihomo 配置保存成功")
         refreshStatus()
     }
@@ -85,7 +85,7 @@ final class MihomoViewModel {
         config.githubReleasesURL = updated.githubReleasesURL
         config.kernelFilenameTemplate = updated.kernelFilenameTemplate
 
-        Toast.success("配置已重置")
+        Toast.success(L10n.string("配置已重置"))
         AppLogger.info("Mihomo 配置重置成功")
         refreshStatus()
     }
@@ -106,7 +106,7 @@ final class MihomoViewModel {
 
             let urls = await FilePanelHelper.selectApplications(
                 allowMultiple: false,
-                message: "选择关联的 Clash/Mihomo 客户端"
+                message: L10n.string("选择关联的 Clash/Mihomo 客户端")
             )
 
             guard let url = urls.first else {
@@ -115,7 +115,7 @@ final class MihomoViewModel {
             }
 
             guard let bundle = Bundle(url: url), let bundleIdentifier = bundle.bundleIdentifier else {
-                Toast.error("无法读取该应用的信息，请确认选择的是有效的 App")
+                Toast.error(L10n.string("无法读取该应用的信息，请确认选择的是有效的 App"))
                 AppLogger.error("读取应用 Bundle 信息失败: \(url.path)")
                 return
             }
@@ -134,7 +134,7 @@ final class MihomoViewModel {
             config.appBundleIdentifier = persisted.appBundleIdentifier
             config.appDisplayName = persisted.appDisplayName
 
-            Toast.success("已关联 \(displayName)")
+            Toast.success(L10n.format("已关联 %@", displayName))
             AppLogger.info("已关联应用: \(displayName) (\(bundleIdentifier))")
 
             refreshStatus()
@@ -157,7 +157,7 @@ final class MihomoViewModel {
         config.appBundleIdentifier = ""
         config.appDisplayName = ""
 
-        Toast.success("已取消关联")
+        Toast.success(L10n.string("已取消关联"))
         AppLogger.info("已取消关联应用")
 
         refreshStatus()
@@ -216,7 +216,7 @@ final class MihomoViewModel {
                 try fileService.backupKernel(kernelPath: snapshot.kernelPath)
                 refreshStatus()
 
-                Toast.success("内核备份成功")
+                Toast.success(L10n.string("内核备份成功"))
                 AppLogger.info("内核备份操作完成")
             } catch {
                 handleError(error)
@@ -234,14 +234,14 @@ final class MihomoViewModel {
     /// 3. 从 GitHub 获取最新预发布版本并下载、替换
     func replaceKernel() {
         guard !config.kernelPath.isEmpty else {
-            Toast.error("请先在下方配置内核文件路径")
+            Toast.error(L10n.string("请先在下方配置内核文件路径"))
             return
         }
 
         AppLogger.info("开始下载并替换内核")
         isDownloading = true
         downloadProgress = 0.0
-        downloadStatusText = "正在获取版本信息..."
+        downloadStatusText = L10n.string("正在获取版本信息...")
 
         // 拍下快照：下载耗时可能长达数秒，期间界面上的内核路径/下载源等
         // 字段仍可编辑，必须固定用同一份配置贯穿整个流程，不能中途改读。
@@ -252,7 +252,7 @@ final class MihomoViewModel {
                 let canProceed = try await ensureHostAppQuitIfRunning(
                     bundleIdentifier: snapshot.appBundleIdentifier,
                     displayName: snapshot.appDisplayName,
-                    onWaiting: { self.downloadStatusText = "等待应用退出..." }
+                    onWaiting: { self.downloadStatusText = L10n.string("等待应用退出...") }
                 )
                 guard canProceed else {
                     isDownloading = false
@@ -267,7 +267,7 @@ final class MihomoViewModel {
                 isDownloading = false
                 downloadProgress = 0.0
                 downloadStatusText = ""
-                Toast.success("内核替换成功")
+                Toast.success(L10n.string("内核替换成功"))
                 AppLogger.info("内核替换操作完成")
             } catch {
                 isDownloading = false
@@ -282,7 +282,7 @@ final class MihomoViewModel {
     /// 从 GitHub 下载最新预发布内核并替换当前内核文件
     /// - Parameter config: 操作开始时拍下的配置快照（而非实时读取 `self.config`）
     private func downloadAndReplaceKernel(config: MihomoConfig) async throws {
-        downloadStatusText = "正在下载内核..."
+        downloadStatusText = L10n.string("正在下载内核...")
         let targetFilename = URL(fileURLWithPath: config.kernelPath).lastPathComponent
 
         let downloadedPath = try await downloadService.downloadLatestKernel(
@@ -294,15 +294,15 @@ final class MihomoViewModel {
                 guard let self else { return }
                 self.downloadProgress = progress
                 if progress < 1.0 {
-                    self.downloadStatusText = "正在下载... \(Int(progress * 100))%"
+                    self.downloadStatusText = L10n.format("正在下载... %lld%%", Int(progress * 100))
                 } else {
-                    self.downloadStatusText = "正在解压..."
+                    self.downloadStatusText = L10n.string("正在解压...")
                 }
             }
         }
 
         AppLogger.info("内核下载完成: \(downloadedPath)")
-        downloadStatusText = "正在替换内核..."
+        downloadStatusText = L10n.string("正在替换内核...")
         try await fileService.replaceKernel(with: downloadedPath, kernelPath: config.kernelPath)
     }
 
@@ -327,7 +327,7 @@ final class MihomoViewModel {
                 try await fileService.restoreKernel(kernelPath: snapshot.kernelPath)
                 refreshStatus()
 
-                Toast.success("内核恢复成功")
+                Toast.success(L10n.string("内核恢复成功"))
                 AppLogger.info("内核恢复操作完成")
             } catch {
                 handleError(error)
@@ -387,7 +387,7 @@ final class MihomoViewModel {
                 allowedTypes: [],
                 allowMultiple: false,
                 directoryURL: defaultDirectory,
-                message: "选择内核文件"
+                message: L10n.string("选择内核文件")
             )
 
             guard let url = urls.first else {
@@ -417,9 +417,9 @@ final class MihomoViewModel {
     private func handleError(_ error: Error) {
         let message: String
         if let mihomoError = error as? MihomoError {
-            message = mihomoError.errorDescription ?? "未知错误"
+            message = mihomoError.errorDescription ?? L10n.string("未知错误")
         } else if error is CancellationError {
-            message = "操作已取消"
+            message = L10n.string("操作已取消")
         } else {
             message = error.localizedDescription
         }

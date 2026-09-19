@@ -21,12 +21,14 @@ struct SettingsView: View {
     @State private var permissionManager = PermissionManager.shared
     @State private var apiKeyManager = APIKeyManager.shared
     @State private var loginItemManager = LoginItemManager.shared
+    @State private var languageController = ApplicationLanguageController.shared
 
     // 导出/导入状态
     @State private var isExporting = false
     @State private var isImporting = false
     @State private var showImportConfirmAlert = false
     @State private var importedData: KairosExportData?
+    @State private var showLanguageRestartAlert = false
 
     var body: some View {
         KairosScrollView {
@@ -68,43 +70,83 @@ struct SettingsView: View {
                 Text("将导入 \(data.appControlScenes.count) 个应用控制场景、\(data.dnsControlScenes.count) 个 DNS 控制场景、API Key 配置以及 Mihomo 内核配置。\n\n此操作将覆盖现有配置，是否继续？")
             }
         }
+        .alert("language.restart.title", isPresented: $showLanguageRestartAlert) {
+            Button("language.restart.now") {
+                ApplicationRelaunchController.shared.requestRelaunch()
+            }
+            Button("language.restart.later", role: .cancel) {}
+        } message: {
+            Text("language.restart.message")
+        }
     }
 
     // MARK: - Login Launch Settings Section
 
     private var generalSettingsSection: some View {
         GroupBox {
-            HStack(spacing: DesignSystem.Spacing.standard) {
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
-                    Text("登录时自动启动")
-                        .font(.body)
-                    Text("登录系统后自动运行 Kairos")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+            VStack(spacing: 0) {
+                HStack(spacing: DesignSystem.Spacing.standard) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+                        Text("登录时自动启动")
+                            .font(.body)
+                        Text("登录系统后自动运行 Kairos")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
 
-                Spacer()
+                    Spacer()
 
-                Toggle("", isOn: Binding(
-                    get: { loginItemManager.isEnabled },
-                    set: { newValue in
-                        do {
-                            if newValue {
-                                try loginItemManager.enable()
-                            } else {
-                                try loginItemManager.disable()
+                    Toggle("", isOn: Binding(
+                        get: { loginItemManager.isEnabled },
+                        set: { newValue in
+                            do {
+                                if newValue {
+                                    try loginItemManager.enable()
+                                } else {
+                                    try loginItemManager.disable()
+                                }
+                            } catch {
+                                AppLogger.error("更改开机自启状态失败", error: error)
+                                loginItemManager.refreshStatus()
                             }
-                        } catch {
-                            AppLogger.error("更改开机自启状态失败", error: error)
-                            loginItemManager.refreshStatus()
+                        }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+                .padding(DesignSystem.Spacing.standard)
+
+                Divider()
+
+                HStack(spacing: DesignSystem.Spacing.standard) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+                        Text("language.setting.title")
+                            .font(.body)
+                        Text("language.setting.description")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+
+                    Picker("language.setting.title", selection: Binding(
+                        get: { languageController.selectedLanguage },
+                        set: { language in
+                            if languageController.setSelectedLanguage(language) {
+                                showLanguageRestartAlert = true
+                            }
+                        }
+                    )) {
+                        ForEach(ApplicationLanguage.allCases, id: \.self) { language in
+                            Text(language.title).tag(language)
                         }
                     }
-                ))
-                .labelsHidden()
-                .toggleStyle(.switch)
+                    .labelsHidden()
+                    .frame(width: 150)
+                }
+                .padding(DesignSystem.Spacing.standard)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(DesignSystem.Spacing.standard)
         } label: {
             SectionHeader(
                 title: "通用",
@@ -124,13 +166,17 @@ struct SettingsView: View {
                     .foregroundStyle(mihomoViewModel.config.hasAssociatedApp ? .green : .secondary)
 
                 VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
-                    Text(mihomoViewModel.config.hasAssociatedApp ? mihomoViewModel.config.appDisplayName : "未关联应用")
+                    Text(
+                        mihomoViewModel.config.hasAssociatedApp
+                            ? mihomoViewModel.config.appDisplayName
+                            : L10n.string("未关联应用")
+                    )
                         .font(.body)
                         .fontWeight(.medium)
                     Text(
                         mihomoViewModel.config.hasAssociatedApp
                             ? mihomoViewModel.config.appBundleIdentifier
-                            : "选择正在使用的 Clash/Mihomo 客户端"
+                            : L10n.string("选择正在使用的 Clash/Mihomo 客户端")
                     )
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -147,7 +193,11 @@ struct SettingsView: View {
                         .disabled(mihomoViewModel.isSelectingHostApp)
                     }
 
-                    Button(mihomoViewModel.config.hasAssociatedApp ? "更换应用…" : "选择应用…") {
+                    Button(
+                        mihomoViewModel.config.hasAssociatedApp
+                            ? L10n.string("更换应用…")
+                            : L10n.string("选择应用…")
+                    ) {
                         mihomoViewModel.selectHostApp()
                     }
                     .buttonStyle(.glassProminent)
@@ -248,7 +298,7 @@ struct SettingsView: View {
 
                 switch result {
                 case .success(let url):
-                    Toast.success("配置已导出到: \(url.lastPathComponent)")
+                    Toast.success(L10n.format("配置已导出到: %@", url.lastPathComponent))
 
                 case .cancelled:
                     break
@@ -308,7 +358,11 @@ struct SettingsView: View {
         importedData = nil
 
         // 显示成功提示
-        Toast.success("已导入 \(data.appControlScenes.count) 个场景和 \(data.dnsControlScenes.count) 个 DNS 场景")
+        Toast.success(L10n.format(
+            "已导入 %lld 个场景和 %lld 个 DNS 场景",
+            data.appControlScenes.count,
+            data.dnsControlScenes.count
+        ))
 
         AppLogger.info("✅ 配置导入完成")
     }
@@ -542,7 +596,7 @@ private struct HelperActionButton: View {
                 .controlSize(.small)
                 .padding(.horizontal, 8)
         } else {
-            Text(title)
+            Text(L10n.string(title))
         }
     }
 
@@ -553,13 +607,13 @@ private struct HelperActionButton: View {
                 operation = nil
 
                 if success {
-                    Toast.success("DNS Helper 已成功安装")
+                    Toast.success(L10n.string("DNS Helper 已成功安装"))
                     // 触发 DNS 场景匹配，确保已开启的场景立即生效
                     networkMonitor.refreshDNSSceneMatching()
                 } else if dnsManager.helperRequiresApproval {
-                    Toast.info("Helper 已注册，请在系统设置的登录项中批准")
+                    Toast.info(L10n.string("Helper 已注册，请在系统设置的登录项中批准"))
                 } else {
-                    let message = error?.localizedDescription ?? "安装失败，请重试"
+                    let message = error?.localizedDescription ?? L10n.string("安装失败，请重试")
                     Toast.error(message)
                 }
 
@@ -577,7 +631,7 @@ private struct HelperActionButton: View {
 
                 switch result {
                 case .success(let version):
-                    Toast.success("Helper 连接正常，版本：\(version)")
+                    Toast.success(L10n.format("Helper 连接正常，版本：%@", version))
                 case .failure(let error):
                     Toast.error(error.localizedDescription)
                 }
@@ -594,9 +648,9 @@ private struct HelperActionButton: View {
                 operation = nil
 
                 if success {
-                    Toast.success("DNS Helper 已成功卸载")
+                    Toast.success(L10n.string("DNS Helper 已成功卸载"))
                 } else {
-                    let message = error?.localizedDescription ?? "卸载失败，请重试"
+                    let message = error?.localizedDescription ?? L10n.string("卸载失败，请重试")
                     Toast.error(message)
                 }
 
@@ -619,7 +673,7 @@ private struct APIKeyInputRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // 标签
-            Text(label)
+            Text(L10n.string(label))
                 .font(.system(size: 13))
                 .frame(width: 100, alignment: .leading)
 
@@ -647,7 +701,7 @@ private struct APIKeyInputRow: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 8)
-                .help(isSecure ? "显示" : "隐藏")
+                .help(isSecure ? L10n.string("显示") : L10n.string("隐藏"))
             }
             .background(Color(nsColor: .textBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
@@ -667,7 +721,7 @@ private struct APIKeyInputRow: View {
                     .font(.system(size: 14))
             }
             .buttonStyle(.plain)
-            .help("获取 API Key")
+            .help(L10n.string("获取 API Key"))
         }
     }
 }

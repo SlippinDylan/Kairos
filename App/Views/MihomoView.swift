@@ -55,30 +55,30 @@ struct StatusCard: View {
     @Environment(MihomoViewModel.self) private var viewModel
 
     private var hostAppTitle: String {
-        viewModel.config.appDisplayName.isEmpty ? "关联应用" : viewModel.config.appDisplayName
+        viewModel.config.appDisplayName.isEmpty ? L10n.string("关联应用") : viewModel.config.appDisplayName
     }
 
     private var hostAppStatusText: String {
         switch viewModel.hostAppInstallStatus {
         case .notConfigured:
-            return "未设置，请前往设置页面关联"
+            return L10n.string("未设置，请前往设置页面关联")
         case .notInstalled:
-            return "未检测到该应用"
+            return L10n.string("未检测到该应用")
         case .installed:
-            return "已安装"
+            return L10n.string("已安装")
         case .unknown:
-            return "检测中"
+            return L10n.string("检测中")
         }
     }
 
     private var isRunningStatusText: String {
         switch viewModel.hostAppInstallStatus {
         case .notConfigured:
-            return "未关联"
+            return L10n.string("未关联")
         case .unknown:
-            return "检测中"
+            return L10n.string("检测中")
         case .notInstalled, .installed:
-            return viewModel.isHostAppRunning ? "运行中" : "未运行"
+            return viewModel.isHostAppRunning ? L10n.string("运行中") : L10n.string("未运行")
         }
     }
 
@@ -137,7 +137,7 @@ struct StatusRow: View {
 
     var body: some View {
         HStack {
-            Text(title)
+            Text(L10n.string(title))
                 .font(.callout)
                 .foregroundStyle(.secondary)
 
@@ -286,7 +286,11 @@ struct ConfigurationCard: View {
                         viewModel.selectKernelFile()
                     } label: {
                         HStack {
-                            Text(viewModel.config.kernelPath.isEmpty ? "点击选择内核文件..." : viewModel.config.kernelPath)
+                            Text(
+                                viewModel.config.kernelPath.isEmpty
+                                    ? L10n.string("点击选择内核文件...")
+                                    : viewModel.config.kernelPath
+                            )
                                 .foregroundStyle(viewModel.config.kernelPath.isEmpty ? Color.secondary : Color.primary)
                                 .lineLimit(1)
                                 .truncationMode(.middle)

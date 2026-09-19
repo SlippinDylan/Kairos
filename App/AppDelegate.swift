@@ -117,6 +117,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// - Parameter notification: 退出通知
     func applicationWillTerminate(_ notification: Notification) {
         AppLogger.info("应用即将退出")
+        ApplicationRelaunchController.shared.relaunchIfRequested()
     }
 
     /// 拦截应用退出请求（实现双击 Cmd+Q 退出）
@@ -128,6 +129,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// - 第一次按 Cmd+Q：显示确认提示，返回 .terminateCancel 阻止退出
     /// - 第二次按 Cmd+Q（2秒内）：返回 .terminateNow 允许退出
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if ApplicationRelaunchController.shared.shouldTerminateImmediately {
+            AppLogger.info("应用因语言变更重新启动")
+            return .terminateNow
+        }
+
         let shouldQuit = QuitConfirmationCoordinator.shared.requestQuit()
         if shouldQuit {
             AppLogger.info("用户确认退出应用（双击 Cmd+Q）")

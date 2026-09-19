@@ -115,7 +115,7 @@ class IPDataFetchingUseCase {
         throw lastError ?? NSError(
             domain: "IPQuality",
             code: -1,
-            userInfo: [NSLocalizedDescriptionKey: "无法获取IP地址"]
+            userInfo: [NSLocalizedDescriptionKey: L10n.string("无法获取IP地址")]
         )
     }
 

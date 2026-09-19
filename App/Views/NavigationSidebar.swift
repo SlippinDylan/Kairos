@@ -41,7 +41,7 @@ struct NavigationSidebar: View {
                     selectedTab = destination.id
                 } label: {
                     Label(
-                        destination.title,
+                        L10n.string(destination.title),
                         systemImage: selectedTab == destination.id
                             ? destination.selectedSystemImage
                             : destination.systemImage

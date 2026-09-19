@@ -43,7 +43,7 @@ final class QuitConfirmationCoordinator {
     var isShowingConfirmation: Bool = false
 
     /// 确认提示文字
-    var confirmationMessage: String = "再按一次 ⌘Q 退出"
+    var confirmationMessage: String = L10n.string("再按一次 ⌘Q 退出")
 
     // MARK: - Private Properties
 

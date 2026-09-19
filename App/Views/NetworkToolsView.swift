@@ -233,7 +233,7 @@ final class NetworkToolsViewModel {
         do {
             try await service.deepClean()
             lastExecutionTime = Date()
-            Toast.success("深度清理完成")
+            Toast.success(L10n.string("深度清理完成"))
             AppLogger.info("✅ 深度清理成功")
         } catch {
             Toast.error(error.localizedDescription)

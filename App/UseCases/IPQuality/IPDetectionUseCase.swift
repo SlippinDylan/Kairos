@@ -42,7 +42,7 @@ class IPDetectionUseCase {
     /// - Throws: 检测过程中的错误
     func executeDetection() async throws -> IPQualityResult {
         // Step 1: Get IP Address (5%)
-        progressCoordinator.updateTask("获取IP地址...")
+        progressCoordinator.updateTask(L10n.string("获取IP地址..."))
         let ip = try await ipDataFetchingUseCase.getIPAddress()
         progressCoordinator.smoothUpdateProgress(to: 0.05)
 
@@ -53,12 +53,12 @@ class IPDetectionUseCase {
         // Step 2: 多数据源检测（35%）
         // ✅ 2026/01/07 重构：合并原 Step 2-4 的单独调用
         // 现在 MultiSourceAggregationUseCase 会同时填充基础信息和多数据源对比数据
-        progressCoordinator.updateTask("多数据源分析...")
+        progressCoordinator.updateTask(L10n.string("多数据源分析..."))
         await multiSourceAggregationUseCase.fetchMultiSourceData(ip: ip, into: &tempResult)
         progressCoordinator.smoothUpdateProgress(to: 0.35)
 
         // Step 3: Test streaming services (65%)
-        progressCoordinator.updateTask("检测流媒体解锁...")
+        progressCoordinator.updateTask(L10n.string("检测流媒体解锁..."))
         AppLogger.debug("🔍 开始流媒体并发测试（7个服务）")
 
         // ✅ 使用 TaskGroup + 超时控制，防止单个任务卡死
@@ -108,14 +108,14 @@ class IPDetectionUseCase {
         progressCoordinator.smoothUpdateProgress(to: 0.65)
 
         // Step 4: Test email services (80%)
-        progressCoordinator.updateTask("检测邮件服务...")
+        progressCoordinator.updateTask(L10n.string("检测邮件服务..."))
         tempResult.emailStatus = await emailTestUseCase.testEmailServices(ip: ip)
         progressCoordinator.smoothUpdateProgress(to: 0.80)
 
         // Complete
         tempResult.detectedAt = Date()
         progressCoordinator.smoothUpdateProgress(to: 1.0)
-        progressCoordinator.updateTask("检测完成")
+        progressCoordinator.updateTask(L10n.string("检测完成"))
 
         return tempResult
     }

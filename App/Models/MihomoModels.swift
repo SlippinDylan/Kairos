@@ -97,13 +97,13 @@ struct KernelStatus {
     /// 当前状态描述
     var statusDescription: String {
         if kernelPath.isEmpty {
-            return "尚未选择内核文件"
+            return L10n.string("尚未选择内核文件")
         } else if !kernelExists {
-            return "内核文件不存在"
+            return L10n.string("内核文件不存在")
         } else if backupExists {
-            return "内核已备份"
+            return L10n.string("内核已备份")
         } else {
-            return "内核未备份"
+            return L10n.string("内核未备份")
         }
     }
 }
@@ -126,25 +126,25 @@ enum MihomoError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .hostAppIsRunning(let displayName):
-            return "\(displayName) 正在运行，请先退出应用"
+            return L10n.format("%@ 正在运行，请先退出应用", displayName)
         case .appQuitTimeout:
-            return "等待应用退出超时，请手动确认应用已完全退出后重试"
+            return L10n.string("等待应用退出超时，请手动确认应用已完全退出后重试")
         case .kernelPathNotConfigured:
-            return "请先选择内核文件路径"
+            return L10n.string("请先选择内核文件路径")
         case .kernelFileNotFound:
-            return "内核文件不存在"
+            return L10n.string("内核文件不存在")
         case .backupAlreadyExists:
-            return "备份文件已存在"
+            return L10n.string("备份文件已存在")
         case .backupNotFound:
-            return "备份文件不存在"
+            return L10n.string("备份文件不存在")
         case .fileOperationFailed(let reason):
-            return "文件操作失败: \(reason)"
+            return L10n.format("文件操作失败: %@", reason)
         case .permissionDenied:
-            return "当前仅支持用户主目录内可写的内核文件，不支持受保护位置或 App Bundle 内的文件"
+            return L10n.string("当前仅支持用户主目录内可写的内核文件，不支持受保护位置或 App Bundle 内的文件")
         case .invalidFilePath:
-            return "无效的文件路径"
+            return L10n.string("无效的文件路径")
         case .shellCommandFailed(let reason):
-            return "命令执行失败: \(reason)"
+            return L10n.format("命令执行失败: %@", reason)
         }
     }
 }

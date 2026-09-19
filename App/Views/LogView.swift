@@ -55,7 +55,7 @@ struct LogView: View {
         let counts = Dictionary(grouping: filteredLogs, by: { $0.level })
             .mapValues { $0.count }
 
-        var parts: [String] = ["共 \(filteredLogs.count) 条"]
+        var parts: [String] = [L10n.format("共 %lld 条", filteredLogs.count)]
 
         // 只显示有数据的级别
         for level in LogLevel.allCases {

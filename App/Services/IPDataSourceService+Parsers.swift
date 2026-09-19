@@ -93,11 +93,11 @@ extension IPDataSourceService {
 
             let level: String
             if score == 0 {
-                level = "低风险"
+                level = L10n.string("低风险")
             } else if score < 50 {
-                level = "中风险"
+                level = L10n.string("中风险")
             } else {
-                level = "高风险"
+                level = L10n.string("高风险")
             }
 
             riskScore = DataSourceRiskScore(source: "ipapi.is", score: score, level: level)
@@ -140,13 +140,13 @@ extension IPDataSourceService {
 
                 switch threatLevel.lowercased() {
                 case "high":
-                    level = "高风险"
+                    level = L10n.string("高风险")
                     score = 80
                 case "medium":
-                    level = "中风险"
+                    level = L10n.string("中风险")
                     score = 50
                 default:
-                    level = "低风险"
+                    level = L10n.string("低风险")
                     score = 10
                 }
 
@@ -223,11 +223,11 @@ extension IPDataSourceService {
         if let score = json["abuseConfidenceScore"] as? Int {
             let level: String
             if score < 25 {
-                level = "低风险"
+                level = L10n.string("低风险")
             } else if score < 75 {
-                level = "高风险"
+                level = L10n.string("高风险")
             } else {
-                level = "极高风险"
+                level = L10n.string("极高风险")
             }
 
             riskScore = DataSourceRiskScore(source: "AbuseIPDB", score: score, level: level)
@@ -276,9 +276,9 @@ extension IPDataSourceService {
 
         var riskScore: DataSourceRiskScore?
         if isProxy {
-            riskScore = DataSourceRiskScore(source: "IP2Location", score: 70, level: "高风险")
+            riskScore = DataSourceRiskScore(source: "IP2Location", score: 70, level: L10n.string("高风险"))
         } else {
-            riskScore = DataSourceRiskScore(source: "IP2Location", score: 10, level: "低风险")
+            riskScore = DataSourceRiskScore(source: "IP2Location", score: 10, level: L10n.string("低风险"))
         }
 
         // 提取风险因子
@@ -348,11 +348,11 @@ extension IPDataSourceService {
         guard let type = type else { return "-" }
 
         switch type.lowercased() {
-        case "business": return "商业"
-        case "isp": return "家宽"
-        case "hosting": return "机房"
-        case "education": return "教育"
-        default: return "其他"
+        case "business": return L10n.string("商业")
+        case "isp": return L10n.string("家宽")
+        case "hosting": return L10n.string("机房")
+        case "education": return L10n.string("教育")
+        default: return L10n.string("其他")
         }
     }
 
@@ -360,11 +360,11 @@ extension IPDataSourceService {
         guard let type = type else { return "-" }
 
         switch type.lowercased() {
-        case "business": return "商业"
-        case "isp": return "家宽"
-        case "hosting": return "机房"
-        case "education": return "教育"
-        default: return "其他"
+        case "business": return L10n.string("商业")
+        case "isp": return L10n.string("家宽")
+        case "hosting": return L10n.string("机房")
+        case "education": return L10n.string("教育")
+        default: return L10n.string("其他")
         }
     }
 
@@ -372,12 +372,12 @@ extension IPDataSourceService {
         guard let type = type else { return "-" }
 
         switch type.lowercased() {
-        case "business": return "商业"
-        case "isp": return "家宽"
-        case "hosting": return "机房"
-        case "education": return "教育"
-        case "government": return "政府"
-        default: return "其他"
+        case "business": return L10n.string("商业")
+        case "isp": return L10n.string("家宽")
+        case "hosting": return L10n.string("机房")
+        case "education": return L10n.string("教育")
+        case "government": return L10n.string("政府")
+        default: return L10n.string("其他")
         }
     }
 
@@ -385,17 +385,17 @@ extension IPDataSourceService {
         guard let type = type else { return "-" }
 
         switch type {
-        case "Commercial": return "商业"
-        case "Data Center/Web Hosting/Transit": return "机房"
-        case "University/College/School": return "教育"
-        case "Government": return "政府"
-        case "Organization": return "组织"
-        case "Military": return "军事"
+        case "Commercial": return L10n.string("商业")
+        case "Data Center/Web Hosting/Transit": return L10n.string("机房")
+        case "University/College/School": return L10n.string("教育")
+        case "Government": return L10n.string("政府")
+        case "Organization": return L10n.string("组织")
+        case "Military": return L10n.string("军事")
         case "Content Delivery Network": return "CDN"
-        case "Fixed Line ISP": return "家宽"
-        case "Mobile ISP": return "移动网络"
-        case "Search Engine Spider": return "爬虫"
-        default: return "其他"
+        case "Fixed Line ISP": return L10n.string("家宽")
+        case "Mobile ISP": return L10n.string("移动网络")
+        case "Search Engine Spider": return L10n.string("爬虫")
+        default: return L10n.string("其他")
         }
     }
 
@@ -406,17 +406,17 @@ extension IPDataSourceService {
         let firstType = type.components(separatedBy: "/").first ?? type
 
         switch firstType.uppercased() {
-        case "COM": return "商业"
-        case "DCH": return "机房"
-        case "EDU": return "教育"
-        case "GOV": return "政府"
-        case "ORG": return "组织"
-        case "MIL": return "军事"
+        case "COM": return L10n.string("商业")
+        case "DCH": return L10n.string("机房")
+        case "EDU": return L10n.string("教育")
+        case "GOV": return L10n.string("政府")
+        case "ORG": return L10n.string("组织")
+        case "MIL": return L10n.string("军事")
         case "CDN": return "CDN"
-        case "ISP": return "家宽"
-        case "MOB": return "移动网络"
-        case "SES": return "爬虫"
-        default: return "其他"
+        case "ISP": return L10n.string("家宽")
+        case "MOB": return L10n.string("移动网络")
+        case "SES": return L10n.string("爬虫")
+        default: return L10n.string("其他")
         }
     }
 }

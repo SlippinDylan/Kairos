@@ -409,7 +409,7 @@ struct IPQualityCardCompletedView: View {
                     HStack(spacing: 6) {
                         Image(systemName: emailStatus.port25Open ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .foregroundStyle(emailStatus.port25Open ? .green : .red)
-                        Text(emailStatus.port25Open ? "开放" : "关闭")
+                        Text(emailStatus.port25Open ? L10n.string("开放") : L10n.string("关闭"))
                             .fontWeight(.medium)
                             .foregroundStyle(emailStatus.port25Open ? .green : .red)
                     }
@@ -425,7 +425,7 @@ struct IPQualityCardCompletedView: View {
                     HStack(spacing: 6) {
                         Image(systemName: emailStatus.smtpConnectable ? "checkmark.circle.fill" : "xmark.circle.fill")
                             .foregroundStyle(emailStatus.smtpConnectable ? .green : .red)
-                        Text(emailStatus.smtpConnectable ? "正常" : "无法连接")
+                        Text(emailStatus.smtpConnectable ? L10n.string("正常") : L10n.string("无法连接"))
                             .fontWeight(.medium)
                             .foregroundStyle(emailStatus.smtpConnectable ? .green : .red)
                     }
@@ -502,7 +502,7 @@ private struct DataTable<T>: View {
     private var headerRow: some View {
         HStack(spacing: 0) {
             ForEach(Array(columns.enumerated()), id: \.offset) { index, column in
-                Text(column.title)
+                Text(L10n.string(column.title))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: column.width.maxWidth, alignment: .leading)

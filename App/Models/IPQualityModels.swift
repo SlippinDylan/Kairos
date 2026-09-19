@@ -17,11 +17,11 @@ enum RiskLevel: String, Codable {
 
     var displayName: String {
         switch self {
-        case .veryLow: return "极低"
-        case .low: return "低"
-        case .medium: return "中等"
-        case .high: return "高"
-        case .veryHigh: return "极高"
+        case .veryLow: return L10n.string("极低")
+        case .low: return L10n.string("低")
+        case .medium: return L10n.string("中等")
+        case .high: return L10n.string("高")
+        case .veryHigh: return L10n.string("极高")
         }
     }
 
@@ -47,14 +47,14 @@ enum IPType: String, Codable {
 
     var displayName: String {
         switch self {
-        case .isp: return "家庭宽带"
-        case .hosting: return "数据中心"
-        case .business: return "商业"
-        case .education: return "教育"
-        case .government: return "政府"
+        case .isp: return L10n.string("家庭宽带")
+        case .hosting: return L10n.string("数据中心")
+        case .business: return L10n.string("商业")
+        case .education: return L10n.string("教育")
+        case .government: return L10n.string("政府")
         case .cdn: return "CDN"
-        case .mobile: return "移动网络"
-        case .unknown: return "未知"
+        case .mobile: return L10n.string("移动网络")
+        case .unknown: return L10n.string("未知")
         }
     }
 }
@@ -66,7 +66,7 @@ struct StreamingStatus: Codable {
     var unlockType: String? // 原生/DNS/-
 
     var displayStatus: String {
-        return available ? "解锁" : "失败"
+        return available ? L10n.string("解锁") : L10n.string("失败")
     }
 
     var displayRegion: String {
@@ -88,9 +88,9 @@ struct EmailStatus: Codable {
 
     var displayStatus: String {
         if !port25Open {
-            return "端口关闭"
+            return L10n.string("端口关闭")
         }
-        return smtpConnectable ? "正常" : "无法连接"
+        return smtpConnectable ? L10n.string("正常") : L10n.string("无法连接")
     }
 }
 

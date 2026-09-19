@@ -22,11 +22,11 @@ struct SectionHeader: View {
                 .background(iconColor)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
 
-            Text(title)
+            Text(L10n.string(title))
                 .font(.system(size: 15, weight: .semibold))
 
             if let description = description {
-                Text(description)
+                Text(L10n.string(description))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

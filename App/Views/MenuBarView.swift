@@ -171,7 +171,7 @@ private struct MenuButton: View {
 
             windowCoordinator.switchTab(tab)
         } label: {
-            Label(title, systemImage: systemImage)
+            Label(L10n.string(title), systemImage: systemImage)
         }
     }
 }

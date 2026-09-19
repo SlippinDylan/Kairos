@@ -92,11 +92,11 @@ class MihomoProcessService {
         AppLogger.info("弹出对话框请求退出关联应用: \(displayName)")
 
         let alert = NSAlert()
-        alert.messageText = "\(displayName) 正在运行"
-        alert.informativeText = "执行此操作需要先退出 \(displayName)，是否继续？"
+        alert.messageText = L10n.format("%@ 正在运行", displayName)
+        alert.informativeText = L10n.format("执行此操作需要先退出 %@，是否继续？", displayName)
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "退出 \(displayName)")
-        alert.addButton(withTitle: "取消")
+        alert.addButton(withTitle: L10n.format("退出 %@", displayName))
+        alert.addButton(withTitle: L10n.string("取消"))
 
         // 使用 withCheckedContinuation 将 runModal 包装为 async
         // 注意：runModal 会阻塞当前线程，但在 MainActor 上下文中是安全的

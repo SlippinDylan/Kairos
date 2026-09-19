@@ -17,26 +17,26 @@ enum PermissionType {
 
     var displayName: String {
         switch self {
-        case .accessibility: return "辅助功能权限"
-        case .helperTool: return "DNS Helper工具"
+        case .accessibility: return L10n.string("辅助功能权限")
+        case .helperTool: return L10n.string("DNS Helper工具")
         }
     }
 
     var description: String {
         switch self {
         case .accessibility:
-            return "用于自动控制应用的启动和退出"
+            return L10n.string("用于自动控制应用的启动和退出")
         case .helperTool:
-            return "用于修改系统 DNS 配置（需要系统批准）"
+            return L10n.string("用于修改系统 DNS 配置（需要系统批准）")
         }
     }
 
     var guideText: String {
         switch self {
         case .accessibility:
-            return "请前往：系统设置 > 隐私与安全性 > 辅助功能，添加 Kairos"
+            return L10n.string("请前往：系统设置 > 隐私与安全性 > 辅助功能，添加 Kairos")
         case .helperTool:
-            return "点击「安装 Helper」，然后在系统设置的登录项与扩展中允许 Kairos"
+            return L10n.string("点击「安装 Helper」，然后在系统设置的登录项与扩展中允许 Kairos")
         }
     }
 }
@@ -48,7 +48,7 @@ struct PermissionStatus {
     var isRequired: Bool  // 是否必需
 
     var statusText: String {
-        isGranted ? "已授权" : "未授权"
+        isGranted ? L10n.string("已授权") : L10n.string("未授权")
     }
 
     var statusColor: NSColor {

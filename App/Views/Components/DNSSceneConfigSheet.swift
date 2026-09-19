@@ -32,7 +32,7 @@ struct DNSSceneConfigSheet: View {
         VStack(spacing: 0) {
             // 标题栏
             HStack {
-                Text(isEditing ? "编辑场景" : "添加场景")
+                Text(isEditing ? L10n.string("编辑场景") : L10n.string("添加场景"))
                     .font(.headline)
                 Spacer()
             }
@@ -263,7 +263,7 @@ private struct DNSFormSection<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
+            Text(L10n.string(title))
                 .font(.caption)
                 .fontWeight(.medium)
                 .foregroundStyle(.secondary)

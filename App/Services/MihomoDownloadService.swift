@@ -213,7 +213,7 @@ final class MihomoDownloadService: NSObject {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw MihomoDownloadError.networkError("无效的响应")
+            throw MihomoDownloadError.networkError(L10n.string("无效的响应"))
         }
 
         guard httpResponse.statusCode == 200 else {
@@ -296,7 +296,11 @@ final class MihomoDownloadService: NSObject {
         }
 
         // 所有重试都失败
-        throw MihomoDownloadError.downloadFailed("网络连接失败，已重试 \(maxRetryCount) 次: \(lastError?.localizedDescription ?? "未知错误")")
+        throw MihomoDownloadError.downloadFailed(L10n.format(
+            "网络连接失败，已重试 %lld 次: %@",
+            maxRetryCount,
+            lastError?.localizedDescription ?? L10n.string("未知错误")
+        ))
     }
 
     /// 判断错误是否可以重试
@@ -342,7 +346,10 @@ final class MihomoDownloadService: NSObject {
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
-            throw MihomoDownloadError.downloadFailed("HTTP 请求失败，状态码: \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+            throw MihomoDownloadError.downloadFailed(L10n.format(
+                "HTTP 请求失败，状态码: %lld",
+                (response as? HTTPURLResponse)?.statusCode ?? -1
+            ))
         }
 
         // 下载完成后移动到目标路径
@@ -359,12 +366,16 @@ final class MihomoDownloadService: NSObject {
 
     private func verifyAssetDigest(at path: String, expectedDigest: String?) throws {
         guard let expectedDigest, !expectedDigest.isEmpty else {
-            throw MihomoDownloadError.integrityCheckFailed("GitHub asset 未提供 SHA-256 digest")
+            throw MihomoDownloadError.integrityCheckFailed(
+                L10n.string("GitHub asset 未提供 SHA-256 digest")
+            )
         }
 
         let components = expectedDigest.split(separator: ":", maxSplits: 1).map(String.init)
         guard components.count == 2, components[0].lowercased() == "sha256" else {
-            throw MihomoDownloadError.integrityCheckFailed("不支持的 digest 格式：\(expectedDigest)")
+            throw MihomoDownloadError.integrityCheckFailed(
+                L10n.format("不支持的 digest 格式：%@", expectedDigest)
+            )
         }
 
         let fileURL = URL(fileURLWithPath: path)
@@ -374,7 +385,9 @@ final class MihomoDownloadService: NSObject {
             .joined()
 
         guard actualDigest == components[1].lowercased() else {
-            throw MihomoDownloadError.integrityCheckFailed("下载文件的 SHA-256 与 GitHub Release 不一致")
+            throw MihomoDownloadError.integrityCheckFailed(
+                L10n.string("下载文件的 SHA-256 与 GitHub Release 不一致")
+            )
         }
         AppLogger.info("GitHub asset SHA-256 校验通过")
     }
@@ -522,23 +535,23 @@ enum MihomoDownloadError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidGitHubURL(let url):
-            return "无效的 GitHub URL: \(url)"
+            return L10n.format("无效的 GitHub URL: %@", url)
         case .networkError(let reason):
-            return "网络错误: \(reason)"
+            return L10n.format("网络错误: %@", reason)
         case .noPrerelease:
-            return "未找到预发布版本"
+            return L10n.string("未找到预发布版本")
         case .assetNotFound(let template):
-            return "未找到匹配的文件: \(template)"
+            return L10n.format("未找到匹配的文件: %@", template)
         case .invalidDownloadURL(let url):
-            return "无效的下载地址: \(url)"
+            return L10n.format("无效的下载地址: %@", url)
         case .downloadFailed(let reason):
-            return "下载失败: \(reason)"
+            return L10n.format("下载失败: %@", reason)
         case .decompressionFailed:
-            return "解压失败"
+            return L10n.string("解压失败")
         case .integrityCheckFailed(let reason):
-            return "完整性校验失败: \(reason)"
+            return L10n.format("完整性校验失败: %@", reason)
         case .fileOperationFailed(let reason):
-            return "文件操作失败: \(reason)"
+            return L10n.format("文件操作失败: %@", reason)
         }
     }
 }

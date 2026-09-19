@@ -48,7 +48,13 @@ struct DNSTestProgress {
 
     /// 进度描述文本
     var description: String {
-        "Testing \(currentDomain) (\(completedDomains + 1)/\(totalDomains), Round \(currentRound)/10)"
+        L10n.format(
+            "Testing %@ (%lld/%lld, Round %lld/10)",
+            currentDomain,
+            completedDomains + 1,
+            totalDomains,
+            currentRound
+        )
     }
 }
 

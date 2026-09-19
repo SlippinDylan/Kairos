@@ -17,7 +17,7 @@ struct DataTableView: View {
             // 表头
             HStack(spacing: 0) {
                 ForEach(Array(headers.enumerated()), id: \.offset) { index, header in
-                    Text(header)
+                    Text(L10n.string(header))
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)

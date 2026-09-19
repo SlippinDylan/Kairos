@@ -51,7 +51,8 @@ enum GeoUtils {
     /// - Parameter code: 洲代码，如 "NA"
     /// - Returns: 中文洲名，如 "北美洲"
     static func continentName(from code: String) -> String {
-        return continentMap[code.uppercased()] ?? code
+        guard let name = continentMap[code.uppercased()] else { return code }
+        return L10n.string(name)
     }
 
     // MARK: - Country Flag
@@ -78,15 +79,15 @@ enum GeoUtils {
     static func ipTypeDisplayName(from type: String) -> String {
         switch type.lowercased() {
         case "hosting", "business":
-            return "数据中心IP"
+            return L10n.string("数据中心IP")
         case "isp":
-            return "原生IP"
+            return L10n.string("原生IP")
         case "education":
-            return "教育机构IP"
+            return L10n.string("教育机构IP")
         case "government":
-            return "政府机构IP"
+            return L10n.string("政府机构IP")
         default:
-            return "未知类型"
+            return L10n.string("未知类型")
         }
     }
 
@@ -149,6 +150,7 @@ enum GeoUtils {
     /// - Parameter stateName: 英文州名
     /// - Returns: 中文州名或原文
     static func translateStateName(_ stateName: String) -> String {
-        return stateTranslationMap[stateName] ?? stateName
+        guard stateTranslationMap[stateName] != nil else { return stateName }
+        return L10n.string(stateName)
     }
 }

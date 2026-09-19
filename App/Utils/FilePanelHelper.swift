@@ -78,7 +78,7 @@ enum FilePanelHelper {
     /// - 应用白名单配置
     static func selectApplications(
         allowMultiple: Bool = true,
-        message: String = "选择要控制的应用"
+        message: String = L10n.string("选择要控制的应用")
     ) async -> [URL] {
         return await selectFiles(
             allowedTypes: [.application],

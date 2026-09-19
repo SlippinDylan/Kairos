@@ -122,7 +122,7 @@ struct LogToolbar: View {
     }
 
     private func filterTitle(for level: LogLevel?) -> String {
-        level?.displayName.trimmingCharacters(in: .whitespaces) ?? "全部"
+        level?.displayName.trimmingCharacters(in: .whitespaces) ?? L10n.string("全部")
     }
 }
 

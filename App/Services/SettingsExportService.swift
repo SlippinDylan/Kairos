@@ -155,9 +155,9 @@ final class SettingsExportService {
         let panel = NSSavePanel()
 
         // 配置对话框
-        panel.title = "导出 Kairos 设置"
-        panel.message = "选择保存位置"
-        panel.nameFieldLabel = "文件名:"
+        panel.title = L10n.string("导出 Kairos 设置")
+        panel.message = L10n.string("选择保存位置")
+        panel.nameFieldLabel = L10n.string("文件名:")
         panel.nameFieldStringValue = generateFileName()
         panel.canCreateDirectories = true
         panel.isExtensionHidden = false
@@ -185,8 +185,8 @@ final class SettingsExportService {
         let panel = NSOpenPanel()
 
         // 配置对话框
-        panel.title = "导入 Kairos 设置"
-        panel.message = "选择要导入的配置文件"
+        panel.title = L10n.string("导入 Kairos 设置")
+        panel.message = L10n.string("选择要导入的配置文件")
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false

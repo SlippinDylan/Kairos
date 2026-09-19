@@ -83,7 +83,9 @@ final class MihomoFileService {
         } catch {
             try? fileManager.removeItem(at: stagingURL)
             AppLogger.error("备份内核失败: \(error.localizedDescription)")
-            throw MihomoError.fileOperationFailed("备份内核失败: \(error.localizedDescription)")
+            throw MihomoError.fileOperationFailed(
+                L10n.format("备份内核失败: %@", error.localizedDescription)
+            )
         }
     }
 
@@ -122,7 +124,9 @@ final class MihomoFileService {
             if let mihomoError = error as? MihomoError {
                 throw mihomoError
             }
-            throw MihomoError.fileOperationFailed("替换内核失败: \(error.localizedDescription)")
+            throw MihomoError.fileOperationFailed(
+                L10n.format("替换内核失败: %@", error.localizedDescription)
+            )
         }
     }
 
@@ -159,7 +163,9 @@ final class MihomoFileService {
             if let mihomoError = error as? MihomoError {
                 throw mihomoError
             }
-            throw MihomoError.fileOperationFailed("恢复内核失败: \(error.localizedDescription)")
+            throw MihomoError.fileOperationFailed(
+                L10n.format("恢复内核失败: %@", error.localizedDescription)
+            )
         }
     }
 
@@ -242,7 +248,7 @@ final class MihomoFileService {
         let sourceSize = try source.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
         let copySize = try copy.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
         guard sourceSize > 0, sourceSize == copySize else {
-            throw MihomoError.fileOperationFailed("文件完整性验证失败")
+            throw MihomoError.fileOperationFailed(L10n.string("文件完整性验证失败"))
         }
     }
 
@@ -262,7 +268,9 @@ final class MihomoFileService {
         let output = String(data: outputData, encoding: .utf8) ?? ""
         let architectures = output.split(whereSeparator: { $0.isWhitespace }).map(String.init)
         guard task.terminationStatus == 0, architectures.contains("arm64") else {
-            throw MihomoError.fileOperationFailed("所选文件不是 arm64 Mach-O 可执行文件")
+            throw MihomoError.fileOperationFailed(
+                L10n.string("所选文件不是 arm64 Mach-O 可执行文件")
+            )
         }
     }
 
@@ -291,7 +299,9 @@ final class MihomoFileService {
             try fileManager.setAttributes(attributes, ofItemAtPath: url.path)
         } catch {
             AppLogger.error("设置文件权限失败: \(error.localizedDescription)")
-            throw MihomoError.fileOperationFailed("设置文件权限失败: \(error.localizedDescription)")
+            throw MihomoError.fileOperationFailed(
+                L10n.format("设置文件权限失败: %@", error.localizedDescription)
+            )
         }
     }
 }

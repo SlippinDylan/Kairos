@@ -62,9 +62,9 @@ final class NotificationCoordinator {
         debouncer.debounce(identifier: NotificationID.sceneMatch) { [weak self] in
             guard let self else { return }
 
-            let names = sceneNames.joined(separator: "、")
-            let title = "已匹配场景"
-            let body = "当前网络匹配「\(names)」，控制的应用未在运行"
+            let names = sceneNames.joined(separator: L10n.string("list.separator"))
+            let title = L10n.string("已匹配场景")
+            let body = L10n.format("当前网络匹配「%@」，控制的应用未在运行", names)
 
             AppLogger.info("发送场景匹配通知（无操作）: \(names)")
             await manager.sendNotification(
@@ -92,17 +92,17 @@ final class NotificationCoordinator {
         debouncer.debounce(identifier: NotificationID.sceneMatch) { [weak self] in
             guard let self else { return }
 
-            let title = "场景切换成功"
+            let title = L10n.string("场景切换成功")
             var bodyParts: [String] = []
 
             if !quitApps.isEmpty {
                 let appsText = formatAppList(quitApps)
-                bodyParts.append("已退出 \(appsText)")
+                bodyParts.append(L10n.format("已退出 %@", appsText))
             }
 
             if !launchApps.isEmpty {
                 let appsText = formatAppList(launchApps)
-                bodyParts.append("已启动 \(appsText)")
+                bodyParts.append(L10n.format("已启动 %@", appsText))
             }
 
             let body = bodyParts.joined(separator: "\n")
@@ -134,21 +134,23 @@ final class NotificationCoordinator {
             guard let self else { return }
 
             let totalFailed = quitFailed.count + launchFailed.count
-            let title = successCount == 0 ? "场景切换失败" : "场景切换部分失败"
+            let title = successCount == 0
+                ? L10n.string("场景切换失败")
+                : L10n.string("场景切换部分失败")
             var bodyParts: [String] = []
 
             if !quitFailed.isEmpty {
                 let appsText = formatAppList(quitFailed)
-                bodyParts.append("退出失败 \(appsText)")
+                bodyParts.append(L10n.format("退出失败 %@", appsText))
             }
 
             if !launchFailed.isEmpty {
                 let appsText = formatAppList(launchFailed)
-                bodyParts.append("启动失败 \(appsText)")
+                bodyParts.append(L10n.format("启动失败 %@", appsText))
             }
 
             if successCount > 0 {
-                bodyParts.append("(\(successCount)个操作成功)")
+                bodyParts.append(L10n.format("(%lld个操作成功)", successCount))
             }
 
             let body = bodyParts.joined(separator: "\n")
@@ -172,9 +174,9 @@ final class NotificationCoordinator {
         debouncer.debounce(identifier: NotificationID.appManagement) { [weak self] in
             guard let self else { return }
 
-            let title = "网络状态发生变化"
+            let title = L10n.string("网络状态发生变化")
             let appsText = formatAppList(apps)
-            let body = "已启动 \(appsText)"
+            let body = L10n.format("已启动 %@", appsText)
 
             AppLogger.info("发送应用启动通知")
             await manager.sendNotification(
@@ -194,9 +196,9 @@ final class NotificationCoordinator {
         debouncer.debounce(identifier: NotificationID.appManagement) { [weak self] in
             guard let self else { return }
 
-            let title = "网络状态发生变化"
+            let title = L10n.string("网络状态发生变化")
             let appsText = formatAppList(apps)
-            let body = "已退出 \(appsText)"
+            let body = L10n.format("已退出 %@", appsText)
 
             AppLogger.info("发送应用退出通知")
             await manager.sendNotification(
@@ -214,11 +216,11 @@ final class NotificationCoordinator {
         debouncer.debounce(identifier: NotificationID.dnsChange) { [weak self] in
             guard let self else { return }
 
-            let title = "网络状态发生变化"
+            let title = L10n.string("网络状态发生变化")
             let body = if let server = server, !server.isEmpty {
-                "已切换至 DNS 服务器 \(server)"
+                L10n.format("已切换至 DNS 服务器 %@", server)
             } else {
-                "已切换 DNS 服务器"
+                L10n.string("已切换 DNS 服务器")
             }
 
             AppLogger.info("发送 DNS 切换通知")
@@ -235,8 +237,8 @@ final class NotificationCoordinator {
         debouncer.debounce(identifier: NotificationID.dnsChange) { [weak self] in
             guard let self else { return }
 
-            let title = "网络状态发生变化"
-            let body = "已恢复默认的 DNS 服务器"
+            let title = L10n.string("网络状态发生变化")
+            let body = L10n.string("已恢复默认的 DNS 服务器")
 
             AppLogger.info("发送 DNS 恢复通知")
             await manager.sendNotification(
@@ -267,10 +269,10 @@ final class NotificationCoordinator {
         guard !apps.isEmpty else { return "" }
 
         if apps.count <= 3 {
-            return apps.joined(separator: "、")
+            return apps.joined(separator: L10n.string("list.separator"))
         } else {
-            let first = apps.prefix(2).joined(separator: "、")
-            return "\(first) 等\(apps.count)个应用"
+            let first = apps.prefix(2).joined(separator: L10n.string("list.separator"))
+            return L10n.format("%@ 等%lld个应用", first, apps.count)
         }
     }
 }

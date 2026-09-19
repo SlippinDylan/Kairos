@@ -10,7 +10,7 @@ import SwiftUI
 /// 网络控制视图（重构版）
 ///
 /// ## 架构说明
-/// - GroupBox 1: 当前网络 - 展示网络基本信息（网络名称、网关IP、网关MAC）
+/// - GroupBox 1: 网络概要 - 展示网络名称、网关 IP、网关 MAC 和 DNS
 /// - GroupBox 2: 应用控制 - 展示应用控制的当前状态（匹配场景、控制应用）
 /// - GroupBox 3: DNS控制 - 展示DNS控制的当前状态（匹配场景、DNS）
 /// - Picker + 添加场景按钮（不在GroupBox内）
@@ -53,17 +53,10 @@ struct NetworkMonitorView: View {
     var body: some View {
         KairosScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // GroupBox 1: 当前网络
+                // GroupBox 1: 网络概要
                 currentNetworkGroupBox
 
-                // GroupBox 2 & 3: 应用控制 + DNS控制（左右分布，等高）
-                HStack(alignment: .top, spacing: 16) {
-                    appControlGroupBox
-                        .frame(maxHeight: .infinity, alignment: .top)
-                    dnsControlGroupBox
-                        .frame(maxHeight: .infinity, alignment: .top)
-                }
-                .fixedSize(horizontal: false, vertical: true)
+                automationStatusCard
 
                 // Picker + 添加场景按钮（不在GroupBox内）
                 sceneTypeSelector
@@ -73,6 +66,8 @@ struct NetworkMonitorView: View {
             }
             .padding(DesignSystem.Spacing.standard)
         }
+        .navigationTitle(L10n.string("网络控制"))
+        .navigationSubtitle(L10n.string("page.networkControl.description"))
         .sheet(isPresented: $showingAppSceneSheet) {
             SceneConfigSheet(
                 scene: $editingAppScene,
@@ -121,93 +116,106 @@ struct NetworkMonitorView: View {
         }
     }
 
-    // MARK: - GroupBox 1: 当前网络
+    // MARK: - GroupBox 1: 网络概要
 
     /// 当前网络信息卡片
     private var currentNetworkGroupBox: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 12) {
-                // 网络名称
-                HStack {
-                    Text("网络名称")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if networkMonitor.activeNetworks.isEmpty {
-                        Text("-")
-                            .fontWeight(.medium)
-                    } else {
-                        HStack(spacing: 6) {
-                            ForEach(networkMonitor.activeNetworks) { network in
-                                Text(network.displayName)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(.blue.opacity(0.1))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                            }
-                        }
-                    }
-                }
+        OverviewCard {
+            HStack(spacing: 0) {
+                OverviewMetric(
+                    title: "网络名称",
+                    value: currentNetworkName,
+                    icon: .symbol("wifi", .blue)
+                )
 
-                Divider()
+                OverviewMetricDivider()
 
-                // 网关 IP
-                InfoRow(label: "网关 IP", value: networkMonitor.currentRouterIP)
+                OverviewMetric(
+                    title: "网关 IP",
+                    value: networkMonitor.currentRouterIP,
+                    icon: .symbol("network", .blue)
+                )
 
-                Divider()
+                OverviewMetricDivider()
 
-                // 网关 MAC
-                InfoRow(label: "网关 MAC", value: networkMonitor.currentRouterMAC)
+                OverviewMetric(
+                    title: "网关 MAC",
+                    value: networkMonitor.currentRouterMAC,
+                    icon: .symbol("point.3.connected.trianglepath.dotted", .blue)
+                )
 
-                Divider()
+                OverviewMetricDivider()
 
-                // 当前 DNS
-                HStack {
-                    Text("DNS")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if dnsManager.currentPrimaryDNS == "-" && dnsManager.currentSecondaryDNS == "-" {
-                        Text("-")
-                            .fontWeight(.medium)
-                    } else {
-                        HStack(spacing: 6) {
-                            // 主 DNS
-                            if dnsManager.currentPrimaryDNS != "-" {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "circle.fill")
-                                        .font(.system(size: 6))
-                                        .foregroundStyle(.green)
-                                    Text(dnsManager.currentPrimaryDNS)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(.green.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                            }
-
-                            // 备用 DNS
-                            if dnsManager.currentSecondaryDNS != "-" {
-                                Text(dnsManager.currentSecondaryDNS)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(.green.opacity(0.1))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                            }
-                        }
-                    }
-                }
+                OverviewMetric(
+                    title: "DNS",
+                    value: currentDNSDescription,
+                    icon: .symbol("server.rack", hasCurrentDNS ? .green : .secondary)
+                )
             }
-            .padding()
-        } label: {
-            SectionHeader(title: "当前网络", icon: "wifi", iconColor: .blue)
         }
     }
 
-    // MARK: - GroupBox 2: 应用控制
+    private var currentNetworkName: String {
+        guard !networkMonitor.activeNetworks.isEmpty else { return "-" }
+        return networkMonitor.activeNetworks.map(\.displayName).joined(separator: " · ")
+    }
 
-    /// 应用控制状态卡片
-    private var appControlGroupBox: some View {
+    private var hasCurrentDNS: Bool {
+        dnsManager.currentPrimaryDNS != "-" || dnsManager.currentSecondaryDNS != "-"
+    }
+
+    private var currentDNSDescription: String {
+        let servers = [dnsManager.currentPrimaryDNS, dnsManager.currentSecondaryDNS]
+            .filter { $0 != "-" }
+        return servers.isEmpty ? "-" : servers.joined(separator: " · ")
+    }
+
+    // MARK: - Automation Status
+
+    private var automationStatusCard: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 0) {
+                automationStatusColumn(
+                    title: "应用控制",
+                    icon: "app.fill",
+                    color: .blue
+                ) {
+                    appControlStatusContent
+                }
+
+                Divider()
+                    .padding(.horizontal, DesignSystem.Spacing.standard)
+
+                automationStatusColumn(
+                    title: "DNS 控制",
+                    icon: "server.rack",
+                    color: .green
+                ) {
+                    dnsControlStatusContent
+                }
+            }
+            .padding(DesignSystem.Spacing.standard)
+        }
+    }
+
+    private func automationStatusColumn<Content: View>(
+        title: String,
+        icon: String,
+        color: Color,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+            SectionHeader(title: title, icon: icon, iconColor: color)
+
+            Divider()
+
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+    }
+
+    private var appControlStatusContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
                 // 匹配场景
                 HStack {
                     Text("匹配场景")
@@ -228,6 +236,7 @@ struct NetworkMonitorView: View {
                         }
                     }
                 }
+                .frame(height: 32)
 
                 Divider()
 
@@ -261,19 +270,12 @@ struct NetworkMonitorView: View {
                         }
                     }
                 }
-            }
-            .padding()
-        } label: {
-            SectionHeader(title: "应用控制", icon: "app.fill", iconColor: .blue)
+                .frame(height: 32)
         }
     }
 
-    // MARK: - GroupBox 3: DNS控制
-
-    /// DNS控制状态卡片
-    private var dnsControlGroupBox: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 12) {
+    private var dnsControlStatusContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
                 // 匹配场景（移到上面）
                 HStack {
                     Text("匹配场景")
@@ -290,6 +292,7 @@ struct NetworkMonitorView: View {
                             .fontWeight(.medium)
                     }
                 }
+                .frame(height: 32)
 
                 Divider()
 
@@ -326,10 +329,7 @@ struct NetworkMonitorView: View {
                             .fontWeight(.medium)
                     }
                 }
-            }
-            .padding()
-        } label: {
-            SectionHeader(title: "DNS 控制", icon: "server.rack", iconColor: .green)
+                .frame(height: 32)
         }
     }
 
@@ -383,7 +383,7 @@ struct NetworkMonitorView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
-                VStack(spacing: 12) {
+                LazyVGrid(columns: sceneGridColumns, spacing: 12) {
                     ForEach($appScenes) { $scene in
                         SceneCard(
                             scene: $scene,
@@ -410,7 +410,7 @@ struct NetworkMonitorView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
-                VStack(spacing: 12) {
+                LazyVGrid(columns: sceneGridColumns, spacing: 12) {
                     ForEach($dnsScenes) { $scene in
                         DNSSceneCard(
                             scene: $scene,
@@ -433,6 +433,13 @@ struct NetworkMonitorView: View {
     }
 
     // MARK: - Helper Methods
+
+    private var sceneGridColumns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: DesignSystem.Spacing.medium),
+            GridItem(.flexible())
+        ]
+    }
 
     /// 计算所有匹配场景的控制应用（去重）
     private var allControlApps: [String] {

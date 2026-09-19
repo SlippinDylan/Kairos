@@ -26,26 +26,31 @@ struct MihomoView: View {
             .padding()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .topTrailing) {
-            refreshButton
-                .padding(DesignSystem.Spacing.standard)
+        .navigationTitle("Mihomo")
+        .navigationSubtitle(L10n.string("page.mihomo.description"))
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                refreshButton
+            }
         }
     }
 
     private var refreshButton: some View {
-        Button {
-            viewModel.refreshStatus()
-        } label: {
+        Group {
             if viewModel.isRefreshing {
                 ProgressView()
                     .controlSize(.small)
+                    .frame(width: 28, height: 28)
             } else {
-                Image(systemName: "arrow.clockwise")
+                Button {
+                    viewModel.refreshStatus()
+                } label: {
+                    Label("刷新状态", systemImage: "arrow.clockwise")
+                        .labelStyle(.iconOnly)
+                }
+                .help("刷新状态")
             }
         }
-        .buttonStyle(.glass)
-        .help("刷新状态")
-        .disabled(viewModel.isRefreshing)
     }
 }
 
@@ -94,65 +99,60 @@ struct StatusCard: View {
     }
 
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 12) {
-                // 关联应用安装状态
-                StatusRow(
+        OverviewCard {
+            HStack(spacing: 0) {
+                OverviewMetric(
                     title: hostAppTitle,
-                    status: hostAppStatusText,
-                    isPositive: viewModel.hostAppInstallStatus == .installed
+                    value: hostAppStatusText,
+                    icon: hostAppIcon,
+                    valueColor: hostAppStatusColor
                 )
 
-                Divider()
+                OverviewMetricDivider()
 
-                // 关联应用运行状态
-                StatusRow(
+                OverviewMetric(
                     title: "运行状态",
-                    status: isRunningStatusText,
-                    isPositive: isRunningStatusPositive
+                    value: isRunningStatusText,
+                    icon: .symbol("play.circle.fill", runningStatusColor),
+                    valueColor: runningStatusColor
                 )
 
-                Divider()
+                OverviewMetricDivider()
 
-                // 内核状态
-                if let kernelStatus = viewModel.kernelStatus {
-                    StatusRow(
-                        title: "内核文件",
-                        status: kernelStatus.statusDescription,
-                        isPositive: kernelStatus.kernelExists
-                    )
-                }
+                OverviewMetric(
+                    title: "内核文件",
+                    value: kernelStatusText,
+                    icon: .symbol("shippingbox.fill", kernelStatusColor),
+                    valueColor: kernelStatusColor
+                )
             }
-            .padding()
-        } label: {
-            SectionHeader(title: "内核状态", icon: "info.circle.fill", iconColor: .blue)
         }
     }
-}
 
-struct StatusRow: View {
-    let title: String
-    let status: String
-    let isPositive: Bool
-
-    var body: some View {
-        HStack {
-            Text(L10n.string(title))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            HStack(spacing: 4) {
-                Image(systemName: isPositive ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .foregroundStyle(isPositive ? .green : .orange)
-                    .imageScale(DesignSystem.IconScale.small)
-
-                Text(status)
-                    .font(.callout)
-                    .foregroundStyle(isPositive ? .green : .orange)
-            }
+    private var hostAppIcon: OverviewMetricIcon {
+        let appBundlePath = viewModel.config.appBundlePath
+        guard !appBundlePath.isEmpty,
+              FileManager.default.fileExists(atPath: appBundlePath) else {
+            return .symbol("app.fill", .blue)
         }
+
+        return .application(NSWorkspace.shared.icon(forFile: appBundlePath))
+    }
+
+    private var hostAppStatusColor: Color {
+        viewModel.hostAppInstallStatus == .installed ? .green : .orange
+    }
+
+    private var runningStatusColor: Color {
+        isRunningStatusPositive ? .green : .orange
+    }
+
+    private var kernelStatusText: String {
+        viewModel.kernelStatus?.statusDescription ?? L10n.string("检测中")
+    }
+
+    private var kernelStatusColor: Color {
+        viewModel.kernelStatus?.kernelExists == true ? .green : .orange
     }
 }
 

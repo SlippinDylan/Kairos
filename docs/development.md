@@ -95,20 +95,6 @@ Scripts/create-dmg.sh --help
 
 ## 开发产物与安全清理
 
-仓库内常见可再生产物：
+清理请求语义、仓库内外范围、Kairos 归属判定、Agent 对话保护、开发安装边界和空间报告要求统一见 [Kairos 开发产物清理规则](development-cleanup.md)。
 
-- `build/`
-- `DerivedData/`
-- `.build/`
-- `*.xcresult`、`*.dSYM`、临时 DMG 挂载或打包目录
-
-只有在明确收到清理请求后才删除，并遵循：
-
-1. 先解析精确路径，确认属于 Kairos 或本次构建。
-2. 删除前统计每个目标和总占用。
-3. 只删除可重新生成且不承载用户数据的内容。
-4. 删除后重新统计并报告实际释放空间。
-
-不要把以下内容当作开发缓存：源码、`.git/`、`Kairos.xcodeproj/`、`Config/`、`Package.resolved`、签名材料，以及 `~/Library/Application Support/Kairos/` 下的场景、日志和用户设置。
-
-仓库外的 `/tmp`、`/private/tmp`、`/private/var/folders`、Xcode DerivedData、SwiftPM cache 可能被其他项目或系统共享。只有用户明确要求全盘审计时才检查；删除范围必须能可靠归属于 Kairos，无法确认用途的条目保留。
+本文前述构建命令生成 `build/DerivedData-Release/`；`Scripts/create-dmg.sh` 生成调用者指定的 DMG，并在正常或异常退出时清理 `kairos-dmg.*` staging。实际输出路径仍以执行的命令和脚本参数为准。

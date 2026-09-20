@@ -84,16 +84,16 @@ xcodebuild build \
 - 根 `AGENTS.md` 目标保持在约 100 行，软上限 150 行；细节下沉到 `docs/`，局部规则需要时放在更近的 `AGENTS.md`。
 - 同一事实只维护一个权威来源。重复出现的 Agent 错误优先通过类型、测试、lint 或 CI 固化，再补充必要说明。
 
-## 开发产物与清理
+## 开发产物清理
 
-- 仓库内 `build/`、`DerivedData/`、`.build/`、测试结果和明确生成的临时文件可在明确清理请求下删除；删除前先确认归属并统计空间。
-- 不删除源码、Git 数据、工程配置、签名材料、用户设置、场景 JSON、日志或用途不明的文件。
-- 扫描或清理 `/tmp`、`/private/tmp`、`/private/var/folders` 及仓库外 DerivedData 必须得到用户明确授权，并仅处理能归属于 Kairos 且可重新生成的内容。
+- 只有用户明确要求时才执行清理；执行前必须读取并遵循 `docs/development-cleanup.md`。
+- 不删除源码、Git 数据、工程配置、用户数据、Agent 对话和状态，或用途不明的文件。
 - 未经明确要求，不提交、推送、创建 Release、修改 tap/appcast，或将 `Config/Release/manifest.json` 的 `release` 改为 `true`。
 
 ## 文档导航
 
 - `docs/architecture.md`：运行时组件、数据流、安全边界、持久化和当前风险。
-- `docs/development.md`：环境、构建验证、CI、发布与安全清理。
+- `docs/development.md`：环境、构建验证、CI 与发布。
+- `docs/development-cleanup.md`：开发产物清理语义、范围、安全边界与结果报告。
 - `README.md`：用户可见能力、权限、安装和平台要求。
 - `CHANGELOG.md`：已发布行为变化与发布说明来源。

@@ -4,14 +4,15 @@
 //
 //  Created by SlippinDylan on 2025/12/30.
 //
+import Darwin
 import Foundation
 
 /// Mihomo 文件操作服务
 ///
 /// ## 架构说明
 /// - 状态检查：使用普通 FileManager（无需特权）
-/// - 备份、替换和恢复仅支持用户主目录内可写的普通文件
-/// - 新文件在目标目录完成 staging 后通过原子替换提交
+/// - 备份、替换和恢复仅支持用户主目录内、父目录可写的普通文件
+/// - 新文件在目标目录完成 staging 和签名后通过原子交换提交
 /// - 所有方法均以参数形式接收路径，不自行读取持久化配置，
 ///   避免与调用方（ViewModel）内存中尚未保存的编辑状态不一致
 final class MihomoFileService {
@@ -65,7 +66,7 @@ final class MihomoFileService {
     ///
     func backupKernel(kernelPath: String) throws {
         AppLogger.debug("开始备份内核文件")
-        let kernelURL = try validatedWritableKernelURL(kernelPath)
+        let kernelURL = try validatedExistingKernelURL(kernelPath)
         let backupURL = URL(fileURLWithPath: kernelURL.path + ".bak")
 
         if fileManager.fileExists(atPath: backupURL.path) {
@@ -99,35 +100,19 @@ final class MihomoFileService {
     @MainActor
     func replaceKernel(with newKernelPath: String, kernelPath: String) async throws {
         AppLogger.debug("开始原子替换内核文件: \(newKernelPath)")
-        let sourceURL = try validatedRegularFileURL(newKernelPath, mustBeWritable: false)
-        let kernelURL = try validatedWritableKernelURL(kernelPath)
+        let sourceURL = try validatedRegularFileURL(newKernelPath)
+        let kernelURL = try validatedExistingKernelURL(kernelPath)
         let backupURL = URL(fileURLWithPath: kernelURL.path + ".bak")
-        let stagingURL = uniqueStagingURL(for: kernelURL)
 
         try validateArm64MachO(at: sourceURL)
         if !fileManager.fileExists(atPath: backupURL.path) {
             try backupKernel(kernelPath: kernelURL.path)
         } else {
-            _ = try validatedRegularFileURL(backupURL.path, mustBeWritable: false)
+            _ = try validatedRegularFileURL(backupURL.path)
         }
 
-        do {
-            try fileManager.copyItem(at: sourceURL, to: stagingURL)
-            try setExecutablePermissions(at: stagingURL)
-            try verifyMatchingFileSize(source: sourceURL, copy: stagingURL)
-            try validateArm64MachO(at: stagingURL)
-            _ = try fileManager.replaceItemAt(kernelURL, withItemAt: stagingURL)
-            AppLogger.info("内核文件原子替换成功")
-        } catch {
-            try? fileManager.removeItem(at: stagingURL)
-            AppLogger.error("内核替换失败: \(error.localizedDescription)")
-            if let mihomoError = error as? MihomoError {
-                throw mihomoError
-            }
-            throw MihomoError.fileOperationFailed(
-                L10n.format("替换内核失败: %@", error.localizedDescription)
-            )
-        }
+        try installKernel(from: sourceURL, at: kernelURL)
+        AppLogger.info("内核文件原子替换成功")
     }
 
     /// 从备份原子恢复内核文件
@@ -143,40 +128,150 @@ final class MihomoFileService {
             AppLogger.error("恢复内核失败: 备份文件不存在")
             throw MihomoError.backupNotFound
         }
-        let validatedBackupURL = try validatedRegularFileURL(backupURL.path, mustBeWritable: false)
+        let validatedBackupURL = try validatedRegularFileURL(backupURL.path)
         try validateArm64MachO(at: validatedBackupURL)
-        let stagingURL = uniqueStagingURL(for: kernelURL)
-
-        do {
-            try fileManager.copyItem(at: validatedBackupURL, to: stagingURL)
-            try setExecutablePermissions(at: stagingURL)
-            try verifyMatchingFileSize(source: validatedBackupURL, copy: stagingURL)
-            if fileManager.fileExists(atPath: kernelURL.path) {
-                _ = try fileManager.replaceItemAt(kernelURL, withItemAt: stagingURL)
-            } else {
-                try fileManager.moveItem(at: stagingURL, to: kernelURL)
-            }
-            AppLogger.info("内核文件恢复成功")
-        } catch {
-            try? fileManager.removeItem(at: stagingURL)
-            AppLogger.error("恢复内核失败: \(error.localizedDescription)")
-            if let mihomoError = error as? MihomoError {
-                throw mihomoError
-            }
-            throw MihomoError.fileOperationFailed(
-                L10n.format("恢复内核失败: %@", error.localizedDescription)
-            )
-        }
+        try installKernel(from: validatedBackupURL, at: kernelURL)
+        AppLogger.info("内核文件恢复成功")
     }
 
     // MARK: - 私有辅助方法
 
-    private func validatedWritableKernelURL(_ path: String) throws -> URL {
+    private func installKernel(from sourceURL: URL, at kernelURL: URL) throws {
+        let stagingURL = uniqueStagingURL(for: kernelURL)
+        var stagingContainsOriginal = false
+
+        defer {
+            if !stagingContainsOriginal && fileManager.fileExists(atPath: stagingURL.path) {
+                do {
+                    try fileManager.removeItem(at: stagingURL)
+                } catch {
+                    AppLogger.warning("清理暂存内核失败: \(error.localizedDescription)")
+                }
+            }
+        }
+
+        do {
+            try fileManager.copyItem(at: sourceURL, to: stagingURL)
+            try setExecutablePermissions(at: stagingURL)
+            try verifyMatchingFileSize(source: sourceURL, copy: stagingURL)
+            try validateArm64MachO(at: stagingURL)
+            try removeQuarantine(at: stagingURL)
+            try runCodeSign(["--force", "--sign", "-"], at: stagingURL)
+            try runCodeSign(["--verify", "--verbose=2"], at: stagingURL)
+            try validateMihomoVersion(at: stagingURL)
+
+            if fileManager.fileExists(atPath: kernelURL.path) {
+                // Atomic swap retains the original inode for rollback, including its owner and mode.
+                try swapFiles(stagingURL, kernelURL)
+                stagingContainsOriginal = true
+                do {
+                    try removeQuarantine(at: kernelURL)
+                    try runCodeSign(["--verify", "--verbose=2"], at: kernelURL)
+                    try validateMihomoVersion(at: kernelURL)
+                } catch {
+                    let verificationError = error
+                    do {
+                        try swapFiles(stagingURL, kernelURL)
+                        stagingContainsOriginal = false
+                    } catch {
+                        throw MihomoError.fileOperationFailed(
+                            "内核验证失败且回滚失败，原文件保留在 \(stagingURL.path): \(error.localizedDescription)"
+                        )
+                    }
+                    throw verificationError
+                }
+
+                do {
+                    try fileManager.removeItem(at: stagingURL)
+                    stagingContainsOriginal = false
+                } catch {
+                    AppLogger.warning("替换成功，但清理旧内核失败: \(stagingURL.path): \(error.localizedDescription)")
+                }
+            } else {
+                try fileManager.moveItem(at: stagingURL, to: kernelURL)
+                do {
+                    try removeQuarantine(at: kernelURL)
+                    try runCodeSign(["--verify", "--verbose=2"], at: kernelURL)
+                    try validateMihomoVersion(at: kernelURL)
+                } catch {
+                    try fileManager.removeItem(at: kernelURL)
+                    throw error
+                }
+            }
+        } catch {
+            AppLogger.error("内核安装失败: \(error.localizedDescription)")
+            if let mihomoError = error as? MihomoError {
+                throw mihomoError
+            }
+            throw MihomoError.fileOperationFailed(error.localizedDescription)
+        }
+    }
+
+    private func swapFiles(_ firstURL: URL, _ secondURL: URL) throws {
+        guard renameatx_np(AT_FDCWD, firstURL.path, AT_FDCWD, secondURL.path, UInt32(RENAME_SWAP)) == 0 else {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+        }
+    }
+
+    private func removeQuarantine(at url: URL) throws {
+        guard removexattr(url.path, "com.apple.quarantine", 0) == 0 || errno == ENOATTR else {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(errno))
+        }
+    }
+
+    private func runCodeSign(_ arguments: [String], at url: URL) throws {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/codesign")
+        task.arguments = arguments + [url.path]
+
+        let outputPipe = Pipe()
+        task.standardOutput = outputPipe
+        task.standardError = outputPipe
+
+        try task.run()
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        task.waitUntilExit()
+
+        guard task.terminationStatus == 0 else {
+            let output = String(data: outputData, encoding: .utf8) ?? ""
+            throw MihomoError.fileOperationFailed("codesign: \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+        }
+    }
+
+    private func validateMihomoVersion(at url: URL) throws {
+        let task = Process()
+        task.executableURL = url
+        task.arguments = ["-v"]
+
+        let outputPipe = Pipe()
+        task.standardOutput = outputPipe
+        task.standardError = outputPipe
+
+        try task.run()
+        let deadline = Date().addingTimeInterval(5)
+        while task.isRunning && Date() < deadline {
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+        if task.isRunning {
+            task.terminate()
+            task.waitUntilExit()
+            throw MihomoError.fileOperationFailed("Mihomo -v timed out")
+        }
+
+        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: outputData, encoding: .utf8) ?? ""
+        guard task.terminationStatus == 0,
+              output.range(of: "mihomo|clash[ ._-]*meta", options: [.regularExpression, .caseInsensitive]) != nil else {
+            throw MihomoError.fileOperationFailed("Mihomo -v: \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+        }
+    }
+
+    private func validatedExistingKernelURL(_ path: String) throws -> URL {
         let url = try validatedKernelDestinationURL(path)
         guard fileManager.fileExists(atPath: url.path) else {
             throw MihomoError.kernelFileNotFound
         }
-        return try validatedRegularFileURL(url.path, mustBeWritable: true)
+        return try validatedRegularFileURL(url.path)
     }
 
     private func validatedKernelDestinationURL(_ path: String) throws -> URL {
@@ -209,12 +304,12 @@ final class MihomoFileService {
         }
 
         if fileManager.fileExists(atPath: resolvedURL.path) {
-            _ = try validatedRegularFileURL(resolvedURL.path, mustBeWritable: true)
+            _ = try validatedRegularFileURL(resolvedURL.path)
         }
         return resolvedURL
     }
 
-    private func validatedRegularFileURL(_ path: String, mustBeWritable: Bool) throws -> URL {
+    private func validatedRegularFileURL(_ path: String) throws -> URL {
         let expandedPath = NSString(string: path).expandingTildeInPath
         guard NSString(string: expandedPath).isAbsolutePath else {
             throw MihomoError.invalidFilePath
@@ -231,9 +326,6 @@ final class MihomoFileService {
         guard values.isRegularFile == true, values.isSymbolicLink != true,
               fileManager.isReadableFile(atPath: resolvedURL.path) else {
             throw MihomoError.invalidFilePath
-        }
-        if mustBeWritable, !fileManager.isWritableFile(atPath: resolvedURL.path) {
-            throw MihomoError.permissionDenied
         }
         return resolvedURL
     }

@@ -4,6 +4,13 @@ All notable changes to Kairos releases are recorded here.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-24
+
+### 修复
+
+- Mihomo 内核替换支持用户主目录内、目标目录可写但原文件由 root 持有的情况。
+- 替换和恢复前对新内核处理隔离属性并完成 ad hoc 签名；提交后验证，失败时恢复原文件。
+
 ## [0.7.0] - 2026-09-19
 
 ### 调整

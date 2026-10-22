@@ -5,7 +5,6 @@
 //  Created by SlippinDylan on 2026/01/08.
 //
 
-import Compression
 import CryptoKit
 import Foundation
 
@@ -392,9 +391,7 @@ final class MihomoDownloadService: NSObject {
         AppLogger.info("GitHub asset SHA-256 校验通过")
     }
 
-    /// 解压 gzip 文件
-    ///
-    /// 使用 Swift 原生 Compression 框架解压
+    /// Decompresses and validates the complete gzip archive using system zlib.
     private func decompressGzip(at path: String) throws -> String {
         let sourceURL = URL(fileURLWithPath: path)
         let outputFilename = sourceURL.deletingPathExtension().lastPathComponent
@@ -402,15 +399,13 @@ final class MihomoDownloadService: NSObject {
 
         AppLogger.debug("开始解压: \(path)")
 
-        // 读取 gzip 数据
-        let compressedData = try Data(contentsOf: sourceURL)
-
-        // 解压 gzip
-        guard let decompressedData = decompressGzipData(compressedData) else {
+        let decompressedData: Data
+        do {
+            decompressedData = try GzipDecompressor.decompress(at: sourceURL)
+        } catch GzipDecompressor.DecompressionError.invalidArchive {
+            AppLogger.error("gzip 数据不完整或校验失败")
             throw MihomoDownloadError.decompressionFailed
         }
-
-        // 写入解压后的文件
         try decompressedData.write(to: outputURL)
 
         // 设置可执行权限
@@ -422,77 +417,6 @@ final class MihomoDownloadService: NSObject {
         AppLogger.debug("解压完成: \(outputURL.path)")
 
         return outputURL.path
-    }
-
-    /// 使用 Compression 框架解压 gzip 数据
-    private func decompressGzipData(_ data: Data) -> Data? {
-        // Gzip 文件头检查
-        guard data.count >= 10,
-              data[0] == 0x1f,
-              data[1] == 0x8b else {
-            AppLogger.error("无效的 gzip 文件头")
-            return nil
-        }
-
-        // 跳过 gzip 头部（10 字节基本头 + 可选字段）
-        var headerSize = 10
-        let flags = data[3]
-
-        // FEXTRA
-        if flags & 0x04 != 0 {
-            guard data.count > headerSize + 2 else { return nil }
-            let extraLen = Int(data[headerSize]) | (Int(data[headerSize + 1]) << 8)
-            headerSize += 2 + extraLen
-        }
-
-        // FNAME
-        if flags & 0x08 != 0 {
-            while headerSize < data.count && data[headerSize] != 0 {
-                headerSize += 1
-            }
-            headerSize += 1  // 跳过 null 终止符
-        }
-
-        // FCOMMENT
-        if flags & 0x10 != 0 {
-            while headerSize < data.count && data[headerSize] != 0 {
-                headerSize += 1
-            }
-            headerSize += 1
-        }
-
-        // FHCRC
-        if flags & 0x02 != 0 {
-            headerSize += 2
-        }
-
-        // 提取压缩数据（去掉头部和尾部 8 字节的 CRC32 + ISIZE）
-        guard data.count > headerSize + 8 else { return nil }
-        let compressedData = data.subdata(in: headerSize..<(data.count - 8))
-
-        // 使用 Compression 框架解压 (DEFLATE)
-        let decompressedSize = 50 * 1024 * 1024  // 50MB 缓冲区
-        var decompressedData = Data(count: decompressedSize)
-
-        let result = decompressedData.withUnsafeMutableBytes { destBuffer in
-            compressedData.withUnsafeBytes { sourceBuffer in
-                compression_decode_buffer(
-                    destBuffer.bindMemory(to: UInt8.self).baseAddress!,
-                    decompressedSize,
-                    sourceBuffer.bindMemory(to: UInt8.self).baseAddress!,
-                    compressedData.count,
-                    nil,
-                    COMPRESSION_ZLIB
-                )
-            }
-        }
-
-        guard result > 0 else {
-            AppLogger.error("解压失败: compression_decode_buffer 返回 \(result)")
-            return nil
-        }
-
-        return decompressedData.prefix(result)
     }
 
     /// 重命名文件

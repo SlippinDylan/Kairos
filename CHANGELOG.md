@@ -10,6 +10,7 @@ All notable changes to Kairos releases are recorded here.
 
 - 修复普通进程无法读取 ARP 表时网关 MAC 显示为空的问题，改由特权 Helper 读取当前网关及对应接口的 MAC。
 - Helper 安装、修复或状态变化后自动刷新网络信息，并避免过期的异步结果覆盖当前网络状态。
+- 修复 Mihomo 内核解压超过 50 MiB 时被截断、导致代码签名失败的问题；完整解压并校验 gzip 的 CRC32 与长度。
 
 ## [0.8.0] - 2026-09-24
 

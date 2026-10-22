@@ -78,10 +78,10 @@ Helper 由 Kairos 自行注册和升级，不属于 Sparkle 的运行时控制�
 
 - `MihomoConfigService` 保存内核路径、关联应用、GitHub Releases URL 和 asset 文件名前缀。
 - `MihomoProcessService` 检查关联应用、请求退出，并等待对应进程终止。
-- `MihomoDownloadService` 查询用户配置仓库的最新 prerelease，下载匹配的 `.gz`，在 asset 提供 SHA-256 digest 时校验后解压。
+- `MihomoDownloadService` 查询用户配置仓库的最新 prerelease，下载匹配的 `.gz`，要求 asset 提供 SHA-256 digest 并校验压缩包。随后由系统 zlib 分块解压完整 gzip，校验 CRC32 和解压长度；不使用固定大小的输出缓冲区，不将截断或校验失败的数据交给内核替换流程。
 - `MihomoFileService` 对现有内核创建 `.bak`，再暂存并原子替换或恢复。
 
-文件服务只接受用户 home 下的普通文件，拒绝 symlink、`.app` bundle 内路径和不可写位置，并验证替换文件是 arm64 Mach-O。GitHub asset 没有 digest 时目前不会进行内容哈希验证，这是现有完整性边界。
+文件服务只接受用户 home 下的普通文件，拒绝 symlink、`.app` bundle 内路径和不可写位置，并验证替换文件是 arm64 Mach-O。GitHub asset 缺少 digest 或校验不一致时拒绝继续安装。
 
 ## 持久化与导入导出
 
@@ -104,6 +104,5 @@ Helper 由 Kairos 自行注册和升级，不属于 Sparkle 的运行时控制�
 - API Key 明文保存在 `UserDefaults`，也会进入设置导出文件。
 - XPC 协议由两个 target 重复维护，缺少自动一致性检查。
 - `DNSHelper.getDNS(interface:)` 的当前实现读取全局 DNS dynamic store，并未按传入接口过滤。
-- Mihomo 下载只在 GitHub asset 提供 digest 时验证内容哈希。
 
 修复这些问题时应修改根因和契约，并为失败路径补充可执行验证；在修复落地前，文档和 UI 不应声称已经提供相应保障。

@@ -57,6 +57,17 @@ build/Tests/GatewayInfoReaderTests
 
 额外传入 `--read-current` 可只读查询当前网关。普通进程可能读到空 ARP 表，真实 MAC 获取需在 root 环境验证；此独立检查不能替代签名 app 与 LaunchDaemon 的 XPC、批准和升级验证。
 
+Mihomo gzip 解压器的独立 Swift 回归检查覆盖超过 50 MiB 的输出、截断数据、CRC32/长度损坏及 gzip 可选头部：
+
+```bash
+mkdir -p build/Tests
+xcrun swiftc App/Services/GzipDecompressor.swift Scripts/Tests/GzipDecompressorTests.swift \
+  -o build/Tests/GzipDecompressorTests
+build/Tests/GzipDecompressorTests
+```
+
+测试只生成临时 gzip 样本，不操作用户实际内核或运行关联应用。
+
 本地化资源由 `App/Localizable.xcstrings` 和 `App/InfoPlist.xcstrings` 提供。修改 `.github/scripts/sync-localization.mjs` 中的受支持字符串后运行同名脚本更新主 Catalog；CI 使用 `--check` 验证生成结果，并由 Node 测试确保 English、简体中文和繁體中文都有完整译文。
 
 按改动选择最小验证：

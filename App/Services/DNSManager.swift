@@ -55,7 +55,11 @@ final class DNSManager {
 
     func checkHelperStatus() {
         let status = helperService.status
+        let wasInstalled = isHelperInstalled
         isHelperInstalled = status == .enabled
+        if wasInstalled != isHelperInstalled {
+            NotificationCenter.default.post(name: .kairosHelperAvailabilityDidChange, object: nil)
+        }
         AppLogger.debug("Helper service status: \(status.rawValue)")
     }
 
@@ -183,6 +187,7 @@ final class DNSManager {
 
         switch result {
         case .success:
+            NotificationCenter.default.post(name: .kairosHelperAvailabilityDidChange, object: nil)
             completion(true, nil)
         case .failure(let error):
             completion(false, error)
@@ -223,6 +228,7 @@ final class DNSManager {
                 AppLogger.info(
                     "Helper 版本验证通过: \(runningVersion.shortVersion) (\(runningVersion.buildVersion))"
                 )
+                NotificationCenter.default.post(name: .kairosHelperAvailabilityDidChange, object: nil)
             case .success(let runningVersion):
                 attemptAutomaticRepair(
                     reason: "Helper 版本不一致: 运行中 \(runningVersion.shortVersion) "
@@ -487,6 +493,47 @@ final class DNSManager {
             },
             completion: completion
         )
+    }
+
+    func getCurrentGateway() async throws -> (ip: String?, mac: String?) {
+        try await withCheckedThrowingContinuation { continuation in
+            performHelperRequest(
+                operation: "读取当前网关",
+                timeoutNanoseconds: 5_000_000_000,
+                invoke: { proxy, reply in
+                    proxy.getCurrentGateway { ip, mac, error in
+                        reply((ip, mac, error))
+                    }
+                }
+            ) { result in
+                do {
+                    let (ip, mac, message) = try result.get()
+                    if let message { throw HelperServiceError.operationFailed(message) }
+                    guard let ip else {
+                        guard mac == nil else {
+                            throw HelperServiceError.operationFailed("网关响应缺少 IP")
+                        }
+                        continuation.resume(returning: (nil, nil))
+                        return
+                    }
+                    guard NetworkValidator.isValidIPv4(ip) else {
+                        throw HelperServiceError.operationFailed("网关响应包含无效 IPv4 地址")
+                    }
+                    if let mac {
+                        guard let normalized = NetworkValidator.normalizeMAC(mac),
+                              normalized != "02:00:00:00:00:00",
+                              normalized != "00:00:00:00:00:00" else {
+                            throw HelperServiceError.operationFailed("网关响应包含无效 MAC 地址")
+                        }
+                        continuation.resume(returning: (ip, normalized))
+                    } else {
+                        continuation.resume(returning: (ip, nil))
+                    }
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 
     // MARK: - DNS Operations
@@ -795,4 +842,8 @@ private final class HelperRequest<Response: Sendable> {
         timeoutTask = nil
         completion(result)
     }
+}
+
+extension Notification.Name {
+    static let kairosHelperAvailabilityDidChange = Notification.Name("Kairos.HelperAvailabilityDidChange")
 }

@@ -7,13 +7,11 @@
 
 import Foundation
 import SystemConfiguration
-import Darwin
 
 /// 路由器信息服务
 ///
 /// ## 职责
 /// - 获取路由器 IP 地址（使用 SystemConfiguration 原生 API）
-/// - 获取路由器 MAC 地址（读取系统 ARP 表）
 /// - 获取所有活跃的网络接口（使用 SystemConfiguration 原生 API）
 ///
 /// ## 设计说明
@@ -25,28 +23,17 @@ import Darwin
 /// ## 原生 API 使用率
 /// - ✅ 路由器 IP：使用 `SCDynamicStore` 读取 `State:/Network/Global/IPv4`
 /// - ✅ 活跃网络接口：使用 `SCNetworkInterfaceCopyAll` + `SCDynamicStore`
-/// - ✅ 路由器 MAC：使用 `sysctl` 读取内核路由/ARP 表
+/// - Gateway MAC reads are handled by the privileged Helper.
 ///
 /// ## 性能提升
 /// - 原实现：7-10 个进程启动（netstat + arp + networksetup + 多个 ifconfig）
 /// - 新实现：零进程启动，全部使用内存读取
 /// - 性能提升：避免 fork 开销，热点路径更稳定
-nonisolated final class RouterInfoService: @unchecked Sendable {
-    static let shared = RouterInfoService()
-
-    private struct MACCacheEntry {
-        let value: String
-        let timestamp: Date
-    }
-
-    private static let cacheLock = NSLock()
-    private nonisolated(unsafe) static var macCache: [String: MACCacheEntry] = [:]
-    private static let cacheTTL: TimeInterval = 3.0
-
+nonisolated final class RouterInfoService: Sendable {
     // MARK: - Network Info Structure
 
     /// 网络信息结构
-    struct NetworkInfo: Identifiable {
+    struct NetworkInfo: Identifiable, Sendable {
         let id = UUID()
         let displayName: String  // 显示名称：Wi-Fi 或接口全称
         let interface: String     // 接口名称：en0, en7 等
@@ -97,41 +84,6 @@ nonisolated final class RouterInfoService: @unchecked Sendable {
         return router
     }
 
-    /// 获取路由器 MAC 地址（nonisolated 允许后台调用）
-    ///
-    /// ## 实现说明
-    /// - 先获取路由器 IP（调用 `getRouterIP()`，已使用原生 API）
-    /// - 使用 `sysctl(CTL_NET, AF_ROUTE, 0, AF_INET, NET_RT_FLAGS, RTF_LLINFO)` 读取 ARP 表
-    /// - 在 ARP 表中匹配目标 IPv4 地址
-    /// - 规范化 MAC 地址格式（大写，添加冒号）
-    /// - 同一 IP 3 秒内复用缓存，避免重复扫描系统表
-    ///
-    /// ## 错误处理
-    /// - 路由器 IP 为 "-" → 返回 "-"
-    /// - sysctl 读取失败 → 返回 "-"
-    /// - ARP 表中未找到目标 → 返回 "-"
-    ///
-    /// - Returns: 路由器 MAC 地址，失败时返回 "-"
-    nonisolated func getRouterMAC() -> String {
-        let routerIP = getRouterIP()
-
-        if routerIP == "-" {
-            return "-"
-        }
-
-        if let cachedMAC = Self.cachedMAC(for: routerIP) {
-            return cachedMAC
-        }
-
-        guard let routerMAC = lookupMACInARPTable(for: routerIP) else {
-            AppLogger.debug("未在 ARP 表中找到路由器 MAC: \(routerIP)")
-            return "-"
-        }
-
-        Self.storeCachedMAC(routerMAC, for: routerIP)
-        return routerMAC
-    }
-
     /// 获取所有活跃的网络接口（nonisolated 允许后台调用）
     ///
     /// ## 实现说明
@@ -180,13 +132,6 @@ nonisolated final class RouterInfoService: @unchecked Sendable {
         return networks
     }
 
-    /// 清空路由器 MAC 缓存
-    nonisolated func clearMACCache() {
-        Self.cacheLock.lock()
-        defer { Self.cacheLock.unlock() }
-        Self.macCache.removeAll()
-    }
-
     // MARK: - Private Methods - Network Detection
 
     /// 检查网络接口是否有 IP 地址（原生 API 实现）
@@ -219,153 +164,4 @@ nonisolated final class RouterInfoService: @unchecked Sendable {
         return true
     }
 
-    // MARK: - Private Methods - ARP Cache
-
-    private nonisolated func lookupMACInARPTable(for ip: String) -> String? {
-        guard let targetAddress = ipv4Address(from: ip) else {
-            return nil
-        }
-
-        var mib: [Int32] = [
-            CTL_NET,
-            AF_ROUTE,
-            0,
-            AF_INET,
-            NET_RT_FLAGS,
-            RTF_LLINFO
-        ]
-
-        var needed = 0
-        guard sysctl(&mib, u_int(mib.count), nil, &needed, nil, 0) == 0, needed > 0 else {
-            AppLogger.warning("读取 ARP 表大小失败: errno=\(errno)")
-            return nil
-        }
-
-        var buffer = [UInt8](repeating: 0, count: needed)
-        guard sysctl(&mib, u_int(mib.count), &buffer, &needed, nil, 0) == 0 else {
-            AppLogger.warning("读取 ARP 表内容失败: errno=\(errno)")
-            return nil
-        }
-
-        return buffer.withUnsafeBytes { rawBuffer in
-            guard let baseAddress = rawBuffer.baseAddress else {
-                return nil
-            }
-
-            var offset = 0
-            while offset < needed {
-                let headerPointer = baseAddress
-                    .advanced(by: offset)
-                    .assumingMemoryBound(to: rt_msghdr.self)
-
-                let messageLength = Int(headerPointer.pointee.rtm_msglen)
-                guard messageLength > 0, offset + messageLength <= needed else {
-                    break
-                }
-
-                if let macAddress = extractMACAddress(
-                    fromRouteMessageAt: baseAddress.advanced(by: offset),
-                    targetAddress: targetAddress
-                ) {
-                    return macAddress
-                }
-
-                offset += messageLength
-            }
-
-            return nil
-        }
-    }
-
-    private nonisolated func extractMACAddress(
-        fromRouteMessageAt baseAddress: UnsafeRawPointer,
-        targetAddress: in_addr
-    ) -> String? {
-        let header = baseAddress.assumingMemoryBound(to: rt_msghdr.self).pointee
-        var sockaddrPointer = baseAddress.advanced(by: MemoryLayout<rt_msghdr>.stride)
-        var matchedTarget = false
-        var macAddress: String?
-
-        let addressMask = Int32(header.rtm_addrs)
-        for index in 0..<Int(RTAX_MAX) where (addressMask & (Int32(1) << Int32(index))) != 0 {
-            let sockaddrValue = sockaddrPointer.assumingMemoryBound(to: sockaddr.self).pointee
-            let sockaddrLength = roundedSockaddrLength(Int(sockaddrValue.sa_len))
-
-            if index == Int(RTAX_DST) && sockaddrValue.sa_family == UInt8(AF_INET) {
-                let ipv4Pointer = sockaddrPointer.assumingMemoryBound(to: sockaddr_in.self)
-                matchedTarget = ipv4Pointer.pointee.sin_addr.s_addr == targetAddress.s_addr
-            } else if index == Int(RTAX_GATEWAY) && sockaddrValue.sa_family == UInt8(AF_LINK) {
-                macAddress = extractMACAddress(from: sockaddrPointer)
-            }
-
-            sockaddrPointer = sockaddrPointer.advanced(by: sockaddrLength)
-        }
-
-        guard matchedTarget else {
-            return nil
-        }
-
-        return macAddress
-    }
-
-    private nonisolated func extractMACAddress(from sockaddrPointer: UnsafeRawPointer) -> String? {
-        let linkLayerPointer = sockaddrPointer.assumingMemoryBound(to: sockaddr_dl.self)
-        let linkLayer = linkLayerPointer.pointee
-
-        guard linkLayer.sdl_alen > 0 else {
-            return nil
-        }
-
-        let linkLayerDataBaseOffset = MemoryLayout<sockaddr_dl>.offset(of: \.sdl_data) ?? 8
-        let linkLayerDataOffset = linkLayerDataBaseOffset + Int(linkLayer.sdl_nlen)
-        let macLength = Int(linkLayer.sdl_alen)
-        guard linkLayerDataOffset + macLength <= Int(linkLayer.sdl_len) else {
-            return nil
-        }
-        let macBytes = sockaddrPointer
-            .advanced(by: linkLayerDataOffset)
-            .assumingMemoryBound(to: UInt8.self)
-
-        let macString = (0..<macLength)
-            .map { String(format: "%02X", macBytes[$0]) }
-            .joined(separator: ":")
-
-        return NetworkValidator.normalizeMAC(macString)
-    }
-
-    private nonisolated func ipv4Address(from ip: String) -> in_addr? {
-        var address = in_addr()
-        guard inet_pton(AF_INET, ip, &address) == 1 else {
-            return nil
-        }
-        return address
-    }
-
-    private nonisolated func roundedSockaddrLength(_ rawLength: Int) -> Int {
-        let length = rawLength > 0 ? rawLength : MemoryLayout<UInt>.size
-        let alignment = MemoryLayout<UInt>.size - 1
-        return (length + alignment) & ~alignment
-    }
-
-    private nonisolated static func cachedMAC(for ip: String) -> String? {
-        cacheLock.lock()
-        defer { cacheLock.unlock() }
-
-        guard let entry = macCache[ip] else {
-            return nil
-        }
-
-        if Date().timeIntervalSince(entry.timestamp) <= cacheTTL {
-            return entry.value
-        }
-
-        macCache.removeValue(forKey: ip)
-        return nil
-    }
-
-    private nonisolated static func storeCachedMAC(_ mac: String, for ip: String) {
-        cacheLock.lock()
-        defer { cacheLock.unlock() }
-        macCache[ip] = MACCacheEntry(value: mac, timestamp: Date())
-    }
 }

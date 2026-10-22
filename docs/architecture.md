@@ -36,7 +36,7 @@ Kairos 是 macOS 26+ 的 Apple Silicon 菜单栏应用，由两个进程组成�
 
 ## 网络场景
 
-`NetworkMonitor` 使用 `NWPathMonitor` 监听路径变化，是网络自动化的应用级编排器。路径变化后，它在后台通过 `RouterInfoService` 读取默认网关 IP、ARP 表中的 MAC 和活跃接口，再回到主线程更新状态并运行两套匹配引擎。
+`NetworkMonitor` 使用 `NWPathMonitor` 监听路径变化，是网络自动化的应用级编排器。路径变化后，它在后台通过 `RouterInfoService` 读取本地网关 IP 和活跃接口，并经 `DNSManager` 请求 root Helper 读取当前默认网关及其 MAC。Helper 自行选择网关和主接口，仅匹配该接口的 ARP 记录，不接受客户端指定地址。主应用不能假定普通进程能读取 ARP 表；Helper 不可用时仍显示本地网关 IP，MAC 显示为不可用并记录原因。Helper 安装、修复或状态变化后会重新获取网络信息；旧的异步刷新结果不会覆盖较新的网络状态。随后在主线程更新状态并运行两套匹配引擎。
 
 应用控制链路：
 

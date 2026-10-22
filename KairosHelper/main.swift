@@ -284,6 +284,15 @@ class DNSHelper: NSObject, DNSHelperProtocol {
         reply(servers)
     }
 
+    func getCurrentGateway(reply: @escaping (String?, String?, String?) -> Void) {
+        do {
+            let gateway = try GatewayInfoReader().read()
+            reply(gateway.ip, gateway.mac, nil)
+        } catch {
+            reply(nil, nil, error.localizedDescription)
+        }
+    }
+
     /// 刷新 DNS 缓存
     ///
     /// ## 使用 Shell 原因（合理例外）

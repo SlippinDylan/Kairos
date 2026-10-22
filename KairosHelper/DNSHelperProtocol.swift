@@ -30,6 +30,10 @@ protocol DNSHelperProtocol {
     ///   - reply: 回调，返回 DNS 服务器列表
     func getDNS(interface: String, reply: @escaping ([String]) -> Void)
 
+    /// Returns the current IPv4 gateway IP, its MAC (if resolved), and any read error.
+    /// The Helper selects the gateway and interface; the client supplies no address.
+    func getCurrentGateway(reply: @escaping (String?, String?, String?) -> Void)
+
     /// 刷新 DNS 缓存
     /// - Parameter reply: 回调，返回是否成功
     func flushDNSCache(reply: @escaping (Bool) -> Void)

@@ -95,7 +95,6 @@ final class NetworkMaintenanceService {
 
             AppLogger.debug("步骤 3/8: 通过 Helper 清除 ARP 缓存")
             try await DNSManager.shared.clearARPCache()
-            RouterInfoService.shared.clearMACCache()
 
             AppLogger.debug("步骤 4/8: 等待 2 秒")
             try await Task.sleep(nanoseconds: 2_000_000_000)

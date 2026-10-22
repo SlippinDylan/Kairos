@@ -47,6 +47,8 @@ final class NetworkMonitor {
     // MARK: - Private Properties
 
     private var pathMonitor: NWPathMonitor?
+    private var networkUpdateTask: Task<Void, Never>?
+    private var helperStatusObserver: NSObjectProtocol?
     private var scenes: [NetworkScene] = []
     private var dnsScenes: [DNSScene] = []
     private var currentMatchedDNSScene: DNSScene?
@@ -170,6 +172,7 @@ final class NetworkMonitor {
     /// 建议在 `AppDelegate.applicationDidFinishLaunching` 中调用，
     /// 确保应用启动（包括作为登录项启动）时立即开始监控。
     func startMonitoring(scenes: [NetworkScene] = [], dnsScenes: [DNSScene] = []) {
+        guard pathMonitor == nil else { return }
         AppLogger.info("🚀 启动网络监控")
         AppLogger.debug("配置: 网络场景=\(scenes.count), DNS场景=\(dnsScenes.count)")
 
@@ -180,10 +183,16 @@ final class NetworkMonitor {
         // 设置网络监听器
         setupNetworkMonitoring()
 
-        // 立即执行首次检测
-        Task {
-            await updateNetworkInfoAsync()
+        helperStatusObserver = NotificationCenter.default.addObserver(
+            forName: .kairosHelperAvailabilityDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.scheduleNetworkInfoUpdate()
+            }
         }
+        scheduleNetworkInfoUpdate()
 
         AppLogger.info("✅ 网络监控已启动")
     }
@@ -194,6 +203,12 @@ final class NetworkMonitor {
 
         pathMonitor?.cancel()
         pathMonitor = nil
+        networkUpdateTask?.cancel()
+        networkUpdateTask = nil
+        if let helperStatusObserver {
+            NotificationCenter.default.removeObserver(helperStatusObserver)
+            self.helperStatusObserver = nil
+        }
         sceneMatchTask?.cancel()
         sceneMatchTask = nil
         sceneMatchRetryTask?.cancel()
@@ -222,8 +237,8 @@ final class NetworkMonitor {
             guard let self = self else { return }
 
             // 网络状态变化，触发异步更新
-            Task {
-                await self.updateNetworkInfoAsync()
+            Task { @MainActor in
+                self.scheduleNetworkInfoUpdate()
             }
         }
 
@@ -231,38 +246,49 @@ final class NetworkMonitor {
         AppLogger.debug("NWPathMonitor 已启动在后台队列")
     }
 
-    /// 异步更新网络信息（nonisolated 允许后台执行）
-    ///
-    /// ## 实现说明
-    /// - **后台执行**: 在后台队列执行重度网络检测操作
-    /// - **主线程更新**: 通过 MainActor.run 将结果传递到主线程
-    /// - **线程安全**: 避免阻塞 UI，确保 @Published 属性更新在主线程
-    nonisolated private func updateNetworkInfoAsync() async {
-        AppLogger.debug("🔄 开始更新网络信息（后台队列）")
+    private func scheduleNetworkInfoUpdate() {
+        guard pathMonitor != nil else { return }
+        // A slow XPC reply from the previous network must not overwrite a newer refresh.
+        networkUpdateTask?.cancel()
+        networkUpdateTask = Task {
+            await updateNetworkInfoAsync()
+        }
+    }
 
-        // ✅ 修正：将耗时且带有阻塞 Shell 调用的方法移出 MainActor.run
-        // 这些方法本身标记为 nonisolated，可以在后台并发池安全执行
-        let routerIP = routerInfoService.getRouterIP()
-        let routerMAC = routerInfoService.getRouterMAC()
+    @concurrent private func updateNetworkInfoAsync() async {
+        var routerIP = routerInfoService.getRouterIP()
+        var routerMAC = "-"
+        for attempt in 0..<3 {
+            guard !Task.isCancelled else { return }
+            do {
+                let gateway = try await DNSManager.shared.getCurrentGateway()
+                routerIP = gateway.ip ?? "-"
+                routerMAC = gateway.mac ?? "-"
+                if gateway.ip == nil || gateway.mac != nil { break }
+                // A newly connected interface may not have resolved its gateway yet.
+                if attempt < 2 {
+                    try await Task.sleep(nanoseconds: 500_000_000)
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                routerIP = routerInfoService.getRouterIP()
+                AppLogger.warning("无法通过 Helper 获取网关 MAC: \(error.localizedDescription)")
+                break
+            }
+        }
         let networks = routerInfoService.getAllActiveNetworks()
-
-        AppLogger.debug("网络信息获取完成: 路由器IP=\(routerIP), MAC=\(routerMAC), 活跃网络=\(networks.count)个")
-
-        // 仅在赋值状态和触发 UI 逻辑时传递到主线程
+        guard !Task.isCancelled else { return }
+        let updatedIP = routerIP
+        let updatedMAC = routerMAC
         await MainActor.run {
-            self.currentRouterIP = routerIP
-            self.currentRouterMAC = routerMAC
+            guard !Task.isCancelled else { return }
+            self.currentRouterIP = updatedIP
+            self.currentRouterMAC = updatedMAC
             self.activeNetworks = networks
-
-            // 更新显示用的网络名称和类型
             self.updateDisplayInfo()
-
-            AppLogger.info("✅ 网络信息已更新: \(self.currentNetworkType), 路由器=\(routerIP)")
-
-            // 网络信息更新后检查场景匹配（网络变化触发，需要发送通知）
+            AppLogger.info("网络信息已更新: \(self.currentNetworkType), 路由器=\(updatedIP), MAC=\(updatedMAC)")
             self.requestSceneMatch(triggeredByNetworkChange: true)
-
-            // 检查 DNS 场景匹配
             self.checkAndHandleDNSSceneMatch()
         }
     }

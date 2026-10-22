@@ -68,6 +68,17 @@ build/Tests/GzipDecompressorTests
 
 测试只生成临时 gzip 样本，不操作用户实际内核或运行关联应用。
 
+菜单栏窗口协调器的独立 Swift 回归检查覆盖请求等待与覆盖、窗口复用、关闭后重建和最小化恢复：
+
+```bash
+mkdir -p build/Tests
+xcrun swiftc App/Coordinators/WindowCoordinator.swift Scripts/Tests/WindowCoordinatorTests.swift \
+  -o build/Tests/WindowCoordinatorTests
+build/Tests/WindowCoordinatorTests
+```
+
+测试使用拦截激活与前置操作的 AppKit 测试对象，不显示窗口。实际菜单点击、跨应用前置和 Dock 行为仍需手动验收。
+
 本地化资源由 `App/Localizable.xcstrings` 和 `App/InfoPlist.xcstrings` 提供。修改 `.github/scripts/sync-localization.mjs` 中的受支持字符串后运行同名脚本更新主 Catalog；CI 使用 `--check` 验证生成结果，并由 Node 测试确保 English、简体中文和繁體中文都有完整译文。
 
 按改动选择最小验证：

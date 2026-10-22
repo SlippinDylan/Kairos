@@ -19,6 +19,8 @@ Kairos 是 macOS 26+ 的 Apple Silicon 菜单栏应用，由两个进程组成�
 
 `App/ContentView.swift` 是五个主页面的导航容器：网络控制、网络工具、Mihomo、日志和设置；关于页面作为设置分类呈现。`WindowCoordinator` 保存页面选择、复用已存在的主窗口，并持有由 SwiftUI 注册的 `OpenWindowAction`，从而在窗口已关闭时重建同一个 `main` scene。应用使用 accessory activation policy，显示窗口时不在 Dock 中添加图标。
 
+主窗口解析完成后才注册创建窗口的 action，避免首次挂载期间重复创建。显示和隐藏共用一个待处理请求，较新的操作覆盖较旧的操作；窗口关闭时清理引用，连续显示请求在等待创建期间合并。右键菜单结束追踪后再切换页面并前置窗口；显式显示请求也会恢复最小化窗口，并在应用激活尚未完成时执行窗口前置。
+
 界面提供 English、简体中文和繁體中文，默认跟随系统。`ApplicationLanguageController` 将用户选择保存在应用 `UserDefaults` 域，并仅在指定语言时写入 `AppleLanguages`；切回跟随系统时删除该覆盖。语言变更通过 `ApplicationRelaunchController` 重启后完整生效，该明确终止意图不会被 Cmd+Q 的隐藏窗口行为拦截。语言偏好不属于 `.kairos` 导入导出格式。
 
 ## 代码职责

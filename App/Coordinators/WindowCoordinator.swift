@@ -6,58 +6,24 @@
 //
 
 import AppKit
-import SwiftUI
 import Observation
 
-/// 窗口协调器 - 统一管理窗口状态
-///
-/// ## 架构设计（精简版）
-/// - **单一职责**: 管理主窗口状态、显示与前置
-/// - **@MainActor**: 所有操作在主线程，确保线程安全
-/// - **Observable**: SwiftUI 可观察对象，状态自动触发刷新
-///
-/// ## 关键改进
-/// - ✅ 移除通知机制（过度设计，引入时序问题）
-/// - ✅ 移除 NSApp.windows 操作（违反职责单一原则）
-/// - ✅ 纯状态管理（符合 SwiftUI 单向数据流）
-///
-/// ## 使用方式
-/// ```swift
-/// // 在 View 中使用
-/// @Environment(WindowCoordinator.self) var windowCoordinator
-///
-/// // 在非 View 层使用（如 AppDelegate）
-/// WindowCoordinator.shared.requestShow(tab: 0)
-/// ```
+/// Owns main-window presentation requests and the selected module.
 @MainActor
 @Observable
-final class WindowCoordinator {
-    // MARK: - Singleton
-
-    /// 全局单例
+final class WindowCoordinator: NSObject {
     static let shared = WindowCoordinator()
 
-    // MARK: - Published State
-
-    /// 当前选中的 Tab 索引 (0-4)
+    /// Selected module index (0–4).
     var selectedTab: Int = 0
 
-    /// 是否存在尚未处理的显示请求
-    var shouldShowWindow: Bool = false
+    private enum PresentationRequest {
+        case show
+        case hide
+    }
 
-    /// 是否存在尚未处理的隐藏请求
-    var shouldHideWindow: Bool = false
-
-    /// 待处理的显示请求（用于 SwiftUI openWindow action 尚未注册时的请求缓存）
-    ///
-    /// ## 设计说明
-    /// 应用启动时，AppDelegate 可能在 ContentView 完成挂载前就调用 requestShow()。
-    /// 此时 .onChange 监听器尚未生效，请求会丢失。
-    /// 通过此标记，ContentView 在 .onAppear 时可以检查并执行待处理的请求。
-    var hasPendingShowRequest: Bool = false
-
-    /// 待处理请求的目标 Tab
-    var pendingTab: Int = 0
+    @ObservationIgnored
+    private var pendingRequest: PresentationRequest?
 
     @ObservationIgnored
     private var openMainWindow: (() -> Void)?
@@ -68,47 +34,26 @@ final class WindowCoordinator {
     @ObservationIgnored
     private weak var mainWindow: NSWindow?
 
-    // MARK: - Initialization
-
-    private init() {
-        AppLogger.debug("WindowCoordinator 实例已创建")
+    private override init() {
+        super.init()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(mainWindowWillClose(_:)),
+            name: NSWindow.willCloseNotification,
+            object: nil
+        )
     }
 
-    /// 为 Preview 创建独立实例（避免使用 shared 单例）
     static func forPreview() -> WindowCoordinator {
-        return WindowCoordinator()
+        WindowCoordinator()
     }
 
-    // MARK: - Public Methods - State Management
-
-    /// 请求显示主窗口并切换到指定 Tab
-    ///
-    /// - Parameter tab: Tab 索引 (0-4)
-    ///
-    /// ## 实现说明
-    /// 1. 更新状态 (selectedTab, shouldShowWindow)
-    /// 2. 设置待处理请求标记（确保 ContentView 挂载后能处理）
-    /// 3. 激活应用
     func requestShow(tab: Int) {
-        guard tab >= 0 && tab <= 4 else {
-            AppLogger.warning("尝试切换到无效的 Tab 索引: \(tab)")
-            return
-        }
+        showMainWindow(tab: tab)
+    }
 
-        AppLogger.info("请求显示主窗口，切换到 Tab \(tab)")
-
-        // 1. 更新状态
-        selectedTab = tab
-        shouldShowWindow = true
-
-        // 2. Cache the request until ContentView registers openWindow.
-        hasPendingShowRequest = true
-        pendingTab = tab
-
-        // 3. 激活应用
-        NSApp.activate()
-
-        AppLogger.debug("主窗口显示请求已设置: Tab=\(tab), hasPendingShowRequest=true")
+    func requestHide() {
+        hideMainWindow()
     }
 
     func registerOpenWindowAction(_ action: @escaping () -> Void) {
@@ -119,114 +64,59 @@ final class WindowCoordinator {
     func mainWindowDidAppear(_ window: NSWindow) {
         window.identifier = NSUserInterfaceItemIdentifier("main")
         mainWindow = window
-
-        let shouldPresentOpenedWindow = isOpeningMainWindow
         isOpeningMainWindow = false
-        if shouldPresentOpenedWindow {
-            present(window)
-        }
-
         processPendingRequestIfPossible()
     }
 
     func showMainWindow(tab: Int? = nil) {
         if let tab {
-            switchTab(tab)
+            guard (0...4).contains(tab) else {
+                AppLogger.warning("尝试切换到无效的 Tab 索引: \(tab)")
+                return
+            }
+            selectedTab = tab
         }
-
-        if let window = mainWindow {
-            present(window)
-            return
-        }
-
-        guard !isOpeningMainWindow else { return }
-        guard let openMainWindow else {
-            requestShow(tab: tab ?? selectedTab)
-            return
-        }
-
-        isOpeningMainWindow = true
-        openMainWindow()
+        pendingRequest = .show
+        processPendingRequestIfPossible()
     }
 
     func hideMainWindow() {
-        isOpeningMainWindow = false
-        mainWindow?.orderOut(nil)
-        resetFlags()
-    }
-
-    private func present(_ window: NSWindow) {
-        NSApp.activate()
-        if window.isMiniaturized {
-            window.deminiaturize(nil)
-        }
-        window.makeKeyAndOrderFront(nil)
+        pendingRequest = .hide
+        processPendingRequestIfPossible()
     }
 
     private func processPendingRequestIfPossible() {
-        if shouldHideWindow, mainWindow != nil {
-            hideMainWindow()
-            return
-        }
-
-        guard hasPendingShowRequest, let mainWindow else { return }
-        selectedTab = pendingTab
-        present(mainWindow)
-        resetFlags()
-    }
-
-    /// 请求隐藏主窗口
-    ///
-    /// ## 实现说明
-    /// 1. 更新状态 (shouldHideWindow)
-    /// 2. 隐藏 Dock 图标
-    func requestHide() {
-        AppLogger.info("请求隐藏主窗口")
-
-        // 1. 更新状态
-        shouldHideWindow = true
-
-        // 2. 隐藏 Dock 图标
-        NSApp.setActivationPolicy(.accessory)
-
-        AppLogger.debug("主窗口隐藏请求已设置")
-    }
-
-    /// 切换主窗口可见性
-    ///
-    /// ## 功能说明
-    /// 根据窗口当前状态自动切换
-    func toggle() {
-        if mainWindow?.isVisible == true {
-            hideMainWindow()
-        } else {
-            showMainWindow()
+        guard let pendingRequest else { return }
+        switch pendingRequest {
+        case .hide:
+            guard let mainWindow else { return }
+            self.pendingRequest = nil
+            mainWindow.orderOut(nil)
+        case .show:
+            if let mainWindow {
+                self.pendingRequest = nil
+                present(mainWindow)
+            } else if !isOpeningMainWindow, let openMainWindow {
+                // Set this before calling SwiftUI, which can register the window synchronously.
+                isOpeningMainWindow = true
+                openMainWindow()
+            }
         }
     }
 
-    /// 切换到指定 Tab（窗口已显示时）
-    ///
-    /// - Parameter tab: Tab 索引 (0-4)
-    ///
-    /// ## 功能说明
-    /// 仅更新 selectedTab 状态，不改变窗口可见性
-    func switchTab(_ tab: Int) {
-        guard tab >= 0 && tab <= 4 else {
-            AppLogger.warning("尝试切换到无效的 Tab 索引: \(tab)")
-            return
+    private func present(_ window: NSWindow) {
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
         }
-
-        AppLogger.info("切换到 Tab \(tab)")
-        selectedTab = tab
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        // Accessory-app activation is asynchronous; honor the explicit click immediately.
+        window.orderFrontRegardless()
     }
 
-    /// 重置触发标志
-    ///
-    /// ## 功能说明
-    /// 窗口请求处理完成后调用，重置触发标志
-    func resetFlags() {
-        shouldShowWindow = false
-        shouldHideWindow = false
-        hasPendingShowRequest = false
+    @objc private func mainWindowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow, window === mainWindow else { return }
+        mainWindow = nil
+        isOpeningMainWindow = false
     }
 }

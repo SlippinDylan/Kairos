@@ -66,11 +66,10 @@ struct ContentView: View {
         .background {
             WindowAccessor { window in
                 windowCoordinator.mainWindowDidAppear(window)
-            }
-        }
-        .onAppear {
-            windowCoordinator.registerOpenWindowAction {
-                openWindow(id: "main")
+                // Register only after resolving the initial scene's window, avoiding a second one.
+                windowCoordinator.registerOpenWindowAction {
+                    openWindow(id: "main")
+                }
             }
         }
     }

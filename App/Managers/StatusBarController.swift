@@ -75,7 +75,10 @@ final class StatusBarController: NSObject {
 
     @objc private func showSelectedTab(_ sender: NSMenuItem) {
         guard let tab = sender.representedObject as? Int else { return }
-        onShowTab(tab)
+        // Present after menu tracking ends so it cannot take focus back from the window.
+        DispatchQueue.main.async { [onShowTab] in
+            onShowTab(tab)
+        }
     }
 
     @objc private func quitApplication() {

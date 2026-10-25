@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		BE72E1D52F0E2800002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper in Embed Helper */ = {isa = PBXBuildFile; fileRef = BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		BE7C5A66305ACCE70041C3BF /* Kairos.icon in Resources */ = {isa = PBXBuildFile; fileRef = BE7C5A65305ACCE70041C3BF /* Kairos.icon */; };
-		BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist in Embed LaunchDaemon */ = {isa = PBXBuildFile; fileRef = BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist */; };
+		BE8D0002305B000000000001 /* KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist in Embed LaunchDaemon */ = {isa = PBXBuildFile; fileRef = BE8D0001305B000000000001 /* KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist */; };
 		BE8D0004305B000000000001 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = BE8D0006305B000000000001 /* Sparkle */; };
 /* End PBXBuildFile section */
 
@@ -50,7 +50,7 @@
 			dstPath = Contents/Library/LaunchDaemons;
 			dstSubfolderSpec = 1;
 			files = (
-				BE8D0002305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist in Embed LaunchDaemon */,
+				BE8D0002305B000000000001 /* KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist in Embed LaunchDaemon */,
 			);
 			name = "Embed LaunchDaemon";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -61,8 +61,8 @@
 		BE6E6C7F2EFC5EF2008F6A66 /* Kairos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kairos.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = studio.slippindylan.BrewKit.Kairos.helper; sourceTree = BUILT_PRODUCTS_DIR; };
 		BE7C5A65305ACCE70041C3BF /* Kairos.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = Kairos.icon; sourceTree = "<group>"; };
-		BE8D0001305B000000000001 /* studio.slippindylan.BrewKit.Kairos.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist; sourceTree = SOURCE_ROOT; };
-		BEF040012F040001008B541B /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Generated/Version.xcconfig; sourceTree = "<group>"; };
+		BE8D0001305B000000000001 /* KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist; sourceTree = SOURCE_ROOT; };
+		BEF040012F040001008B541B /* Config/Generated/Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config/Generated/Version.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -114,10 +114,11 @@
 			isa = PBXGroup;
 			children = (
 				BE7C5A65305ACCE70041C3BF /* Kairos.icon */,
-				BEF040012F040001008B541B /* Version.xcconfig */,
+				BEF040012F040001008B541B /* Config/Generated/Version.xcconfig */,
 				BE6E6C812EFC5EF2008F6A66 /* App */,
 				BE72E1CC2F0E2590002A3C57 /* KairosHelper */,
 				BE6E6C802EFC5EF2008F6A66 /* Products */,
+				BE8692E1308A704300E58CE0 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -128,6 +129,14 @@
 				BE72E1CB2F0E2590002A3C57 /* studio.slippindylan.BrewKit.Kairos.helper */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BE8692E1308A704300E58CE0 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				BE8D0001305B000000000001 /* KairosHelper/studio.slippindylan.BrewKit.Kairos.helper.plist */,
+			);
+			name = "Recovered References";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -210,10 +219,10 @@
 				Base,
 			);
 			mainGroup = BE6E6C762EFC5EF2008F6A66;
+			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				BE8D0005305B000000000001 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
-			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
 			productRefGroup = BE6E6C802EFC5EF2008F6A66 /* Products */;
 			projectDirPath = "";
@@ -265,8 +274,8 @@
 		BE6E6C882EFC5EF3008F6A66 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -330,8 +339,8 @@
 		BE6E6C892EFC5EF3008F6A66 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = arm64;
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -387,13 +396,14 @@
 		};
 		BE6E6C8B2EFC5EF3008F6A66 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BEF040012F040001008B541B /* Version.xcconfig */;
+			baseConfigurationReference = BEF040012F040001008B541B /* Config/Generated/Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Kairos;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = App/Kairos.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K7623V57QS;
@@ -403,11 +413,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				KAIROS_UPDATER_ENABLED = NO;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				KAIROS_UPDATER_ENABLED = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Kairos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -422,7 +432,7 @@
 		};
 		BE6E6C8C2EFC5EF3008F6A66 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BEF040012F040001008B541B /* Version.xcconfig */;
+			baseConfigurationReference = BEF040012F040001008B541B /* Config/Generated/Version.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = Kairos;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -438,11 +448,11 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				KAIROS_UPDATER_ENABLED = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				KAIROS_UPDATER_ENABLED = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = studio.slippindylan.BrewKit.Kairos;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -457,14 +467,15 @@
 		};
 		BE72E1D02F0E2590002A3C57 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BEF040012F040001008B541B /* Version.xcconfig */;
+			baseConfigurationReference = BEF040012F040001008B541B /* Config/Generated/Version.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = KairosHelper/KairosHelper.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CODE_SIGN_STYLE = Manual;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K7623V57QS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = KairosHelper/Info.plist;
@@ -480,14 +491,14 @@
 		};
 		BE72E1D12F0E2590002A3C57 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BEF040012F040001008B541B /* Version.xcconfig */;
+			baseConfigurationReference = BEF040012F040001008B541B /* Config/Generated/Version.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = KairosHelper/KairosHelper.entitlements;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
 				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = K7623V57QS;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = KairosHelper/Info.plist;

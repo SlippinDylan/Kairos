@@ -4,7 +4,7 @@
 </div>
 
 <div align="center">
-  <p>A native macOS menu-bar app for network scenes, DNS work, IP lookups, and Mihomo kernel maintenance.</p>
+  <p>Network scenes, diagnostics, and Mihomo kernel maintenance from the macOS menu bar.</p>
   <p>
     <a href="docs/README.zh-CN.md">简体中文</a> ·
     <a href="docs/README.zh-TW.md">繁體中文</a> ·
@@ -14,7 +14,9 @@
   </p>
 </div>
 
-Kairos watches the active network and puts a few network tasks in one place. It is for people who regularly move between known networks and want predictable DNS or app actions, alongside IP and resolver tools.
+Click the menu-bar icon to open Kairos. Click it again or click outside the panel to hide it. Reopening it during the same session restores your page, inputs, and task results.
+
+App Control and DNS Control have separate tabs. Network Tools brings together diagnostics and maintenance; Settings holds service configuration, permissions, and logs. About shows the app version and update check. Tools and scene editors open as detail pages inside the same panel, with a back button to return.
 
 The app interface supports English, Simplified Chinese, and Traditional Chinese. It follows the macOS language by default, or you can choose a language under Settings → General; changing it takes effect after Kairos restarts.
 
@@ -33,24 +35,31 @@ The matching values are visible in the app, so they can be copied into a rule fo
 <table>
   <tr>
     <td width="32%">
-      <strong>Network automation</strong><br><br>
-      View active interfaces and the current gateway, then create separate app-control and DNS scenes for that gateway.
+      <strong>App Control</strong><br><br>
+      View the network name, gateway IP, and gateway MAC, then create scenes to quit selected apps when the gateway matches. Each card keeps its enable switch, edit and delete actions, and matching-status dot together.
     </td>
-    <td width="68%"><img src="docs/images/readme/network-automation.png" alt="Kairos network overview with app and DNS scene controls"></td>
+    <td width="68%"><img src="docs/images/readme/app-control.png" alt="Kairos App Control tab with network information and an app-control scene"></td>
   </tr>
   <tr>
     <td>
-      <strong>Network tools</strong><br><br>
-      Look up an IP, measure DNS response time over UDP, check public-IP characteristics, or run the guided deep-clean operation.
+      <strong>DNS Control</strong><br><br>
+      View the current network, gateway IP, and DNS. Create separate DNS scenes with a primary and optional secondary resolver; the dot beside each scene name indicates whether its gateway rule matches.
     </td>
-    <td><img src="docs/images/readme/network-tools.png" alt="Kairos tools for DNS cleanup, IP lookup, DNS testing, and IP quality"></td>
+    <td><img src="docs/images/readme/dns-control.png" alt="Kairos DNS Control tab with current DNS and a DNS scene"></td>
   </tr>
   <tr>
     <td>
-      <strong>Mihomo kernel maintenance</strong><br><br>
-      Associate your own client and kernel file, inspect its state, back it up, restore it, or download a matching kernel from GitHub Releases.
+      <strong>Network Tools</strong><br><br>
+      System Maintenance contains DNS cleanup and Mihomo kernel backup, restore, and replacement. Network Diagnostics contains IP Lookup, DNS Test, and IP Quality. Click a card to open its inputs, progress, and results inside the panel.
     </td>
-    <td><img src="docs/images/readme/mihomo-management.png" alt="Kairos Mihomo kernel status, replacement, recovery, and download settings"></td>
+    <td><img src="docs/images/readme/network-tools.png" alt="Kairos Network Tools tab with maintenance and diagnostic cards"></td>
+  </tr>
+  <tr>
+    <td>
+      <strong>Settings</strong><br><br>
+      Manage launch at login, language, Mihomo paths and downloads, IP-data credentials, configuration import/export, permissions, and logs. Save Mihomo and API-key changes with the checkmark at the top right. Reveal the current log file in Finder from the Logs group.
+    </td>
+    <td><img src="docs/images/readme/settings.png" alt="Kairos Settings tab with general preferences and Mihomo service configuration"></td>
   </tr>
 </table>
 
@@ -64,15 +73,19 @@ Accessibility permission is needed when an app-control scene must quit another a
 
 ## Mihomo
 
+Mihomo backup, restore, and replacement are under Network Tools → System Maintenance. Configure the associated app, kernel path, GitHub Releases URL, and filename template under Settings → Services.
+
 Kairos does not include a Mihomo client or manage proxy rules. You choose the host app and its kernel file yourself. Kairos can back up and restore that file, or download the latest prerelease asset that matches the configured filename template from a GitHub Releases URL (the default is `vernesong/mihomo`). It asks you to quit the associated app before changing its kernel.
 
 ## IP data and API keys
 
 An IP lookup entered in the app is sent to [ipapi.is](https://ipapi.is). The IP-quality check first discovers the public IP through `api64.ipify.org`, `checkip.amazonaws.com`, or `icanhazip.com`, then sends that IP to the sources below in parallel. A DNS benchmark sends the selected domain names directly to the resolver being tested.
 
+IP Lookup also uses the ipapi.is key saved in Settings. Without a key, the provider currently allows 30 lookups per public IPv4 address or IPv6 /64 per UTC day and returns basic ownership and location only. Missing fields appear as “—”; a map is shown only when coordinates are available. A keyed request returns the full response within the account’s quota. See the [provider documentation](https://ipapi.is/developers.html) for current limits.
+
 | Source | Without a key | With your key |
 |---|---|---|
-| IPinfo, ipapi.is, DB-IP, IPWHOIS | Kairos uses their available free endpoint. | Kairos uses the provider's keyed endpoint when applicable; IPinfo's token endpoint is a fallback if its widget endpoint fails. |
+| IPinfo, ipapi.is, DB-IP, IPWHOIS | Kairos uses their available free endpoint. | Kairos uses the provider's keyed endpoint when applicable. For IPinfo, a configured token selects the official endpoint directly; without one, Kairos uses the widget endpoint. Request failures are reported. |
 | AbuseIPDB, IP2Location, ipregistry | Skipped. | Included in the IP-quality check. |
 
 Configure keys in Settings only if you want the keyed sources or their higher limits. Kairos stores them in local `UserDefaults`; it does not provide its own relay service. A settings export (`.kairos`) includes API keys as well as scenes and Mihomo settings, so treat that file as sensitive and do not share it.
@@ -86,12 +99,12 @@ Provider responses are used to show location, ASN/organization, network type, an
 ```bash
 brew tap slippindylan/tap
 brew trust --tap slippindylan/tap
-brew install --cask kairos@beta
+brew install --cask kairos
 ```
 
 ### DMG
 
-The current public builds are beta releases. Download the latest DMG from [GitHub Releases](https://github.com/SlippinDylan/Kairos/releases), open it, and drag `Kairos.app` to `Applications`.
+Download the latest DMG from [GitHub Releases](https://github.com/SlippinDylan/Kairos/releases), open it, and drag `Kairos.app` to `Applications`.
 
 The release is signed with an Apple Development certificate but is not notarized by Apple. Apps downloaded from the internet receive macOS's quarantine attribute; Gatekeeper may therefore block the first launch. If you trust the release, remove that attribute after copying the app:
 
@@ -104,7 +117,7 @@ sudo xattr -rd com.apple.quarantine /Applications/Kairos.app
 - macOS 26.0 Tahoe or later
 - Apple Silicon (arm64)
 
-For a local build, use macOS 26 or later with Xcode 26 or later. Open `Kairos.xcodeproj`, choose your development team, then build the `Kairos` scheme. Kairos derives the reciprocal XPC code-signing requirements from the selected team's signature at runtime.
+For a local build, use macOS 26 or later with Xcode 26 or later. Open `Kairos.xcodeproj` and run the `Kairos` scheme. Debug uses local ad hoc signing without an Apple account; privileged Helper features require both the app and Helper to be signed with a valid team certificate. See [local development](docs/development.md) for details.
 
 ## License
 

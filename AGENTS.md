@@ -16,7 +16,7 @@ Kairos 是面向 macOS 26+、Apple Silicon 的原生菜单栏网络工具。主�
 ## 仓库地图
 
 - `App/KairosApp.swift`、`App/AppDelegate.swift`：应用入口、生命周期、菜单栏与主窗口。
-- `App/Views/`：SwiftUI 页面与组件；`ContentView.swift` 是五个主页面的导航容器，关于页面位于设置分类中。
+- `App/Views/`：SwiftUI 页面与组件；`ContentView.swift` 是五个主页面的导航容器，关于页面与设置并列，日志配置位于设置内。
 - `App/ViewModels/`：页面状态与异步操作编排。
 - `App/Services/`：网络监控、DNS、IP 数据源、Mihomo、持久化和设置导入导出。
 - `App/Services/NetworkMonitor/`：网关读取、场景匹配和应用控制的拆分服务。
@@ -25,7 +25,7 @@ Kairos 是面向 macOS 26+、Apple Silicon 的原生菜单栏网络工具。主�
 - `App/Managers/`、`App/Coordinators/`：应用级系统服务与 UI 流程协调。
 - `App/Utils/`：日志、校验、超时和设计系统等共享能力。
 - `KairosHelper/`：特权 LaunchDaemon、XPC 服务和固定的 root 操作。
-- `Kairos.xcodeproj/`：`Kairos` app 与 `KairosHelper` 两个 target；CI 和 Xcode 使用自动生成的 `Kairos` scheme，仓库未提交 `.xcscheme`。
+- `Kairos.xcodeproj/`：`Kairos` app 与 `KairosHelper` 两个 target；CI 和 Xcode 使用仓库内共享的 `Kairos` scheme。
 - `.github/workflows/`、`.github/scripts/`：CI、发布、分发元数据和通知自动化。
 - `Config/Release/manifest.json`：是否发版和当前发布版本的唯一请求入口。
 - `Scripts/create-dmg.sh`：可复现的拖放式 DMG 打包脚本。
@@ -65,7 +65,7 @@ xcodebuild build \
   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 ```
 
-本地运行需要在 Xcode 中选择开发团队并构建 `Kairos` scheme。当前工程没有 XCTest target；不要声称执行过应用单元测试。完整命令和发布流程见 `docs/development.md`。
+本地 UI 调试使用 `Kairos` scheme 的 Debug 临时签名，无需登录；特权功能验证仍需有效团队证书。当前工程没有 XCTest target；不要声称执行过应用单元测试。完整命令和发布流程见 `docs/development.md`。
 
 ## 完成标准
 

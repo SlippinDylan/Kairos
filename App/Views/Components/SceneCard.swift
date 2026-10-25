@@ -9,106 +9,104 @@ import SwiftUI
 
 struct SceneCard: View {
     @Binding var scene: NetworkScene
+    let isMatched: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
-                HStack(spacing: DesignSystem.Spacing.medium) {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                HStack(spacing: DesignSystem.Spacing.small) {
                     Text(scene.name)
                         .font(.headline)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    Spacer()
+                    Circle()
+                        .fill(isMatched ? Color.green : Color.secondary.opacity(0.4))
+                        .frame(width: 7, height: 7)
+                        .accessibilityLabel(isMatched ? Text("已匹配") : Text("未匹配"))
+                        .help(isMatched ? Text("已匹配") : Text("未匹配"))
 
-                    Toggle("", isOn: $scene.isEnabled)
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .controlSize(.mini)
+                    Spacer(minLength: DesignSystem.Spacing.small)
 
-                    Menu {
-                        Button {
-                            onEdit()
-                        } label: {
+                    HStack(spacing: DesignSystem.Spacing.small) {
+                        Toggle("应用控制", isOn: $scene.isEnabled)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .controlSize(.mini)
+                            .help("应用控制")
+
+                        Button(action: onEdit) {
                             Label("编辑", systemImage: "square.and.pencil")
                         }
 
-                        Divider()
-
-                        Button(role: .destructive) {
-                            onDelete()
-                        } label: {
+                        Button(role: .destructive, action: onDelete) {
                             Label("删除", systemImage: "trash")
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 15))
+                        .foregroundStyle(.red)
                     }
-                    .menuStyle(.borderlessButton)
-                    .menuIndicator(.hidden)
+                    .buttonStyle(.glass)
                     .fixedSize()
-                    .help("场景操作")
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                HStack(spacing: DesignSystem.Spacing.large) {
-                    HStack(spacing: DesignSystem.Spacing.small) {
-                        Image(systemName: "network")
-                            .frame(width: 16)
-                        Text(scene.routerIP)
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                    HStack(alignment: .top, spacing: DesignSystem.Spacing.standard) {
+                        gatewayDetail(title: "网关 IP", value: scene.routerIP, symbol: "point.3.connected.trianglepath.dotted")
+                        Divider().padding(.vertical, DesignSystem.Spacing.extraSmall)
+                        gatewayDetail(title: "网关 MAC", value: scene.routerMAC, symbol: "cable.connector")
                     }
+                    .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: DesignSystem.Spacing.small) {
-                        Image(systemName: "externaldrive.connected.to.line.below")
-                            .frame(width: 16)
-                        Text(scene.routerMAC)
-                    }
-                }
-                .font(.callout)
-                .foregroundStyle(.secondary)
+                    if !scene.controlApps.isEmpty {
+                        Divider()
 
-                if !scene.controlApps.isEmpty {
-                    Divider()
-                        .padding(.top, DesignSystem.Spacing.extraSmall)
-
-                    HStack(spacing: DesignSystem.Spacing.standard) {
-                        Text("控制应用")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        HStack(spacing: DesignSystem.Spacing.standard) {
+                        LazyVGrid(
+                            columns: [GridItem(.adaptive(minimum: 180), alignment: .leading)],
+                            alignment: .leading,
+                            spacing: DesignSystem.Spacing.small
+                        ) {
                             ForEach(scene.controlApps, id: \.self) { app in
                                 HStack(spacing: DesignSystem.Spacing.small) {
-                                    if let icon = getAppIcon(appName: app) {
-                                        Image(nsImage: icon)
-                                            .resizable()
-                                            .frame(width: 20, height: 20)
-                                    } else {
-                                        Image(systemName: "app.fill")
-                                            .frame(width: 20, height: 20)
-                                            .foregroundStyle(.secondary)
-                                    }
+                                    Image(nsImage: AppControlPresentation.icon(for: app))
+                                        .resizable()
+                                        .frame(width: 20, height: 20)
 
-                                    Text(app)
+                                    Text(AppControlPresentation.name(for: app))
                                         .font(.callout)
+                                        .lineLimit(2)
+                                        .truncationMode(.middle)
                                 }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .help(app)
                             }
                         }
-
-                        Spacer()
                     }
                 }
+                .padding(DesignSystem.Spacing.medium)
+                .background(
+                    Color.primary.opacity(0.04),
+                    in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
+                )
             }
-            .padding(DesignSystem.Spacing.standard)
+            .padding(DesignSystem.Spacing.small)
         }
     }
 
-    // 获取应用图标
-    private func getAppIcon(appName: String) -> NSImage? {
-        let workspace = NSWorkspace.shared
-        let appPath = workspace.urlForApplication(withBundleIdentifier: "com.apple.\(appName)") ??
-                      workspace.urlForApplication(withBundleIdentifier: appName) ??
-                      URL(fileURLWithPath: "/Applications/\(appName).app")
+    private func gatewayDetail(title: String, value: String, symbol: String) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+            Label(L10n.string(title), systemImage: symbol)
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
-        return workspace.icon(forFile: appPath.path)
+            Text(value)
+                .font(.system(.callout, design: .monospaced))
+                .textSelection(.enabled)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(value)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

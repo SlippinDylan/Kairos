@@ -8,12 +8,11 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct SceneConfigSheet: View {
-    @Environment(\.dismiss) var dismiss
     @Binding var scene: NetworkScene?
 
+    @State private var hasLoadedScene = false
     @State private var sceneName = ""
     @State private var routerIP = ""
     @State private var routerMAC = ""
@@ -22,19 +21,18 @@ struct SceneConfigSheet: View {
     @State private var showMACError = false
 
     let isEditing: Bool
-    let onSave: (NetworkScene) -> Void
+    let onCancel: () -> Void
+    let onSave: (NetworkScene) throws -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            // 标题栏
-            HStack {
-                Text(isEditing ? L10n.string("编辑场景") : L10n.string("添加场景"))
-                    .font(.headline)
-                Spacer()
-            }
-            .padding()
-
-            Divider()
+            SheetHeader(
+                title: isEditing ? L10n.string("编辑场景") : L10n.string("添加场景"),
+                action: .save,
+                isEnabled: isFormValid,
+                onBack: onCancel,
+                onAction: saveScene
+            )
 
             // 配置表单（使用 VStack 替代 Form，避免嵌套滚动冲突）
             KairosScrollView {
@@ -42,14 +40,7 @@ struct SceneConfigSheet: View {
                     // Section 1: 场景名称
                     FormSection(title: "场景名称") {
                         TextField("输入场景名称", text: $sceneName)
-                            .textFieldStyle(.plain)
-                            .padding(10)
-                            .background(Color(nsColor: .textBackgroundColor))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+                            .kairosTextField()
                     }
 
                     // Section 2: 路由器配置
@@ -58,14 +49,7 @@ struct SceneConfigSheet: View {
                             // 路由器 IP
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("路由器 IP", text: $routerIP)
-                                    .textFieldStyle(.plain)
-                                    .padding(10)
-                                    .background(Color(nsColor: .textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                            .stroke(showIPError ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                                    .kairosTextField(isInvalid: showIPError)
                                     .onChange(of: routerIP) { _, _ in
                                         showIPError = false
                                     }
@@ -80,14 +64,7 @@ struct SceneConfigSheet: View {
                             // MAC 地址
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("MAC 地址", text: $routerMAC)
-                                    .textFieldStyle(.plain)
-                                    .padding(10)
-                                    .background(Color(nsColor: .textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                            .stroke(showMACError ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                                    .kairosTextField(isInvalid: showMACError)
                                     .onChange(of: routerMAC) { _, _ in
                                         showMACError = false
                                     }
@@ -113,18 +90,11 @@ struct SceneConfigSheet: View {
                             } else {
                                 ForEach(selectedApps, id: \.self) { app in
                                     HStack {
-                                        // 显示应用图标
-                                        if let icon = getAppIcon(appName: app) {
-                                            Image(nsImage: icon)
-                                                .resizable()
-                                                .frame(width: 24, height: 24)
-                                        } else {
-                                            Image(systemName: "app.fill")
-                                                .font(.system(size: 20))
-                                                .foregroundStyle(.blue)
-                                        }
+                                        Image(nsImage: AppControlPresentation.icon(for: app))
+                                            .resizable()
+                                            .frame(width: 24, height: 24)
 
-                                        Text(app)
+                                        Text(AppControlPresentation.name(for: app))
                                             .font(.callout)
 
                                         Spacer()
@@ -142,6 +112,7 @@ struct SceneConfigSheet: View {
                                     .padding(.horizontal, 10)
                                     .background(Color(nsColor: .controlBackgroundColor))
                                     .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                                    .help(app)
                                 }
                             }
 
@@ -159,30 +130,11 @@ struct SceneConfigSheet: View {
                 }
                 .padding()
             }
-
-            Divider()
-
-            // 底部按钮
-            HStack(spacing: 12) {
-                Button("取消") {
-                    dismiss()
-                }
-                .buttonStyle(.glass)
-                .frame(minWidth: 80)
-
-                Spacer()
-
-                Button("保存") {
-                    saveScene()
-                }
-                .buttonStyle(.glassProminent)
-                .frame(minWidth: 80)
-                .disabled(!isFormValid)
-            }
-            .padding()
         }
-        .frame(width: 500, height: 500)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
+            guard !hasLoadedScene else { return }
+            hasLoadedScene = true
             if let scene = scene {
                 sceneName = scene.name
                 routerIP = scene.routerIP
@@ -195,12 +147,9 @@ struct SceneConfigSheet: View {
     // MARK: - Validation
 
     private var isFormValid: Bool {
-        return !sceneName.isEmpty &&
-               !routerIP.isEmpty &&
-               !routerMAC.isEmpty &&
-               !selectedApps.isEmpty &&
-               NetworkValidator.isValidIP(routerIP) &&
-               NetworkValidator.isValidMAC(routerMAC)
+        if case .success = SceneValidation.appControl(name: sceneName, routerIP: routerIP,
+            routerMAC: routerMAC, apps: selectedApps) { return true }
+        return false
     }
 
     // MARK: - Actions
@@ -213,9 +162,8 @@ struct SceneConfigSheet: View {
         )
 
         for url in urls {
-            let appName = url.deletingPathExtension().lastPathComponent
-            if !selectedApps.contains(appName) {
-                selectedApps.append(appName)
+            if !selectedApps.contains(url.path) {
+                selectedApps.append(url.path)
             }
         }
     }
@@ -234,7 +182,8 @@ struct SceneConfigSheet: View {
         }
 
         // 规范化 MAC 地址（确保存储格式统一）
-        let normalizedMAC = NetworkValidator.normalizeMAC(routerMAC) ?? routerMAC
+        guard case .success(let normalizedMAC) = SceneValidation.appControl(name: sceneName,
+            routerIP: routerIP, routerMAC: routerMAC, apps: selectedApps) else { return }
 
         let newScene = NetworkScene(
             id: scene?.id ?? UUID(),
@@ -244,19 +193,12 @@ struct SceneConfigSheet: View {
             controlApps: selectedApps,
             isEnabled: scene?.isEnabled ?? false
         )
-        onSave(newScene)
-        dismiss()
-    }
-
-    // MARK: - Helpers
-
-    private func getAppIcon(appName: String) -> NSImage? {
-        let workspace = NSWorkspace.shared
-        let appPath = workspace.urlForApplication(withBundleIdentifier: "com.apple.\(appName)") ??
-                      workspace.urlForApplication(withBundleIdentifier: appName) ??
-                      URL(fileURLWithPath: "/Applications/\(appName).app")
-
-        return workspace.icon(forFile: appPath.path)
+        do {
+            try onSave(newScene)
+            onCancel()
+        } catch {
+            Toast.error(error.localizedDescription)
+        }
     }
 }
 

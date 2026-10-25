@@ -5,15 +5,24 @@ final class StatusBarController: NSObject {
     private let statusItem: NSStatusItem
     private let menu = NSMenu()
     private let onShowTab: (Int?) -> Void
+    private let onHide: () -> Void
     private let onQuit: () -> Void
 
-    init(onShowTab: @escaping (Int?) -> Void, onQuit: @escaping () -> Void) {
+    init(onShowTab: @escaping (Int?) -> Void, onHide: @escaping () -> Void, onQuit: @escaping () -> Void) {
         self.onShowTab = onShowTab
         self.onQuit = onQuit
+        self.onHide = onHide
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
         configureButton()
         configureMenu()
+    }
+
+    var button: NSStatusBarButton {
+        guard let button = statusItem.button else {
+            preconditionFailure("NSStatusItem must provide a status bar button")
+        }
+        return button
     }
 
     private func configureButton() {
@@ -30,9 +39,9 @@ final class StatusBarController: NSObject {
     }
 
     private func configureMenu() {
-        addNavigationItem(title: "网络控制", systemImage: "globe", tab: 0)
+        addNavigationItem(title: "应用控制", systemImage: "app", tab: 0)
+        addNavigationItem(title: "DNS 控制", systemImage: "server.rack", tab: 6)
         addNavigationItem(title: "网络工具", systemImage: "wrench.and.screwdriver", tab: 1)
-        addNavigationItem(title: "Mihomo", systemImage: "shippingbox", tab: 2)
         menu.addItem(.separator())
 
         let quitItem = NSMenuItem(
@@ -60,6 +69,7 @@ final class StatusBarController: NSObject {
     @objc private func handleStatusItemClick() {
         switch NSApp.currentEvent?.type {
         case .rightMouseUp:
+            onHide()
             showContextMenu()
         default:
             onShowTab(nil)

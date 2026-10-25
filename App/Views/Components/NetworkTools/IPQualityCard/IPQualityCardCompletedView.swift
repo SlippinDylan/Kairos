@@ -20,8 +20,9 @@ import SwiftUI
 /// ## 设计说明
 /// - 使用表格布局展示多数据源对比信息
 /// - 通用 DataTable 组件实现表格复用
-/// - 布局适配 GroupBox 环境（不使用 ScrollView，避免嵌套）
+/// - Tables render directly in the result sheet; only wide tables scroll horizontally.
 struct IPQualityCardCompletedView: View {
+    static let minimumTableWidth: CGFloat = 640
     // MARK: - Properties
 
     let result: IPQualityResult
@@ -74,18 +75,24 @@ struct IPQualityCardCompletedView: View {
                     .font(.headline)
                     .foregroundStyle(.secondary)
 
-                Text("\(result.riskScore)")
-                    .font(.system(size: 72, weight: .bold))
-                    .foregroundStyle(riskLevelColor)
+                if let multiSource = result.multiSourceData, !multiSource.riskScores.isEmpty {
+                    Text("\(result.riskScore)")
+                        .font(.system(size: 72, weight: .bold))
+                        .foregroundStyle(riskLevelColor)
 
-                Text(result.riskLevel.displayName)
-                    .font(.title3)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .background(riskLevelColor.opacity(0.2))
-                    .foregroundStyle(riskLevelColor)
-                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
+                    Text(result.riskLevel.displayName)
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(riskLevelColor.opacity(0.2))
+                        .foregroundStyle(riskLevelColor)
+                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium))
+                } else {
+                    Text("未获取评分")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
@@ -128,7 +135,7 @@ struct IPQualityCardCompletedView: View {
                     InfoRow(label: "时区", value: timezone)
                 }
             }
-            .padding()
+            .padding(DesignSystem.Spacing.small)
         } label: {
             Label("基础信息", systemImage: "info.circle.fill")
                 .foregroundStyle(.blue)
@@ -139,7 +146,12 @@ struct IPQualityCardCompletedView: View {
 
     /// IP 类型对比卡片（表格布局）
     private func ipTypeTableCard(ipTypes: [DataSourceIPType]) -> some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+            Label("IP 类型对比", systemImage: "network")
+                .foregroundStyle(.purple)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+
             DataTable(
                 data: ipTypes,
                 columns: [
@@ -164,10 +176,6 @@ struct IPQualityCardCompletedView: View {
                     }
                 ]
             )
-            .padding()
-        } label: {
-            Label("IP 类型对比", systemImage: "network")
-                .foregroundStyle(.purple)
         }
     }
 
@@ -175,7 +183,12 @@ struct IPQualityCardCompletedView: View {
 
     /// 风险评分对比卡片（表格布局）
     private func riskScoreTableCard(riskScores: [DataSourceRiskScore]) -> some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+            Label("风险评分对比", systemImage: "exclamationmark.shield.fill")
+                .foregroundStyle(.orange)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+
             DataTable(
                 data: riskScores,
                 columns: [
@@ -197,10 +210,6 @@ struct IPQualityCardCompletedView: View {
                     }
                 ]
             )
-            .padding()
-        } label: {
-            Label("风险评分对比", systemImage: "exclamationmark.shield.fill")
-                .foregroundStyle(.orange)
         }
     }
 
@@ -218,7 +227,12 @@ struct IPQualityCardCompletedView: View {
 
     /// 风险因子对比卡片（表格布局）
     private func riskFactorsTableCard(riskFactors: [DataSourceRiskFactors]) -> some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+            Label("风险因子对比", systemImage: "shield.checkered")
+                .foregroundStyle(.red)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+
             DataTable(
                 data: riskFactors,
                 columns: [
@@ -254,10 +268,6 @@ struct IPQualityCardCompletedView: View {
                     }
                 ]
             )
-            .padding()
-        } label: {
-            Label("风险因子对比", systemImage: "shield.checkered")
-                .foregroundStyle(.red)
         }
     }
 
@@ -265,7 +275,12 @@ struct IPQualityCardCompletedView: View {
 
     /// 流媒体解锁卡片（表格布局）
     private var streamingServicesTableCard: some View {
-        GroupBox {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+            Label("流媒体及 AI 服务解锁检测", systemImage: "play.circle.fill")
+                .foregroundStyle(.purple)
+                .font(.headline)
+                .accessibilityAddTraits(.isHeader)
+
             DataTable(
                 data: streamingServices,
                 columns: [
@@ -297,10 +312,6 @@ struct IPQualityCardCompletedView: View {
                     }
                 ]
             )
-            .padding()
-        } label: {
-            Label("流媒体及 AI 服务解锁检测", systemImage: "play.circle.fill")
-                .foregroundStyle(.purple)
         }
     }
 
@@ -411,7 +422,7 @@ struct IPQualityCardCompletedView: View {
                     }
                 }
             }
-            .padding()
+            .padding(DesignSystem.Spacing.small)
         } label: {
             Label("邮件服务", systemImage: "envelope.fill")
                 .foregroundStyle(.blue)
@@ -444,6 +455,13 @@ private struct DataTable<T>: View {
     let columns: [TableColumn<T>]
 
     var body: some View {
+        ScrollView(.horizontal) {
+            tableContent
+                .frame(minWidth: IPQualityCardCompletedView.minimumTableWidth)
+        }
+    }
+
+    private var tableContent: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 表头
             headerRow
@@ -460,8 +478,8 @@ private struct DataTable<T>: View {
             }
         }
         .overlay(
-            RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
-                .stroke(Color(NSColor.separatorColor), lineWidth: 1)
+            Rectangle()
+                .strokeBorder(Color(NSColor.separatorColor), lineWidth: 1)
         )
     }
 

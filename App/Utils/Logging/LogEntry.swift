@@ -106,6 +106,7 @@ struct LogEntry: Identifiable, Sendable {
     /// - 日志级别：根据 level.nsColor 着色
     /// - emoji + 消息：黑色/白色（跟随系统深色模式）
     /// - 位置信息：浅灰色
+    @MainActor
     var attributedString: NSAttributedString {
         let result = NSMutableAttributedString()
 

@@ -1,7 +1,951 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "无法读取 Mihomo 配置：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot read Mihomo configuration: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取 Mihomo 配置：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法讀取 Mihomo 設定：%@"
+          }
+        }
+      }
+    },
+    "Mihomo 配置读取失败": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could Not Read Mihomo Configuration"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mihomo 配置读取失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mihomo 設定讀取失敗"
+          }
+        }
+      }
+    },
+    "找不到应用：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Application not found: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到应用：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到應用程式：%@"
+          }
+        }
+      }
+    },
+    "存在多个同名应用，请使用应用路径或 Bundle ID：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Multiple applications share this name. Use an application path or bundle ID: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存在多个同名应用，请使用应用路径或 Bundle ID：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有多個同名應用程式，請使用應用程式路徑或 Bundle ID：%@"
+          }
+        }
+      }
+    },
+    "无法读取应用身份：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot read application identity: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取应用身份：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法讀取應用程式識別資訊：%@"
+          }
+        }
+      }
+    },
+    "应用拒绝退出：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The application refused to quit: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用拒绝退出：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "應用程式拒絕結束：%@"
+          }
+        }
+      }
+    },
+    "等待应用退出超时：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timed out waiting for the application to quit: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待应用退出超时：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等待應用程式結束逾時：%@"
+          }
+        }
+      }
+    },
+    "无法读取场景文件 %@：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot read scene file %@: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法读取场景文件 %@：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法讀取場景檔案 %@：%@"
+          }
+        }
+      }
+    },
+    "无法保存场景文件 %@：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot save scene file %@: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法保存场景文件 %@：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法儲存場景檔案 %@：%@"
+          }
+        }
+      }
+    },
+    "重试": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重试"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重試"
+          }
+        }
+      }
+    },
+    "不支持的配置文件版本：%lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsupported settings file version: %lld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不支持的配置文件版本：%lld"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不支援的設定檔案版本：%lld"
+          }
+        }
+      }
+    },
+    "该文件不是 Kairos 配置文件": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is not a Kairos settings file"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该文件不是 Kairos 配置文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此檔案不是 Kairos 設定檔案"
+          }
+        }
+      }
+    },
+    "配置文件含重复场景 ID：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The settings file contains duplicate scene IDs: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件含重复场景 ID：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定檔案含重複場景 ID：%@"
+          }
+        }
+      }
+    },
+    "配置文件缺少字段：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The settings file is missing a field: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件缺少字段：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定檔案缺少欄位：%@"
+          }
+        }
+      }
+    },
+    "配置文件字段无效：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid settings file field: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "配置文件字段无效：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定檔案欄位無效：%@"
+          }
+        }
+      }
+    },
+    "导入失败：%@；恢复原配置也失败：%@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import failed: %@; restoring the previous settings also failed: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入失败：%@；恢复原配置也失败：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匯入失敗：%@；還原原設定也失敗：%@"
+          }
+        }
+      }
+    },
+    "ipapi.is 请求额度已受限，请在 %@ 后重试。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ipapi.is request quota reached. Try again after %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ipapi.is 请求额度已受限，请在 %@ 后重试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ipapi.is 請求額度已受限，請在 %@ 後重試。"
+          }
+        }
+      }
+    },
+    "ipapi.is 返回 HTTP 429，但 Retry-After 缺失或无效，无法确定恢复时间。请检查账户额度或更换 API Key。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ipapi.is returned HTTP 429 without a valid Retry-After header. The recovery time is unknown. Check your account quota or use a different API key."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ipapi.is 返回 HTTP 429，但 Retry-After 缺失或无效，无法确定恢复时间。请检查账户额度或更换 API Key。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ipapi.is 回傳 HTTP 429，但 Retry-After 缺少或無效，無法確定恢復時間。請檢查帳戶額度或更換 API Key。"
+          }
+        }
+      }
+    },
+    "所有 IP 质量数据源均请求失败，请检查网络或数据源配置后重试。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All IP quality data sources failed. Check your network or data source settings and try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有 IP 质量数据源均请求失败，请检查网络或数据源配置后重试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "所有 IP 品質資料來源均請求失敗，請檢查網路或資料來源設定後重試。"
+          }
+        }
+      }
+    },
+    "未获取评分": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Score Unavailable"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未获取评分"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未取得評分"
+          }
+        }
+      }
+    },
+    "无有效结果": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Valid Results"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无有效结果"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無有效結果"
+          }
+        }
+      }
+    },
+    "第 %lld/%lld 个域名 · 第 %lld/10 轮": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Domain %lld/%lld · Round %lld/10"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %lld/%lld 个域名 · 第 %lld/10 轮"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %lld/%lld 個網域 · 第 %lld/10 輪"
+          }
+        }
+      }
+    },
+    "备份 Mihomo 内核": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back Up Mihomo Kernel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份 Mihomo 内核"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "備份 Mihomo 核心"
+          }
+        }
+      }
+    },
+    "恢复 Mihomo 内核": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Mihomo Kernel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复 Mihomo 内核"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "復原 Mihomo 核心"
+          }
+        }
+      }
+    },
+    "替换 Mihomo 内核": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace Mihomo Kernel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "替换 Mihomo 内核"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "替換 Mihomo 核心"
+          }
+        }
+      }
+    },
+    "%@ 运行中": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is running"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 运行中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 執行中"
+          }
+        }
+      }
+    },
+    "%@ 未运行": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not running"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 未运行"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 未執行"
+          }
+        }
+      }
+    },
+    "未检测到 %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ not found"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未检测到 %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未偵測到 %@"
+          }
+        }
+      }
+    },
+    "系统维护": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Maintenance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统维护"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統維護"
+          }
+        }
+      }
+    },
+    "网络检测": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Network Diagnostics"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网络检测"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網路檢測"
+          }
+        }
+      }
+    },
+    "DNS 清理": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DNS Cleanup"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DNS 清理"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DNS 清理"
+          }
+        }
+      }
+    },
+    "清理网络缓存": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear network caches"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清理网络缓存"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清理網路快取"
+          }
+        }
+      }
+    },
+    "查询 IP 信息": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look up IP details"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查询 IP 信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查詢 IP 資訊"
+          }
+        }
+      }
+    },
+    "测试解析速度": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test resolver speed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "测试解析速度"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "測試解析速度"
+          }
+        }
+      }
+    },
+    "检测当前网络": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check this network"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "检测当前网络"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檢測目前網路"
+          }
+        }
+      }
+    },
+    "刷新内核状态": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh Kernel Status"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷新内核状态"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新整理核心狀態"
+          }
+        }
+      }
+    },
+    "浏览器清理范围为 Chrome 和 Firefox，并包含系统缓存清理。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browser cleanup covers Chrome and Firefox. System caches are also cleared."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浏览器清理范围为 Chrome 和 Firefox，并包含系统缓存清理。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瀏覽器清理範圍為 Chrome 和 Firefox，並包含系統快取清理。"
+          }
+        }
+      }
+    },
+    "处理中": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "处理中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "處理中"
+          }
+        }
+      }
+    },
+    "备份文件": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup File"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "備份檔案"
+          }
+        }
+      }
+    },
+    "请前往设置的服务组配置内核文件路径": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure the kernel file path under Services in Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请前往设置的服务组配置内核文件路径"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請前往設定的服務群組設定核心檔案路徑"
+          }
+        }
+      }
+    },
+    "操作前会请求退出关联应用，完成后可重新启动应用": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You will be asked to quit the linked app before proceeding. You can relaunch it afterward."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操作前会请求退出关联应用，完成后可重新启动应用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操作前會要求結束關聯 App，完成後可重新啟動 App"
+          }
+        }
+      }
+    },
     "language.follow_system": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -24,6 +968,7 @@
       }
     },
     "language.setting.title": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -46,6 +991,7 @@
       }
     },
     "language.setting.description": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -68,6 +1014,7 @@
       }
     },
     "language.restart.title": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -90,6 +1037,7 @@
       }
     },
     "language.restart.message": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -112,6 +1060,7 @@
       }
     },
     "language.restart.now": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -134,6 +1083,7 @@
       }
     },
     "language.restart.later": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -156,6 +1106,7 @@
       }
     },
     "settings.pane.services": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -178,6 +1129,7 @@
       }
     },
     "settings.pane.services.description": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -200,6 +1152,7 @@
       }
     },
     "settings.pane.data": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -222,6 +1175,7 @@
       }
     },
     "settings.pane.data.description": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -244,6 +1198,7 @@
       }
     },
     "page.networkControl.description": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -266,6 +1221,7 @@
       }
     },
     "page.networkTools.description": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -288,6 +1244,7 @@
       }
     },
     "page.mihomo.description": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -310,6 +1267,7 @@
       }
     },
     "IP 查询结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -332,6 +1290,7 @@
       }
     },
     "DNS 测试结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -354,6 +1313,7 @@
       }
     },
     "IP 质量检测结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -376,6 +1336,7 @@
       }
     },
     "查看结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -397,7 +1358,77 @@
         }
       }
     },
+    "添加": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增"
+          }
+        }
+      }
+    },
+    "已匹配": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Matched"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已匹配"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已符合"
+          }
+        }
+      }
+    },
+    "未匹配": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Matched"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未匹配"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未符合"
+          }
+        }
+      }
+    },
     "网络控制": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -420,6 +1451,7 @@
       }
     },
     "网络工具": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -442,6 +1474,7 @@
       }
     },
     "设置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -464,6 +1497,7 @@
       }
     },
     "关于": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -486,6 +1520,7 @@
       }
     },
     "退出": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -508,6 +1543,7 @@
       }
     },
     "关闭窗口": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -530,6 +1566,7 @@
       }
     },
     "通用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -552,6 +1589,7 @@
       }
     },
     "应用基本行为": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -574,6 +1612,7 @@
       }
     },
     "登录时自动启动": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -596,6 +1635,7 @@
       }
     },
     "登录系统后自动运行 Kairos": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -618,6 +1658,7 @@
       }
     },
     "Mihomo 关联应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -640,6 +1681,7 @@
       }
     },
     "内核替换功能依赖的宿主应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -662,6 +1704,7 @@
       }
     },
     "未关联应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -684,6 +1727,7 @@
       }
     },
     "选择正在使用的 Clash/Mihomo 客户端": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -706,6 +1750,7 @@
       }
     },
     "取消关联": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -728,6 +1773,7 @@
       }
     },
     "更换应用…": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -750,6 +1796,7 @@
       }
     },
     "选择应用…": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -772,6 +1819,7 @@
       }
     },
     "配置管理": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -794,6 +1842,7 @@
       }
     },
     "导出和导入应用配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -816,6 +1865,7 @@
       }
     },
     "导入配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -838,6 +1888,7 @@
       }
     },
     "从备份文件覆盖当前应用设置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -860,6 +1911,7 @@
       }
     },
     "导出配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -882,6 +1934,7 @@
       }
     },
     "将场景、DNS、API Key 和 Mihomo 设置保存为文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -904,6 +1957,7 @@
       }
     },
     "确认导入": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -926,6 +1980,7 @@
       }
     },
     "取消": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -948,6 +2003,7 @@
       }
     },
     "导入": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -970,6 +2026,7 @@
       }
     },
     "将导入 %lld 个应用控制场景、%lld 个 DNS 控制场景、API Key 配置以及 Mihomo 内核配置。\n\n此操作将覆盖现有配置，是否继续？": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -992,6 +2049,7 @@
       }
     },
     "IP 质量数据源": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1014,6 +2072,7 @@
       }
     },
     "配置第三方数据源凭据；未配置时使用免费版或跳过付费源": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1036,6 +2095,7 @@
       }
     },
     "支持免费访问": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1058,6 +2118,7 @@
       }
     },
     "付费数据源": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1080,6 +2141,7 @@
       }
     },
     "清除全部": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1101,7 +2163,77 @@
         }
       }
     },
+    "Mihomo 应用路径": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mihomo App Path"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mihomo 应用路径"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mihomo App 路徑"
+          }
+        }
+      }
+    },
+    "输入 Mihomo 应用路径": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the Mihomo app path"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入 Mihomo 应用路径"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輸入 Mihomo App 路徑"
+          }
+        }
+      }
+    },
+    "输入内核文件路径": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the kernel file path"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "输入内核文件路径"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輸入核心檔案路徑"
+          }
+        }
+      }
+    },
     "保存配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1124,6 +2256,7 @@
       }
     },
     "权限": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1146,6 +2279,7 @@
       }
     },
     "Kairos 所需的系统权限": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1168,6 +2302,7 @@
       }
     },
     "打开设置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1190,6 +2325,7 @@
       }
     },
     "检查 Helper": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1212,6 +2348,7 @@
       }
     },
     "卸载 Helper": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1234,6 +2371,7 @@
       }
     },
     "安装 Helper": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1256,6 +2394,7 @@
       }
     },
     "显示": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1278,6 +2417,7 @@
       }
     },
     "隐藏": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1300,6 +2440,7 @@
       }
     },
     "获取 API Key": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1322,6 +2463,7 @@
       }
     },
     "当前网络": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1344,6 +2486,7 @@
       }
     },
     "网关 IP": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1366,6 +2509,7 @@
       }
     },
     "网关 MAC": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1388,6 +2532,7 @@
       }
     },
     "网络名称": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1410,6 +2555,7 @@
       }
     },
     "应用控制": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1432,6 +2578,8 @@
       }
     },
     "DNS 控制": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1454,6 +2602,7 @@
       }
     },
     "添加场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1476,6 +2625,7 @@
       }
     },
     "暂无配置的场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1498,6 +2648,7 @@
       }
     },
     "编辑场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1520,6 +2671,7 @@
       }
     },
     "输入场景名称": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1542,6 +2694,7 @@
       }
     },
     "匹配场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1564,6 +2717,7 @@
       }
     },
     "控制应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1586,6 +2740,7 @@
       }
     },
     "添加应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1608,6 +2763,7 @@
       }
     },
     "暂未添加应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1630,6 +2786,7 @@
       }
     },
     "保存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1652,6 +2809,7 @@
       }
     },
     "删除": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1674,6 +2832,8 @@
       }
     },
     "DNS控制": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1695,7 +2855,31 @@
         }
       }
     },
+    "目标 DNS": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Target DNS"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目标 DNS"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目標 DNS"
+          }
+        }
+      }
+    },
     "主 DNS": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1718,6 +2902,7 @@
       }
     },
     "备用 DNS（可选）": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1740,6 +2925,7 @@
       }
     },
     "例如: 223.5.5.5": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1762,6 +2948,7 @@
       }
     },
     "当前网络状态": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1784,6 +2971,7 @@
       }
     },
     "路由器 IP": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1806,6 +2994,7 @@
       }
     },
     "MAC 地址": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1828,6 +3017,7 @@
       }
     },
     "DNS 深度清理": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1850,6 +3040,7 @@
       }
     },
     "清理 DNS 缓存、重置网络接口、清除 ARP 缓存、重置 WiFi、清理浏览器缓存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1872,6 +3063,7 @@
       }
     },
     "执行深度清理": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1894,6 +3086,7 @@
       }
     },
     "执行中...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1916,6 +3109,7 @@
       }
     },
     "执行时将中断网络连接 2-5 秒": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1938,6 +3132,7 @@
       }
     },
     "确认执行深度清理？": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1960,6 +3155,7 @@
       }
     },
     "此操作将执行：": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -1982,6 +3178,7 @@
       }
     },
     "• 清理 DNS 缓存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2004,6 +3201,8 @@
       }
     },
     "• 清除 ARP 缓存": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2026,6 +3225,7 @@
       }
     },
     "• 重置网络接口": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2048,6 +3248,7 @@
       }
     },
     "• 重置 WiFi": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2070,6 +3271,7 @@
       }
     },
     "• 清理浏览器缓存（Chrome、Firefox）": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2092,6 +3294,7 @@
       }
     },
     "• 清理系统缓存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2114,6 +3317,7 @@
       }
     },
     "⚠️ 将中断网络连接 2-5 秒": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2136,6 +3340,7 @@
       }
     },
     "执行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2158,6 +3363,7 @@
       }
     },
     "IP 查询": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2180,6 +3386,7 @@
       }
     },
     "输入 IP 地址": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2202,6 +3409,7 @@
       }
     },
     "查询中...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2223,7 +3431,123 @@
         }
       }
     },
+    "查询": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look Up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查询"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "查詢"
+          }
+        }
+      }
+    },
+    "编辑": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯"
+          }
+        }
+      }
+    },
+    "重新测试": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Again"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新测试"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新測試"
+          }
+        }
+      }
+    },
+    "取消测试": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel Test"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消测试"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消測試"
+          }
+        }
+      }
+    },
+    "%@ · %lld%%": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld%%"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld%%"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld%%"
+          }
+        }
+      }
+    },
     "查询结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2246,6 +3570,7 @@
       }
     },
     "自治系统号": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2268,6 +3593,8 @@
       }
     },
     "IP类型": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2290,6 +3617,7 @@
       }
     },
     "组织": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2312,6 +3640,7 @@
       }
     },
     "时区": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2334,6 +3663,7 @@
       }
     },
     "使用地": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2356,6 +3686,7 @@
       }
     },
     "注册地": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2378,6 +3709,7 @@
       }
     },
     "城市": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2400,6 +3732,7 @@
       }
     },
     "坐标": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2422,6 +3755,7 @@
       }
     },
     "DNS 测试": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2444,6 +3778,7 @@
       }
     },
     "DNS 服务器": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2466,6 +3801,7 @@
       }
     },
     "域名": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2488,6 +3824,7 @@
       }
     },
     "测试结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2510,6 +3847,7 @@
       }
     },
     "最快": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2532,6 +3870,7 @@
       }
     },
     "最慢": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2554,6 +3893,7 @@
       }
     },
     "平均耗时": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2576,6 +3916,7 @@
       }
     },
     "成功率": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2598,6 +3939,7 @@
       }
     },
     "测试失败，未获取到任何结果": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2620,6 +3962,7 @@
       }
     },
     "IP 质量": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2642,6 +3985,7 @@
       }
     },
     "IP 质量检测": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2664,6 +4008,7 @@
       }
     },
     "开始检测": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2686,6 +4031,7 @@
       }
     },
     "重新检测": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2708,6 +4054,7 @@
       }
     },
     "基础信息": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2730,6 +4077,7 @@
       }
     },
     "IP 地址": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2752,6 +4100,7 @@
       }
     },
     "IP 版本": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2774,6 +4123,8 @@
       }
     },
     "IP 类型": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2796,6 +4147,7 @@
       }
     },
     "国家": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2818,6 +4170,7 @@
       }
     },
     "风险评分": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2840,6 +4193,7 @@
       }
     },
     "风险评分对比": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2862,6 +4216,7 @@
       }
     },
     "风险因子对比": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2884,6 +4239,7 @@
       }
     },
     "IP 类型对比": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2906,6 +4262,7 @@
       }
     },
     "流媒体及 AI 服务解锁检测": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2928,6 +4285,7 @@
       }
     },
     "邮件服务": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2950,6 +4308,7 @@
       }
     },
     "SMTP 连接": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2972,6 +4331,7 @@
       }
     },
     "端口 25": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -2994,6 +4354,7 @@
       }
     },
     "开放": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3016,6 +4377,7 @@
       }
     },
     "正常": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3038,6 +4400,7 @@
       }
     },
     "无法连接": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3060,6 +4423,7 @@
       }
     },
     "内核状态": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3082,6 +4446,7 @@
       }
     },
     "关联应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3104,6 +4469,7 @@
       }
     },
     "运行状态": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3126,6 +4492,7 @@
       }
     },
     "内核文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3148,6 +4515,7 @@
       }
     },
     "刷新状态": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3170,6 +4538,7 @@
       }
     },
     "未设置，请前往设置页面关联": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3192,6 +4561,7 @@
       }
     },
     "未检测到该应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3214,6 +4584,7 @@
       }
     },
     "已安装": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3236,6 +4607,7 @@
       }
     },
     "检测中": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3258,6 +4630,7 @@
       }
     },
     "未关联": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3280,6 +4653,7 @@
       }
     },
     "运行中": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3302,6 +4676,7 @@
       }
     },
     "未运行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3324,6 +4699,7 @@
       }
     },
     "内核替换": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3346,6 +4722,7 @@
       }
     },
     "备份并替换 Mihomo 内核，替换后可能需要重启关联应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3368,6 +4745,7 @@
       }
     },
     "保存当前内核副本，供后续恢复使用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3390,6 +4768,7 @@
       }
     },
     "备份内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3412,6 +4791,7 @@
       }
     },
     "使用已备份的文件恢复当前内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3434,6 +4814,7 @@
       }
     },
     "恢复内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3456,6 +4837,7 @@
       }
     },
     "从 GitHub 下载最新预发布版本并替换当前内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3478,6 +4860,7 @@
       }
     },
     "替换内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3500,6 +4883,7 @@
       }
     },
     "下载内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3522,6 +4906,7 @@
       }
     },
     "从 GitHub 自动下载最新预发布内核": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3544,6 +4929,7 @@
       }
     },
     "配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3566,6 +4952,7 @@
       }
     },
     "自定义内核路径和下载源，配置将保存在本地": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3588,6 +4975,7 @@
       }
     },
     "内核文件路径": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3610,6 +4998,7 @@
       }
     },
     "访问": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3632,6 +5021,7 @@
       }
     },
     "输入 GitHub Releases URL": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3654,6 +5044,7 @@
       }
     },
     "内核文件名模板": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3676,6 +5067,7 @@
       }
     },
     "例如：mihomo-darwin-arm64-alpha-smart": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3698,6 +5090,7 @@
       }
     },
     "重置配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3720,6 +5113,7 @@
       }
     },
     "配置已保存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3742,6 +5136,7 @@
       }
     },
     "配置已重置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3764,6 +5159,7 @@
       }
     },
     "内核备份成功": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3786,6 +5182,7 @@
       }
     },
     "内核替换成功": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3808,6 +5205,7 @@
       }
     },
     "内核恢复成功": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3830,6 +5228,7 @@
       }
     },
     "请先在下方配置内核文件路径": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3851,7 +5250,123 @@
         }
       }
     },
+    "日志等级": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log Level"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日志等级"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日誌等級"
+          }
+        }
+      }
+    },
+    "仅记录所选等级及以上的日志，修改后立即生效。": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records the selected level and higher. Changes apply immediately."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "仅记录所选等级及以上的日志，修改后立即生效。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "僅記錄所選等級及以上的日誌，修改後立即生效。"
+          }
+        }
+      }
+    },
+    "当前日志文件（打开文件夹后将选中此文件，可使用文本编辑器查看）": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Log File (revealed in Finder; view it in a text editor)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "当前日志文件（打开文件夹后将选中此文件，可使用文本编辑器查看）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前日誌檔案（開啟資料夾後會選取此檔案，可使用文字編輯器檢視）"
+          }
+        }
+      }
+    },
+    "打开日志文件": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Log File"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开日志文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟日誌檔案"
+          }
+        }
+      }
+    },
+    "无法打开日志文件夹": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unable to open the logs folder"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法打开日志文件夹"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法開啟日誌資料夾"
+          }
+        }
+      }
+    },
     "日志": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3874,6 +5389,7 @@
       }
     },
     "应用运行时产生的日志将在此显示": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3896,6 +5412,7 @@
       }
     },
     "暂无日志": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3918,6 +5435,7 @@
       }
     },
     "未找到匹配的日志，请尝试其他筛选条件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3940,6 +5458,7 @@
       }
     },
     "按日志级别过滤": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3962,6 +5481,7 @@
       }
     },
     "搜索内容...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -3984,6 +5504,7 @@
       }
     },
     "清空": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4006,6 +5527,7 @@
       }
     },
     "清空所有日志": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4028,6 +5550,7 @@
       }
     },
     "导出": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4050,6 +5573,7 @@
       }
     },
     "导出日志到文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4072,6 +5596,7 @@
       }
     },
     "清除筛选条件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4094,6 +5619,7 @@
       }
     },
     "极简、高效、智能的网络自动化工具": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4116,6 +5642,7 @@
       }
     },
     "检查更新": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4138,6 +5665,7 @@
       }
     },
     "版本 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4160,6 +5688,7 @@
       }
     },
     "Copyright © 2025-2026 SlippinDylan Studio": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4182,6 +5711,7 @@
       }
     },
     "list.separator": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4204,6 +5734,7 @@
       }
     },
     "极低": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4226,6 +5757,7 @@
       }
     },
     "低": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4248,6 +5780,7 @@
       }
     },
     "中等": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4270,6 +5803,7 @@
       }
     },
     "高": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4292,6 +5826,7 @@
       }
     },
     "极高": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4314,6 +5849,7 @@
       }
     },
     "家庭宽带": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4336,6 +5872,7 @@
       }
     },
     "数据中心": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4358,6 +5895,7 @@
       }
     },
     "商业": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4380,6 +5918,7 @@
       }
     },
     "教育": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4402,6 +5941,7 @@
       }
     },
     "政府": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4424,6 +5964,7 @@
       }
     },
     "移动网络": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4446,6 +5987,7 @@
       }
     },
     "未知": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4468,6 +6010,7 @@
       }
     },
     "解锁": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4490,6 +6033,7 @@
       }
     },
     "失败": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4512,6 +6056,7 @@
       }
     },
     "尚未选择内核文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4534,6 +6079,7 @@
       }
     },
     "内核文件不存在": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4556,6 +6102,7 @@
       }
     },
     "内核已备份": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4578,6 +6125,7 @@
       }
     },
     "内核未备份": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4600,6 +6148,7 @@
       }
     },
     "%@ 正在运行，请先退出应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4622,6 +6171,7 @@
       }
     },
     "等待应用退出超时，请手动确认应用已完全退出后重试": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4644,6 +6194,7 @@
       }
     },
     "请先选择内核文件路径": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4666,6 +6217,7 @@
       }
     },
     "备份文件已存在": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4688,6 +6240,7 @@
       }
     },
     "备份文件不存在": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4710,6 +6263,7 @@
       }
     },
     "文件操作失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4732,6 +6286,7 @@
       }
     },
     "当前仅支持用户主目录内可写的内核文件，不支持受保护位置或 App Bundle 内的文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4754,6 +6309,7 @@
       }
     },
     "无效的文件路径": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4776,6 +6332,7 @@
       }
     },
     "命令执行失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4798,6 +6355,7 @@
       }
     },
     "无效的IP地址格式": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4820,6 +6378,7 @@
       }
     },
     "无效的URL": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4842,6 +6401,7 @@
       }
     },
     "无效的服务器响应": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4864,6 +6424,7 @@
       }
     },
     "HTTP错误: %lld": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4886,6 +6447,7 @@
       }
     },
     "数据解析失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4908,6 +6470,7 @@
       }
     },
     "辅助功能权限": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4930,6 +6493,7 @@
       }
     },
     "DNS Helper工具": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4952,6 +6516,7 @@
       }
     },
     "用于自动控制应用的启动和退出": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4974,6 +6539,7 @@
       }
     },
     "用于修改系统 DNS 配置（需要系统批准）": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -4996,6 +6562,7 @@
       }
     },
     "请前往：系统设置 > 隐私与安全性 > 辅助功能，添加 Kairos": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5018,6 +6585,7 @@
       }
     },
     "点击「安装 Helper」，然后在系统设置的登录项中允许 Kairos": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5040,6 +6608,7 @@
       }
     },
     "已授权": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5062,6 +6631,7 @@
       }
     },
     "未授权": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5084,6 +6654,7 @@
       }
     },
     "查询失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5106,6 +6677,7 @@
       }
     },
     "检测失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5128,6 +6700,7 @@
       }
     },
     "%@ 正在运行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5150,6 +6723,7 @@
       }
     },
     "执行此操作需要先退出 %@，是否继续？": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5172,6 +6746,7 @@
       }
     },
     "退出 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5194,6 +6769,7 @@
       }
     },
     "选择关联的 Clash/Mihomo 客户端": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5216,6 +6792,7 @@
       }
     },
     "无法读取该应用的信息，请确认选择的是有效的 App": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5238,6 +6815,7 @@
       }
     },
     "已关联 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5260,6 +6838,7 @@
       }
     },
     "已取消关联": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5282,6 +6861,7 @@
       }
     },
     "正在获取版本信息...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5304,6 +6884,7 @@
       }
     },
     "等待应用退出...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5326,6 +6907,7 @@
       }
     },
     "正在下载内核...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5348,6 +6930,7 @@
       }
     },
     "正在下载... %lld%%": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5370,6 +6953,7 @@
       }
     },
     "正在解压...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5392,6 +6976,7 @@
       }
     },
     "正在替换内核...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5414,6 +6999,7 @@
       }
     },
     "选择内核文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5436,6 +7022,7 @@
       }
     },
     "未知错误": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5458,6 +7045,7 @@
       }
     },
     "操作已取消": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5480,6 +7068,7 @@
       }
     },
     "配置已导出到: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5502,6 +7091,7 @@
       }
     },
     "已导入 %lld 个场景和 %lld 个 DNS 场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5524,6 +7114,7 @@
       }
     },
     "DNS Helper 已成功安装": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5546,6 +7137,7 @@
       }
     },
     "Helper 已注册，请在系统设置的登录项中批准": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5568,6 +7160,7 @@
       }
     },
     "安装失败，请重试": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5590,6 +7183,7 @@
       }
     },
     "Helper 连接正常，版本：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5612,6 +7206,7 @@
       }
     },
     "DNS Helper 已成功卸载": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5634,6 +7229,7 @@
       }
     },
     "卸载失败，请重试": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5656,6 +7252,7 @@
       }
     },
     "深度清理完成": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5678,6 +7275,7 @@
       }
     },
     "无效的 GitHub URL: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5700,6 +7298,7 @@
       }
     },
     "网络错误: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5722,6 +7321,7 @@
       }
     },
     "未找到预发布版本": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5744,6 +7344,7 @@
       }
     },
     "未找到匹配的文件: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5766,6 +7367,7 @@
       }
     },
     "无效的下载地址: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5788,6 +7390,7 @@
       }
     },
     "下载失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5810,6 +7413,7 @@
       }
     },
     "解压失败": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5832,6 +7436,7 @@
       }
     },
     "完整性校验失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5854,6 +7459,7 @@
       }
     },
     "未找到 WiFi 网卡": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5876,6 +7482,7 @@
       }
     },
     "WiFi 控制失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5898,6 +7505,7 @@
       }
     },
     "网络维护失败且 WiFi 恢复失败。维护错误: %@；恢复错误: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5920,6 +7528,7 @@
       }
     },
     "DNS Helper 未启用，请先在设置中注册并批准 Helper": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5942,6 +7551,7 @@
       }
     },
     "Bundle 内缺少 Helper：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5964,6 +7574,7 @@
       }
     },
     "Bundle 内缺少 LaunchDaemon plist：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -5986,6 +7597,7 @@
       }
     },
     "Helper 注册完成，但服务尚未启用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6008,6 +7620,7 @@
       }
     },
     "Helper 返回未知的服务状态": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6030,6 +7643,7 @@
       }
     },
     "Helper 未启用或无法连接": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6052,6 +7666,7 @@
       }
     },
     "Helper 通信失败：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6074,6 +7689,7 @@
       }
     },
     "Helper %@超时，操作结果未知": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6096,6 +7712,7 @@
       }
     },
     "Helper 操作失败：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6118,6 +7735,7 @@
       }
     },
     "已匹配场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6140,6 +7758,7 @@
       }
     },
     "当前网络匹配「%@」，控制的应用未在运行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6162,6 +7781,7 @@
       }
     },
     "场景切换成功": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6184,6 +7804,7 @@
       }
     },
     "已退出 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6206,6 +7827,7 @@
       }
     },
     "已启动 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6228,6 +7850,7 @@
       }
     },
     "场景切换失败": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6250,6 +7873,7 @@
       }
     },
     "场景切换部分失败": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6272,6 +7896,7 @@
       }
     },
     "退出失败 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6294,6 +7919,7 @@
       }
     },
     "启动失败 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6316,6 +7942,7 @@
       }
     },
     "(%lld个操作成功)": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6338,6 +7965,7 @@
       }
     },
     "网络状态发生变化": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6360,6 +7988,7 @@
       }
     },
     "已切换至 DNS 服务器 %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6382,6 +8011,7 @@
       }
     },
     "已切换 DNS 服务器": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6404,6 +8034,7 @@
       }
     },
     "已恢复默认的 DNS 服务器": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6426,6 +8057,7 @@
       }
     },
     "%@ 等%lld个应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6448,6 +8080,7 @@
       }
     },
     "点击「安装 Helper」，然后在系统设置的登录项与扩展中允许 Kairos": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6470,6 +8103,7 @@
       }
     },
     "选择 JSON 文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6492,6 +8126,8 @@
       }
     },
     "-": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6514,6 +8150,8 @@
       }
     },
     "%lld": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6536,6 +8174,8 @@
       }
     },
     "%lld%%": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6558,6 +8198,7 @@
       }
     },
     "12 ms": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6580,6 +8221,7 @@
       }
     },
     "223.5.5.5": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6602,6 +8244,7 @@
       }
     },
     "45 ms": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6624,6 +8267,7 @@
       }
     },
     "8.8.8.8": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6646,6 +8290,7 @@
       }
     },
     "DNS": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6668,6 +8313,7 @@
       }
     },
     "DNS 管理功能需要安装 Helper Tool，请前往设置页面安装。": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6690,6 +8336,7 @@
       }
     },
     "DNS 地址格式不正确": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6712,6 +8359,7 @@
       }
     },
     "DNS 服务器: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6734,6 +8382,7 @@
       }
     },
     "FilePanelHelper 演示": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6756,6 +8405,7 @@
       }
     },
     "GitHub Releases URL": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6778,6 +8428,7 @@
       }
     },
     "Helper 未安装": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6800,6 +8451,7 @@
       }
     },
     "IP 地址格式不正确": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6822,6 +8474,7 @@
       }
     },
     "Kairos": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6844,6 +8497,7 @@
       }
     },
     "MAC 地址格式不正确": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6866,6 +8520,7 @@
       }
     },
     "ms": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6888,6 +8543,7 @@
       }
     },
     "家庭网络": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6910,6 +8566,7 @@
       }
     },
     "场景操作": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6932,6 +8589,7 @@
       }
     },
     "上次执行：%@ %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6954,6 +8612,7 @@
       }
     },
     "前往设置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6976,6 +8635,7 @@
       }
     },
     "多行内容": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -6998,6 +8658,7 @@
       }
     },
     "选择多个应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7020,6 +8681,7 @@
       }
     },
     "第二行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7042,6 +8704,7 @@
       }
     },
     "添加 Toast": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7064,6 +8727,7 @@
       }
     },
     "简单内容，无标题": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7086,6 +8750,7 @@
       }
     },
     "服务状态": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7108,6 +8773,7 @@
       }
     },
     "选择目录": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7130,6 +8796,7 @@
       }
     },
     "用于不需要明确分组标题的场景": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7152,6 +8819,7 @@
       }
     },
     "路由器: 192.168.1.1": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7174,6 +8842,7 @@
       }
     },
     "选择单个应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7196,6 +8865,7 @@
       }
     },
     "无标题卡片示例": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7218,6 +8888,7 @@
       }
     },
     "点击选择内核文件...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7240,6 +8911,7 @@
       }
     },
     "关闭": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7262,6 +8934,7 @@
       }
     },
     "准备中...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7284,6 +8957,7 @@
       }
     },
     "Testing %@ (%lld/%lld, Round %lld/10)": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7306,6 +8980,7 @@
       }
     },
     "端口关闭": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7328,6 +9003,7 @@
       }
     },
     "导出 Kairos 设置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7350,6 +9026,7 @@
       }
     },
     "选择保存位置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7372,6 +9049,7 @@
       }
     },
     "文件名:": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7394,6 +9072,7 @@
       }
     },
     "导入 Kairos 设置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7416,6 +9095,7 @@
       }
     },
     "选择要导入的配置文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7438,6 +9118,7 @@
       }
     },
     "低风险": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7460,6 +9141,7 @@
       }
     },
     "中风险": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7482,6 +9164,7 @@
       }
     },
     "高风险": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7504,6 +9187,7 @@
       }
     },
     "极高风险": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7526,6 +9210,7 @@
       }
     },
     "家宽": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7548,6 +9233,7 @@
       }
     },
     "机房": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7570,6 +9256,7 @@
       }
     },
     "其他": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7592,6 +9279,7 @@
       }
     },
     "军事": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7614,6 +9302,7 @@
       }
     },
     "爬虫": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7636,6 +9325,7 @@
       }
     },
     "共 %lld 条": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7658,6 +9348,7 @@
       }
     },
     "启动超时": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7680,6 +9371,7 @@
       }
     },
     "启动失败": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7702,6 +9394,7 @@
       }
     },
     "找不到应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7724,6 +9417,7 @@
       }
     },
     "已在运行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7746,6 +9440,7 @@
       }
     },
     "缺少辅助功能权限": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7768,6 +9463,7 @@
       }
     },
     "terminate()返回false": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7790,6 +9486,7 @@
       }
     },
     "应用未运行": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7812,6 +9509,7 @@
       }
     },
     "获取IP地址...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7834,6 +9532,7 @@
       }
     },
     "多数据源分析...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7856,6 +9555,7 @@
       }
     },
     "检测流媒体解锁...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7878,6 +9578,7 @@
       }
     },
     "检测邮件服务...": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7900,6 +9601,7 @@
       }
     },
     "检测完成": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7922,6 +9624,7 @@
       }
     },
     "主 DNS 地址无效": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7944,6 +9647,7 @@
       }
     },
     "备用 DNS 地址无效": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7966,6 +9670,7 @@
       }
     },
     "原生": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -7988,6 +9693,7 @@
       }
     },
     "全部": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8010,6 +9716,7 @@
       }
     },
     "选择要控制的应用": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8032,6 +9739,7 @@
       }
     },
     "数据中心IP": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8054,6 +9762,7 @@
       }
     },
     "原生IP": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8076,6 +9785,7 @@
       }
     },
     "教育机构IP": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8098,6 +9808,7 @@
       }
     },
     "政府机构IP": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8120,6 +9831,7 @@
       }
     },
     "未知类型": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8142,6 +9854,7 @@
       }
     },
     "备份内核失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8164,6 +9877,7 @@
       }
     },
     "替换内核失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8186,6 +9900,7 @@
       }
     },
     "恢复内核失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8208,6 +9923,7 @@
       }
     },
     "文件完整性验证失败": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8230,6 +9946,7 @@
       }
     },
     "所选文件不是 arm64 Mach-O 可执行文件": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8252,6 +9969,7 @@
       }
     },
     "设置文件权限失败: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8274,6 +9992,7 @@
       }
     },
     "无效的响应": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8296,6 +10015,7 @@
       }
     },
     "网络连接失败，已重试 %lld 次: %@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8318,6 +10038,7 @@
       }
     },
     "HTTP 请求失败，状态码: %lld": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8340,6 +10061,7 @@
       }
     },
     "GitHub asset 未提供 SHA-256 digest": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8362,6 +10084,7 @@
       }
     },
     "不支持的 digest 格式：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8384,6 +10107,7 @@
       }
     },
     "下载文件的 SHA-256 与 GitHub Release 不一致": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8406,6 +10130,7 @@
       }
     },
     "无法获取IP地址": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8428,6 +10153,7 @@
       }
     },
     "无法创建网络配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8450,6 +10176,7 @@
       }
     },
     "无法获取网络服务": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8472,6 +10199,7 @@
       }
     },
     "无法应用 DNS 配置更改": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8494,6 +10222,7 @@
       }
     },
     "无法设置 DNS 协议配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8516,6 +10245,7 @@
       }
     },
     "无法清除 DNS 协议配置": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8538,6 +10268,7 @@
       }
     },
     "未找到匹配的网络服务：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8560,6 +10291,7 @@
       }
     },
     "未找到网络接口：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8582,6 +10314,7 @@
       }
     },
     "无法刷新网络接口：%@": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8604,6 +10337,7 @@
       }
     },
     "读取 Helper 版本": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8626,6 +10360,7 @@
       }
     },
     "读取 Helper 构建号": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8648,6 +10383,7 @@
       }
     },
     "健康检查": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8670,6 +10406,7 @@
       }
     },
     "设置 DNS": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8692,6 +10429,7 @@
       }
     },
     "清除 DNS": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8714,6 +10452,7 @@
       }
     },
     "刷新 DNS 缓存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8736,6 +10475,8 @@
       }
     },
     "清除 ARP 缓存": {
+      "extractionState": "manual",
+      "generatesSymbol": false,
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8758,6 +10499,7 @@
       }
     },
     "刷新网络接口": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8780,6 +10522,7 @@
       }
     },
     "清理非活跃内存": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8802,6 +10545,7 @@
       }
     },
     "非洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8824,6 +10568,7 @@
       }
     },
     "南极洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8846,6 +10591,7 @@
       }
     },
     "亚洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8868,6 +10614,7 @@
       }
     },
     "欧洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8890,6 +10637,7 @@
       }
     },
     "北美洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8912,6 +10660,7 @@
       }
     },
     "大洋洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8934,6 +10683,7 @@
       }
     },
     "南美洲": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8956,6 +10706,7 @@
       }
     },
     "California": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -8978,6 +10729,7 @@
       }
     },
     "New York": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9000,6 +10752,7 @@
       }
     },
     "Texas": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9022,6 +10775,7 @@
       }
     },
     "Florida": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9044,6 +10798,7 @@
       }
     },
     "Washington": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9066,6 +10821,7 @@
       }
     },
     "Illinois": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9088,6 +10844,7 @@
       }
     },
     "Pennsylvania": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9110,6 +10867,7 @@
       }
     },
     "Ohio": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9132,6 +10890,7 @@
       }
     },
     "Georgia": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9154,6 +10913,7 @@
       }
     },
     "North Carolina": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9176,6 +10936,7 @@
       }
     },
     "Michigan": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9198,6 +10959,7 @@
       }
     },
     "New Jersey": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9220,6 +10982,7 @@
       }
     },
     "Virginia": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9242,6 +11005,7 @@
       }
     },
     "Massachusetts": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9264,6 +11028,7 @@
       }
     },
     "Arizona": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9286,6 +11051,7 @@
       }
     },
     "Indiana": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9308,6 +11074,7 @@
       }
     },
     "Tennessee": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9330,6 +11097,7 @@
       }
     },
     "Missouri": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9352,6 +11120,7 @@
       }
     },
     "Maryland": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9374,6 +11143,7 @@
       }
     },
     "Wisconsin": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9396,6 +11166,7 @@
       }
     },
     "Colorado": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9418,6 +11189,7 @@
       }
     },
     "Minnesota": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9440,6 +11212,7 @@
       }
     },
     "South Carolina": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9462,6 +11235,7 @@
       }
     },
     "Alabama": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9484,6 +11258,7 @@
       }
     },
     "Louisiana": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9506,6 +11281,7 @@
       }
     },
     "Kentucky": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9528,6 +11304,7 @@
       }
     },
     "Oregon": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9550,6 +11327,7 @@
       }
     },
     "Oklahoma": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9572,6 +11350,7 @@
       }
     },
     "Connecticut": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9594,6 +11373,7 @@
       }
     },
     "Utah": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9616,6 +11396,7 @@
       }
     },
     "Nevada": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9638,6 +11419,7 @@
       }
     },
     "Arkansas": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9660,6 +11442,7 @@
       }
     },
     "Mississippi": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9682,6 +11465,7 @@
       }
     },
     "Kansas": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9704,6 +11488,7 @@
       }
     },
     "New Mexico": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9726,6 +11511,7 @@
       }
     },
     "Nebraska": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9748,6 +11534,7 @@
       }
     },
     "West Virginia": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9770,6 +11557,7 @@
       }
     },
     "Idaho": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9792,6 +11580,7 @@
       }
     },
     "Hawaii": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9814,6 +11603,7 @@
       }
     },
     "New Hampshire": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9836,6 +11626,7 @@
       }
     },
     "Maine": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9858,6 +11649,7 @@
       }
     },
     "Montana": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9880,6 +11672,7 @@
       }
     },
     "Rhode Island": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9902,6 +11695,7 @@
       }
     },
     "Delaware": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9924,6 +11718,7 @@
       }
     },
     "South Dakota": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9946,6 +11741,7 @@
       }
     },
     "North Dakota": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9968,6 +11764,7 @@
       }
     },
     "Alaska": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -9990,6 +11787,7 @@
       }
     },
     "Vermont": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
@@ -10012,6 +11810,7 @@
       }
     },
     "Wyoming": {
+      "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {

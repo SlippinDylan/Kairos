@@ -31,7 +31,7 @@ actor AppLogger {
     // MARK: - Properties
 
     /// 最低日志级别（低于此级别的日志将被忽略）
-    private var minimumLevel: LogLevel = .trace
+    private var minimumLevel: LogLevel
 
     /// 串行队列（确保日志按顺序写入）
     private let loggingQueue = DispatchQueue(
@@ -42,11 +42,7 @@ actor AppLogger {
     // MARK: - Initializer
 
     private init() {
-        #if DEBUG
-        minimumLevel = .debug
-        #else
-        minimumLevel = .warning
-        #endif
+        minimumLevel = LogPreferences.minimumLevel()
     }
 
     // MARK: - Configuration

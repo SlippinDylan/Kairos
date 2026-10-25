@@ -9,6 +9,7 @@ import SwiftUI
 
 struct DNSSceneCard: View {
     @Binding var scene: DNSScene
+    let isMatched: Bool
     let onEdit: () -> Void
     let onDelete: () -> Void
     var onHelperNotInstalled: (() -> Void)? = nil
@@ -17,143 +18,103 @@ struct DNSSceneCard: View {
 
     var body: some View {
         GroupBox {
-            HStack(alignment: .center, spacing: 16) {
-                // 左侧内容区域
-                VStack(alignment: .leading, spacing: 8) {
-                    // 第一行：场景名称和路由器信息
-                    HStack(spacing: 6) {
-                        Text(scene.name)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                HStack(spacing: DesignSystem.Spacing.small) {
+                    Text(scene.name)
+                        .font(.headline)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                        HStack(spacing: 6) {
-                            // IP 地址 tag（带图标）
-                            HStack(spacing: 3) {
-                                // 左侧正方形图标块
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                        .fill(Color.blue)
-                                    Image(systemName: "point.3.connected.trianglepath.dotted")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(.white)
+                    Circle()
+                        .fill(isMatched ? Color.green : Color.secondary.opacity(0.4))
+                        .frame(width: 7, height: 7)
+                        .accessibilityLabel(isMatched ? Text("已匹配") : Text("未匹配"))
+                        .help(isMatched ? Text("已匹配") : Text("未匹配"))
+
+                    Spacer(minLength: DesignSystem.Spacing.small)
+
+                    HStack(spacing: DesignSystem.Spacing.small) {
+                        Toggle("DNS 控制", isOn: Binding(
+                            get: { scene.isEnabled },
+                            set: { newValue in
+                                if newValue && !dnsManager.isHelperInstalled {
+                                    onHelperNotInstalled?()
+                                } else {
+                                    scene.isEnabled = newValue
                                 }
-                                .frame(width: 16, height: 16)
-
-                                // IP 地址文本
-                                Text(scene.routerIP)
                             }
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(.blue.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                        ))
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .controlSize(.mini)
+                            .help("DNS 控制")
 
-                            // MAC 地址 tag（带图标）
-                            HStack(spacing: 3) {
-                                // 左侧正方形图标块
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                        .fill(Color.orange)
-                                    Image(systemName: "externaldrive.connected.to.line.below.fill")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(.white)
-                                }
-                                .frame(width: 16, height: 16)
-
-                                // MAC 地址文本
-                                Text(scene.routerMAC)
-                            }
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(.orange.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                        Button(action: onEdit) {
+                            Label("编辑", systemImage: "square.and.pencil")
                         }
+
+                        Button(role: .destructive, action: onDelete) {
+                            Label("删除", systemImage: "trash")
+                        }
+                        .foregroundStyle(.red)
                     }
+                    .buttonStyle(.glass)
+                    .fixedSize()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                    // 第二行：DNS 配置
-                    HStack(spacing: 6) {
-                        // 主 DNS 服务器 tag（带图标）
-                        HStack(spacing: 3) {
-                            // 左侧正方形图标块
-                            ZStack {
-                                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                    .fill(Color.green)
-                                Image(systemName: "server.rack")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.white)
-                            }
-                            .frame(width: 16, height: 16)
+                HStack(alignment: .top, spacing: DesignSystem.Spacing.medium) {
+                    gatewayDetail(title: "网关 IP", value: scene.routerIP, symbol: "point.3.connected.trianglepath.dotted")
+                    Divider().padding(.vertical, DesignSystem.Spacing.extraSmall)
+                    gatewayDetail(title: "网关 MAC", value: scene.routerMAC, symbol: "cable.connector")
 
-                            // DNS 地址文本
-                            Text(scene.primaryDNS)
-                        }
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(.green.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                    Divider().padding(.vertical, DesignSystem.Spacing.extraSmall)
 
-                        // 备用 DNS 服务器 tag（带图标）
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+                        Label("目标 DNS", systemImage: "server.rack")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        dnsServer(scene.primaryDNS)
                         if !scene.secondaryDNS.isEmpty {
-                            HStack(spacing: 3) {
-                                // 左侧正方形图标块
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                        .fill(Color.green)
-                                    Image(systemName: "server.rack")
-                                        .font(.system(size: 10))
-                                        .foregroundStyle(.white)
-                                }
-                                .frame(width: 16, height: 16)
-
-                                // DNS 地址文本
-                                Text(scene.secondaryDNS)
-                            }
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(.green.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
+                            dnsServer(scene.secondaryDNS)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-
-                Spacer()
-
-                // 右侧操作按钮（垂直居中）
-                HStack(spacing: 12) {
-                    Toggle("", isOn: Binding(
-                        get: { scene.isEnabled },
-                        set: { newValue in
-                            // 只在尝试开启时检查 Helper 状态
-                            if newValue && !dnsManager.isHelperInstalled {
-                                onHelperNotInstalled?()
-                            } else {
-                                scene.isEnabled = newValue
-                            }
-                        }
-                    ))
-                        .toggleStyle(.switch)
-                        .labelsHidden()
-                        .controlSize(.mini)
-
-                    Button {
-                        onEdit()
-                    } label: {
-                        Image(systemName: "square.and.pencil")
-                            .font(.system(size: 13))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.blue)
-
-                    Button {
-                        onDelete()
-                    } label: {
-                        Image(systemName: "trash")
-                            .font(.system(size: 13))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.red)
-                }
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(DesignSystem.Spacing.medium)
+                .background(
+                    Color.primary.opacity(0.04),
+                    in: RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.medium)
+                )
             }
-            .padding()
+            .padding(DesignSystem.Spacing.small)
         }
+    }
+
+    private func gatewayDetail(title: String, value: String, symbol: String) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+            Label(L10n.string(title), systemImage: symbol)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(value)
+                .font(.system(.callout, design: .monospaced))
+                .textSelection(.enabled)
+                .lineLimit(1)
+                .truncationMode(.middle)
+                .help(value)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func dnsServer(_ address: String) -> some View {
+        Text(address)
+            .font(.system(.callout, design: .monospaced))
+            .lineLimit(1)
+            .truncationMode(.middle)
+            .textSelection(.enabled)
+            .help(address)
     }
 }

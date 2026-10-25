@@ -9,8 +9,8 @@
 import SwiftUI
 
 struct DNSSceneConfigSheet: View {
-    @Environment(\.dismiss) var dismiss
 
+    @State private var hasLoadedScene = false
     @State private var sceneName = ""
     @State private var routerIP = ""
     @State private var routerMAC = ""
@@ -22,7 +22,8 @@ struct DNSSceneConfigSheet: View {
     @State private var showSecondaryDNSError = false
 
     let scene: DNSScene?
-    let onSave: (DNSScene) -> Void
+    let onCancel: () -> Void
+    let onSave: (DNSScene) throws -> Void
 
     private var isEditing: Bool {
         scene != nil
@@ -30,15 +31,13 @@ struct DNSSceneConfigSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // 标题栏
-            HStack {
-                Text(isEditing ? L10n.string("编辑场景") : L10n.string("添加场景"))
-                    .font(.headline)
-                Spacer()
-            }
-            .padding()
-
-            Divider()
+            SheetHeader(
+                title: isEditing ? L10n.string("编辑场景") : L10n.string("添加场景"),
+                action: .save,
+                isEnabled: isFormValid,
+                onBack: onCancel,
+                onAction: saveScene
+            )
 
             // 配置表单（使用 VStack 替代 Form，避免嵌套滚动冲突）
             KairosScrollView {
@@ -46,14 +45,7 @@ struct DNSSceneConfigSheet: View {
                     // Section 1: 场景名称
                     DNSFormSection(title: "场景名称") {
                         TextField("输入场景名称", text: $sceneName)
-                            .textFieldStyle(.plain)
-                            .padding(10)
-                            .background(Color(nsColor: .textBackgroundColor))
-                            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                            )
+                            .kairosTextField()
                     }
 
                     // Section 2: 路由器配置
@@ -62,14 +54,7 @@ struct DNSSceneConfigSheet: View {
                             // 路由器 IP
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("路由器 IP", text: $routerIP)
-                                    .textFieldStyle(.plain)
-                                    .padding(10)
-                                    .background(Color(nsColor: .textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                            .stroke(showRouterIPError ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                                    .kairosTextField(isInvalid: showRouterIPError)
                                     .onChange(of: routerIP) { _, _ in
                                         showRouterIPError = false
                                     }
@@ -84,14 +69,7 @@ struct DNSSceneConfigSheet: View {
                             // MAC 地址
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("MAC 地址", text: $routerMAC)
-                                    .textFieldStyle(.plain)
-                                    .padding(10)
-                                    .background(Color(nsColor: .textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                            .stroke(showRouterMACError ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                                    .kairosTextField(isInvalid: showRouterMACError)
                                     .onChange(of: routerMAC) { _, _ in
                                         showRouterMACError = false
                                     }
@@ -111,14 +89,7 @@ struct DNSSceneConfigSheet: View {
                             // 主 DNS
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("主 DNS", text: $primaryDNS)
-                                    .textFieldStyle(.plain)
-                                    .padding(10)
-                                    .background(Color(nsColor: .textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                            .stroke(showPrimaryDNSError ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                                    .kairosTextField(isInvalid: showPrimaryDNSError)
                                     .onChange(of: primaryDNS) { _, _ in
                                         showPrimaryDNSError = false
                                     }
@@ -133,14 +104,7 @@ struct DNSSceneConfigSheet: View {
                             // 备用 DNS
                             VStack(alignment: .leading, spacing: 4) {
                                 TextField("备用 DNS（可选）", text: $secondaryDNS)
-                                    .textFieldStyle(.plain)
-                                    .padding(10)
-                                    .background(Color(nsColor: .textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                                            .stroke(showSecondaryDNSError ? Color.red : Color.gray.opacity(0.3), lineWidth: 1)
-                                    )
+                                    .kairosTextField(isInvalid: showSecondaryDNSError)
                                     .onChange(of: secondaryDNS) { _, _ in
                                         showSecondaryDNSError = false
                                     }
@@ -156,30 +120,11 @@ struct DNSSceneConfigSheet: View {
                 }
                 .padding()
             }
-
-            Divider()
-
-            // 底部按钮
-            HStack(spacing: 12) {
-                Button("取消") {
-                    dismiss()
-                }
-                .buttonStyle(.glass)
-                .frame(minWidth: 80)
-
-                Spacer()
-
-                Button("保存") {
-                    saveScene()
-                }
-                .buttonStyle(.glassProminent)
-                .frame(minWidth: 80)
-                .disabled(!isFormValid)
-            }
-            .padding()
         }
-        .frame(width: 500, height: 500)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
+            guard !hasLoadedScene else { return }
+            hasLoadedScene = true
             if let scene = scene {
                 sceneName = scene.name
                 routerIP = scene.routerIP
@@ -193,16 +138,9 @@ struct DNSSceneConfigSheet: View {
     // MARK: - Validation
 
     private var isFormValid: Bool {
-        let isSecondaryDNSValid = secondaryDNS.isEmpty || NetworkValidator.isValidIP(secondaryDNS)
-
-        return !sceneName.isEmpty &&
-               !routerIP.isEmpty &&
-               !routerMAC.isEmpty &&
-               !primaryDNS.isEmpty &&
-               NetworkValidator.isValidIP(routerIP) &&
-               NetworkValidator.isValidMAC(routerMAC) &&
-               NetworkValidator.isValidIP(primaryDNS) &&
-               isSecondaryDNSValid
+        if case .success = SceneValidation.dnsControl(name: sceneName, routerIP: routerIP,
+            routerMAC: routerMAC, primaryDNS: primaryDNS, secondaryDNS: secondaryDNS) { return true }
+        return false
     }
 
     // MARK: - Actions
@@ -233,7 +171,8 @@ struct DNSSceneConfigSheet: View {
         }
 
         // 规范化 MAC 地址（确保存储格式统一）
-        let normalizedMAC = NetworkValidator.normalizeMAC(routerMAC) ?? routerMAC
+        guard case .success(let normalizedMAC) = SceneValidation.dnsControl(name: sceneName,
+            routerIP: routerIP, routerMAC: routerMAC, primaryDNS: primaryDNS, secondaryDNS: secondaryDNS) else { return }
 
         let newScene = DNSScene(
             id: scene?.id ?? UUID(),
@@ -244,8 +183,12 @@ struct DNSSceneConfigSheet: View {
             secondaryDNS: secondaryDNS,
             isEnabled: scene?.isEnabled ?? true
         )
-        onSave(newScene)
-        dismiss()
+        do {
+            try onSave(newScene)
+            onCancel()
+        } catch {
+            Toast.error(error.localizedDescription)
+        }
     }
 }
 

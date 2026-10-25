@@ -1,137 +1,89 @@
-//
-//  IPQualityNetworkToolCard.swift
-//  Kairos
-//
-//  Created by SlippinDylan on 2026/01/07.
-//  网络工具 - IP质量卡片主容器
-//
-
 import SwiftUI
 
-/// 网络工具 - IP质量卡片（完整版）
-///
-/// ## 架构说明
-/// - 业务层：复用IPQualityViewModel.shared（与原IP质量tab共享状态）
-/// - UI层：全新实现，适配GroupBox卡片环境
-/// - 三态切换：idle（检测前）→ detecting（检测中）→ completed（检测后）
-///
-/// ## 设计差异
-/// - 原IP质量tab（IPQualityView）：
-///   - 全屏展示，独立ScrollView
-///   - idle/detecting状态垂直居中（Spacer包裹）
-///   - completed状态直接VStack堆叠所有卡片
-///
-/// - 网络工具卡片（本组件）：
-///   - 嵌套在NetworkToolsView的ScrollView中
-///   - 外层有GroupBox包裹
-///   - 不使用ScrollView（避免嵌套死锁）
-///   - completed状态完整展示（与原tab一致）
-///
-/// ## 状态同步
-/// - 两套UI共用IPQualityViewModel.shared
-/// - 在IP质量tab检测完成后，网络工具卡片自动显示结果
 struct IPQualityNetworkToolCard: View {
-    // MARK: - State
-
     @State private var viewModel = IPQualityViewModel.shared
-    let onResultAvailable: () -> Void
-    let onShowResult: () -> Void
-
-    init(
-        onResultAvailable: @escaping () -> Void = {},
-        onShowResult: @escaping () -> Void = {}
-    ) {
-        self.onResultAvailable = onResultAvailable
-        self.onShowResult = onShowResult
-    }
-
-    // MARK: - Body
+    @State private var isHovered = false
 
     var body: some View {
         Group {
-            switch viewModel.detectionState {
-            case .idle:
-                IPQualityCardIdleView(onStart: startDetection)
-
-            case .detecting:
-                IPQualityCardDetectingView(
-                    progress: viewModel.currentProgress,
-                    currentTask: viewModel.currentTaskDescription
-                )
-
-            case .completed:
-                completedView
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .background {
-            ProgressCardBackground(
-                progress: viewModel.detectionState == .detecting
-                    ? viewModel.currentProgress
-                    : nil
-            )
-        }
-        .animation(.easeInOut(duration: 0.3), value: viewModel.detectionState)
-        .onDisappear {
-            viewModel.cancelDetection()
-        }
-        .onChange(of: viewModel.isLoading) { oldValue, newValue in
-            if newValue {
-                // 检测开始：切换到detecting状态
-                viewModel.detectionState = .detecting
-            } else if viewModel.result != nil {
-                // 检测完成：切换到completed状态
-                Task { @MainActor in
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                        viewModel.detectionState = .completed
+            if viewModel.isLoading {
+                VStack(spacing: 4) {
+                    Text(viewModel.currentProgress, format: .percent.precision(.fractionLength(0)))
+                        .font(.headline.monospacedDigit())
+                    Text(viewModel.currentTaskDescription)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.white.opacity(0.8))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, minHeight: DesignSystem.Input.height)
+                .padding(.horizontal, 56)
+                .padding(.vertical, 22)
+                .accessibilityElement(children: .combine)
+            } else if let result = viewModel.result {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text(result.detectedAt.formatted(date: .abbreviated, time: .shortened))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("重新检测", action: viewModel.startDetection)
+                            .buttonStyle(.glassProminent)
+                            .keyboardShortcut(.defaultAction)
                     }
-                    onResultAvailable()
+                    sourceFailureMessages
+                    IPQualityCardCompletedView(result: result)
+                }
+                .padding(16)
+            } else {
+                VStack(spacing: 0) {
+                    Button(action: viewModel.startDetection) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "shield.checkered")
+                                .font(.title2)
+                                .foregroundStyle(.cyan)
+                                .shadow(color: .cyan.opacity(0.6), radius: 8)
+                            Text("开始检测")
+                                .font(.headline)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity, minHeight: 80)
+                        .padding(.horizontal, 56)
+                        .background {
+                            LinearGradient(
+                                colors: [Color(red: 0.025, green: 0.055, blue: 0.10), Color(red: 0.03, green: 0.24, blue: isHovered ? 0.55 : 0.42)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .keyboardShortcut(.defaultAction)
+                    .onHover { isHovered = $0 }
+
+                    if let error = viewModel.errorMessage {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity)
+                            .padding(16)
+                        sourceFailureMessages.padding(.horizontal, 16)
+                    }
                 }
             }
         }
     }
 
-    private var completedView: some View {
-        HStack(spacing: DesignSystem.Spacing.small) {
-            Spacer()
-
-            Button("查看结果", action: onShowResult)
-                .buttonStyle(.glass)
-
-            Button("重新检测", action: resetDetection)
-                .buttonStyle(.glassProminent)
-
-            Spacer()
-        }
-        .frame(height: 64)
-    }
-
-    // MARK: - Private Methods
-
-    /// 开始检测
-    private func startDetection() {
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-            viewModel.detectionState = .detecting
-        }
-        viewModel.startDetection()
-    }
-
-    /// 重置检测状态
-    private func resetDetection() {
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-            viewModel.resetDetection()
+    private var sourceFailureMessages: some View {
+        ForEach(viewModel.sourceFailures, id: \.self) { failure in
+            Text(failure)
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-}
 
-// MARK: - Preview
-
-#Preview {
-    GroupBox {
-        IPQualityNetworkToolCard()
-            .padding()
-    } label: {
-        Text("IP 质量")
-    }
-    .frame(width: 800)
 }

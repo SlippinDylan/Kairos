@@ -11,6 +11,16 @@ import SwiftUI
 /// 设计系统：统一的视觉规范
 enum DesignSystem {
 
+    enum Window {
+        static let width: CGFloat = 540
+        static let minimumHeight: CGFloat = 720
+    }
+
+    enum Input {
+        static let height: CGFloat = 36
+        static let actionHeight: CGFloat = 28
+    }
+
     // MARK: - 圆角半径
 
     /// 圆角半径规范

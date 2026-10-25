@@ -19,6 +19,14 @@ struct AboutView: View {
     }
 
     var body: some View {
+        GeometryReader { geometry in
+            KairosScrollView {
+                content.frame(minHeight: geometry.size.height)
+            }
+        }
+    }
+
+    private var content: some View {
         VStack(spacing: 0) {
             Spacer()
 

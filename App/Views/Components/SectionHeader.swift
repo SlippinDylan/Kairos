@@ -22,13 +22,16 @@ struct SectionHeader: View {
                 .background(iconColor)
                 .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
 
-            Text(L10n.string(title))
-                .font(.system(size: 15, weight: .semibold))
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+                Text(L10n.string(title))
+                    .font(.system(size: 15, weight: .semibold))
 
-            if let description = description {
-                Text(L10n.string(description))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if let description {
+                    Text(L10n.string(description))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.bottom, 8)

@@ -101,7 +101,7 @@ struct DNSTestCardView: View {
 
     /// 输入状态视图（紧凑布局，适配卡片）
     private var inputView: some View {
-        CapsuleActionTextField(
+        ActionTextField(
             placeholder: "例如: 223.5.5.5",
             text: $viewModel.dnsServer,
             actionTitle: "测试",
@@ -185,29 +185,32 @@ struct DNSTestCardView: View {
             // 平均统计卡片
             if let stats = viewModel.overallStatistics {
                 HStack(spacing: 12) {
-                    // 平均耗时
-                    CompactStatisticCard(
-                        title: "平均耗时",
-                        value: String(format: "%.2f", stats.averageTime),
-                        unit: "ms",
-                        color: colorForTime(stats.averageTime)
-                    )
-
-                    // 最快
-                    CompactStatisticCard(
-                        title: "最快",
-                        value: "\(stats.minTime)",
-                        unit: "ms",
-                        color: .green
-                    )
-
-                    // 最慢
-                    CompactStatisticCard(
-                        title: "最慢",
-                        value: "\(stats.maxTime)",
-                        unit: "ms",
-                        color: .red
-                    )
+                    if let average = stats.averageTime,
+                       let minimum = stats.minTime,
+                       let maximum = stats.maxTime {
+                        CompactStatisticCard(
+                            title: "平均耗时",
+                            value: String(format: "%.2f", average),
+                            unit: "ms",
+                            color: colorForTime(average)
+                        )
+                        CompactStatisticCard(
+                            title: "最快",
+                            value: "\(minimum)",
+                            unit: "ms",
+                            color: .green
+                        )
+                        CompactStatisticCard(
+                            title: "最慢",
+                            value: "\(maximum)",
+                            unit: "ms",
+                            color: .red
+                        )
+                    } else {
+                        Text("无有效结果")
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
 
                     // 成功率
                     CompactStatisticCard(
@@ -239,30 +242,45 @@ struct DNSTestCardView: View {
                             .width(min: 150, ideal: 200, max: 300)
 
                         TableColumn("平均耗时") { result in
-                            HStack(spacing: 4) {
-                                Text(result.formattedAverageTime)
-                                    .foregroundStyle(colorForTime(result.averageTime))
-                                Text("ms")
+                            if result.successCount > 0 {
+                                HStack(spacing: 4) {
+                                    Text(result.formattedAverageTime)
+                                        .foregroundStyle(colorForTime(result.averageTime))
+                                    Text("ms")
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else {
+                                Text("无有效结果")
                                     .foregroundStyle(.secondary)
                             }
                         }
                         .width(min: 80, ideal: 100)
 
                         TableColumn("最快") { result in
-                            HStack(spacing: 4) {
-                                Text("\(result.minTime)")
-                                    .foregroundStyle(.green)
-                                Text("ms")
+                            if result.successCount > 0 {
+                                HStack(spacing: 4) {
+                                    Text("\(result.minTime)")
+                                        .foregroundStyle(.green)
+                                    Text("ms")
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else {
+                                Text("无有效结果")
                                     .foregroundStyle(.secondary)
                             }
                         }
                         .width(min: 70, ideal: 80)
 
                         TableColumn("最慢") { result in
-                            HStack(spacing: 4) {
-                                Text("\(result.maxTime)")
-                                    .foregroundStyle(.red)
-                                Text("ms")
+                            if result.successCount > 0 {
+                                HStack(spacing: 4) {
+                                    Text("\(result.maxTime)")
+                                        .foregroundStyle(.red)
+                                    Text("ms")
+                                        .foregroundStyle(.secondary)
+                                }
+                            } else {
+                                Text("无有效结果")
                                     .foregroundStyle(.secondary)
                             }
                         }

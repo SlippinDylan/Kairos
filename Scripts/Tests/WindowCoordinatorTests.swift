@@ -1,116 +1,105 @@
 import AppKit
 
-// Keep these checks independent of app startup, logging, and visible UI.
-enum AppLogger {
-    static func warning(_ message: String) {}
+// Keep presentation checks independent of app startup, network IO, and visible UI.
+enum AppLogger { static func warning(_ message: String) {} }
+enum DesignSystem {
+    enum Window {
+        static let width: CGFloat = 540
+        static let minimumHeight: CGFloat = 720
+    }
 }
 
-@main
-@MainActor
+@main @MainActor
 struct WindowCoordinatorTests {
     private static var checks = 0
 
     static func main() {
-        let application = RecordingApplication.shared
-        precondition(application is RecordingApplication)
-        _ = application.setActivationPolicy(.accessory)
+        let app = RecordingApplication.shared
+        precondition(app is RecordingApplication)
+        app.setActivationPolicy(.prohibited)
+        let popover = RecordingPopover()
+        let coordinator = WindowCoordinator.forPreview(popover: popover)
+        let anchor = NSView(frame: CGRect(x: 0, y: 0, width: 24, height: 24))
+        let controller = NSViewController()
+        controller.view = NSView()
 
-        let pending = WindowCoordinator.forPreview()
-        var openCount = 0
-        pending.showMainWindow(tab: 2)
-        pending.registerOpenWindowAction { openCount += 1 }
-        expect(openCount == 1, "a pending show opens a missing window")
-        pending.showMainWindow(tab: 1)
-        expect(openCount == 1, "repeated clicks do not open duplicate windows")
-        let first = RecordingWindow()
-        pending.mainWindowDidAppear(first)
-        expect(first.presentCount == 1 && pending.selectedTab == 1, "opening uses the latest requested module")
-        expect(first.frontCount == 1, "presentation orders the window even before activation completes")
-        pending.showMainWindow()
-        expect(first.presentCount == 2 && pending.selectedTab == 1, "left click reuses the window and preserves its module")
+        coordinator.requestShow(tab: 4)
+        expect(!popover.isShown, "show waits until the menu-bar anchor is configured")
+        coordinator.requestShow(tab: 1)
+        coordinator.configurePopover(contentViewController: controller, anchor: anchor)
+        expect(popover.isShown && popover.showCount == 1, "pending show opens exactly one popover")
+        expect(coordinator.selectedTab == 1, "latest requested tab is selected")
+        expect(popover.lastAnchor === anchor && popover.lastEdge == .minY, "native arrow is anchored below the status item")
+        expect(popover.behavior == .applicationDefined, "outside dismissal is controlled without discarding state")
+        coordinator.showMainWindow()
+        expect(popover.showCount == 1, "repeated show reuses the same presentation")
+        coordinator.toggleMainWindow()
+        expect(!popover.isShown, "second menu-bar click hides the popover")
+        expect(popover.contentViewController === controller && coordinator.selectedTab == 1, "hiding retains the hosting controller and current module")
+        coordinator.toggleMainWindow()
+        expect(popover.isShown && popover.showCount == 2, "reopening reuses the retained popover")
+        coordinator.setContentSize(CGSize(width: 704, height: 632))
+        expect(popover.contentSize == CGSize(width: 704, height: 632), "result dimensions update the native popover")
+        expect(coordinator.maximumContentWidth == nil, "unattached previews have no screen width constraint")
+        popover.contentSize = .zero
+        NotificationCenter.default.post(name: NSApplication.didChangeScreenParametersNotification, object: app)
+        expect(popover.contentSize == CGSize(width: 704, height: 632), "display changes reapply the current requested dimensions")
+        expect(coordinator.selectedTab == 1 && popover.contentViewController === controller, "display changes preserve navigation and hosted state")
+        coordinator.hideMainWindow()
+        coordinator.showMainWindow()
+        expect(coordinator.contentWidth == 704 && coordinator.contentHeight == 632, "hide and reopen retain result dimensions")
+        expect(popover.contentViewController === controller, "result reopening never replaces content")
+        coordinator.setContentSize(CGSize(width: 540, height: 136))
+        expect(popover.contentSize == CGSize(width: 540, height: 136), "new detection returns to compact sizing")
+        coordinator.requestShow(tab: 5)
+        expect(coordinator.selectedTab == 5 && coordinator.contentHeight == 720, "navigation restores ordinary page dimensions")
+        coordinator.requestShow(tab: 6)
+        expect(coordinator.selectedTab == 6, "DNS remains a top-level module")
+        coordinator.requestShow(tab: 2)
+        coordinator.requestShow(tab: 3)
+        coordinator.requestShow(tab: 7)
+        expect(coordinator.selectedTab == 6, "retired and invalid modules are rejected")
 
-        first.minimized = true
-        pending.showMainWindow(tab: 0)
-        expect(!first.minimized && first.restoreCount == 1, "show restores a minimized window")
-        expect(pending.selectedTab == 0, "right-click navigation selects the requested module")
-
-        first.close()
-        pending.showMainWindow(tab: 2)
-        expect(openCount == 2, "closing clears the window even while another owner retains it")
-        pending.hideMainWindow()
-        let replacement = RecordingWindow()
-        pending.mainWindowDidAppear(replacement)
-        expect(replacement.presentCount == 0 && replacement.hideCount == 1, "hide cancels presentation of an opening window")
-        pending.showMainWindow()
-        expect(replacement.presentCount == 1, "a hidden window can be shown again")
-
-        let login = WindowCoordinator.forPreview()
-        login.requestHide()
-        login.showMainWindow(tab: 2)
-        let loginWindow = RecordingWindow()
-        login.mainWindowDidAppear(loginWindow)
-        expect(loginWindow.presentCount == 1 && loginWindow.hideCount == 0, "an explicit click supersedes the pending login hide")
-
-        let hidden = WindowCoordinator.forPreview()
+        let hiddenPopover = RecordingPopover()
+        let hidden = WindowCoordinator.forPreview(popover: hiddenPopover)
+        hidden.requestShow(tab: 0)
         hidden.requestHide()
-        let hiddenWindow = RecordingWindow()
-        hidden.mainWindowDidAppear(hiddenWindow)
-        expect(hiddenWindow.hideCount == 1 && hiddenWindow.presentCount == 0, "login launch keeps the initial window hidden")
-        hidden.requestShow(tab: 1)
-        expect(hiddenWindow.presentCount == 1, "requestShow handles an already registered window immediately")
+        hidden.configurePopover(contentViewController: NSViewController(), anchor: anchor)
+        expect(!hiddenPopover.isShown, "login hide supersedes pending show")
+        hidden.requestShow(tab: 4)
+        expect(hiddenPopover.isShown, "explicit navigation shows an initially hidden interface")
+        hidden.hideMainWindow()
+        coordinator.hideMainWindow()
 
-        let initial = WindowCoordinator.forPreview()
-        initial.requestShow(tab: 0)
-        let initialWindow = RecordingWindow()
-        initial.mainWindowDidAppear(initialWindow)
-        var initialOpenCount = 0
-        initial.registerOpenWindowAction { initialOpenCount += 1 }
-        expect(initialOpenCount == 0 && initialWindow.presentCount == 1, "resolving the initial window before registering the opener avoids duplication")
-        replacement.close()
-        initial.showMainWindow()
-        expect(initialOpenCount == 0 && initialWindow.presentCount == 2, "another window closing cannot clear the main-window reference")
-
-        let synchronous = WindowCoordinator.forPreview()
-        let synchronousWindow = RecordingWindow()
-        synchronous.registerOpenWindowAction { [weak synchronous] in
-            synchronous?.mainWindowDidAppear(synchronousWindow)
-        }
-        synchronous.showMainWindow(tab: 2)
-        expect(synchronousWindow.presentCount == 1, "synchronous window registration processes the show exactly once")
-        expect(application.activationPolicy() == .accessory, "show never adds a Dock icon")
+        let screen = CGRect(x: 0, y: 0, width: 600, height: 500)
+        expect(WindowCoordinator.constrainedSize(requested: CGSize(width: 704, height: 720), visibleFrame: screen) == CGSize(width: 576, height: 476), "small screens cap both dimensions including arrow space")
+        expect(WindowCoordinator.constrainedSize(requested: CGSize(width: 540, height: 136), visibleFrame: screen) == CGSize(width: 540, height: 136), "compact content keeps its requested size")
+        expect(WindowCoordinator.constrainedSize(requested: CGSize(width: 704, height: 632), visibleFrame: nil) == CGSize(width: 704, height: 632), "unattached previews keep deterministic sizing")
+        expect(app.activationPolicy() == .prohibited, "presentation does not change the activation policy")
         print("WindowCoordinator: \(checks) checks passed")
     }
 
     private static func expect(_ condition: Bool, _ name: String) {
-        guard condition else { fatalError("FAIL: \(name)") }
+        precondition(condition, "FAIL: \(name)")
         checks += 1
     }
 }
 
-@MainActor
-private final class RecordingApplication: NSApplication {
+@MainActor private final class RecordingApplication: NSApplication {
     override func activate() {}
 }
 
-@MainActor
-private final class RecordingWindow: NSWindow {
-    var presentCount = 0
-    var frontCount = 0
-    var hideCount = 0
-    var restoreCount = 0
-    var minimized = false
-
-    init() {
-        super.init(contentRect: .zero, styleMask: [], backing: .buffered, defer: true)
-        isReleasedWhenClosed = false
+@MainActor private final class RecordingPopover: NSPopover {
+    private var recordedShown = false
+    var showCount = 0
+    weak var lastAnchor: NSView?
+    var lastEdge: NSRectEdge?
+    override var isShown: Bool { recordedShown }
+    override func show(relativeTo positioningRect: NSRect, of positioningView: NSView, preferredEdge: NSRectEdge) {
+        recordedShown = true
+        showCount += 1
+        lastAnchor = positioningView
+        lastEdge = preferredEdge
     }
-
-    override var isMiniaturized: Bool { minimized }
-    override func makeKeyAndOrderFront(_ sender: Any?) { presentCount += 1 }
-    override func orderFrontRegardless() { frontCount += 1 }
-    override func orderOut(_ sender: Any?) { hideCount += 1 }
-    override func deminiaturize(_ sender: Any?) {
-        minimized = false
-        restoreCount += 1
-    }
+    override func close() { recordedShown = false }
 }

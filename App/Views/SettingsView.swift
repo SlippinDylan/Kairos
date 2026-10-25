@@ -14,42 +14,16 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-private enum SettingsPane: String, CaseIterable {
-    case general
-    case services
-    case data
-    case permissions
-    case about
-
-    var title: String {
-        switch self {
-        case .general: L10n.string("通用")
-        case .services: L10n.string("settings.pane.services")
-        case .data: L10n.string("settings.pane.data")
-        case .permissions: L10n.string("权限")
-        case .about: L10n.string("关于")
-        }
-    }
-
-    var description: String {
-        switch self {
-        case .general: L10n.string("应用基本行为")
-        case .services: L10n.string("settings.pane.services.description")
-        case .data: L10n.string("settings.pane.data.description")
-        case .permissions: L10n.string("Kairos 所需的系统权限")
-        case .about: L10n.string("极简、高效、智能的网络自动化工具")
-        }
-    }
-}
-
 struct SettingsView: View {
     @Environment(NetworkMonitor.self) private var networkMonitor
     @Environment(MihomoViewModel.self) private var mihomoViewModel
+    @Environment(SettingsViewModel.self) private var settingsViewModel
     @State private var dnsManager = DNSManager.shared
     @State private var permissionManager = PermissionManager.shared
     @State private var apiKeyManager = APIKeyManager.shared
     @State private var loginItemManager = LoginItemManager.shared
     @State private var languageController = ApplicationLanguageController.shared
+    @State private var logSettings = LogSettings.shared
 
     // 导出/导入状态
     @State private var isExporting = false
@@ -57,31 +31,67 @@ struct SettingsView: View {
     @State private var showImportConfirmAlert = false
     @State private var importedData: KairosExportData?
     @State private var showLanguageRestartAlert = false
-    @AppStorage("settings.selectedPane") private var selectedPane: SettingsPane = .general
-    @Namespace private var paneSelectorNamespace
 
     var body: some View {
-        Group {
-            if selectedPane == .about {
-                AboutView()
-            } else {
-                KairosScrollView {
-                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.large) {
-                        paneHeader
-                        selectedPaneContent
+        KairosScrollView {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.large) {
+                settingsGroup("通用") {
+                    generalSettingsSection
+                }
+
+                Divider()
+
+                settingsGroup("settings.pane.services") {
+                    mihomoSettingsSection
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                    HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.small) {
+                        Text("IP 质量数据源")
+                            .font(.title3.weight(.semibold))
+                            .fixedSize()
+                            .accessibilityAddTraits(.isHeader)
+                        Text("配置第三方数据源凭据；未配置时使用免费版或跳过付费源")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: 800)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    apiKeySettingsSection
+                }
+
+                Divider()
+
+                settingsGroup("settings.pane.data") {
+                    exportImportSection
+                }
+
+                Divider()
+
+                settingsGroup("权限") {
+                    permissionsSection
+                }
+
+                Divider()
+
+                settingsGroup("日志") {
+                    loggingSection
                 }
             }
+            .frame(maxWidth: 800)
+            .frame(maxWidth: .infinity)
+            .padding(DesignSystem.Spacing.standard)
         }
-        .toolbar(removing: .title)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                paneSelector
+        .safeAreaInset(edge: .top, spacing: 0) {
+            PopoverNavigationBar {
+                if settingsViewModel.hasChanges {
+                    Button("保存配置", systemImage: "checkmark", action: saveSettings)
+                        .labelStyle(.iconOnly)
+                        .buttonBorderShape(.circle)
+                        .help("保存配置")
+                        .disabled(!settingsViewModel.canSaveConfiguration || mihomoViewModel.isLoading || mihomoViewModel.isDownloading || isImporting || isExporting)
+                }
             }
-            .sharedBackgroundVisibility(.hidden)
         }
         .onAppear {
             permissionManager.refresh()
@@ -111,72 +121,15 @@ struct SettingsView: View {
         }
     }
 
-    private var paneSelector: some View {
-        GlassEffectContainer(spacing: 0) {
-            HStack(spacing: 0) {
-                ForEach(SettingsPane.allCases, id: \.self) { pane in
-                    paneButton(for: pane)
-                }
-            }
-            .padding(3)
-            .glassEffect(.regular.interactive(), in: Capsule())
-        }
-        .frame(maxWidth: 480)
-        .frame(maxWidth: .infinity, alignment: .center)
-    }
-
-    private func paneButton(for pane: SettingsPane) -> some View {
-        let isSelected = selectedPane == pane
-
-        return Button {
-            withAnimation(.smooth(duration: 0.25)) {
-                selectedPane = pane
-            }
-        } label: {
-            Text(pane.title)
-                .font(.callout.weight(isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .padding(.horizontal, DesignSystem.Spacing.small)
-                .frame(minWidth: 80, minHeight: 32)
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .background {
-            if isSelected {
-                Color.clear
-                    .glassEffect(.regular.tint(.accentColor).interactive(), in: Capsule())
-                    .glassEffectID("settings-pane-selection", in: paneSelectorNamespace)
-            }
-        }
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    private var paneHeader: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
-            Text(selectedPane.title)
-                .font(.title2.weight(.semibold))
-            Text(selectedPane.description)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private var selectedPaneContent: some View {
-        switch selectedPane {
-        case .general:
-            generalSettingsSection
-        case .services:
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.large) {
-                mihomoHostAppSection
-                apiKeySettingsSection
-            }
-        case .data:
-            exportImportSection
-        case .permissions:
-            permissionsSection
-        case .about:
-            EmptyView()
+    private func settingsGroup<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+            Text(L10n.string(title))
+                .font(.title3.weight(.semibold))
+                .accessibilityAddTraits(.isHeader)
+            content()
         }
     }
 
@@ -215,11 +168,11 @@ struct SettingsView: View {
                     .toggleStyle(.switch)
                     .controlSize(.mini)
                 }
-                .padding(DesignSystem.Spacing.standard)
+                .padding(DesignSystem.Spacing.small)
 
                 Divider()
 
-                HStack(spacing: DesignSystem.Spacing.standard) {
+                HStack(alignment: .center, spacing: DesignSystem.Spacing.standard) {
                     VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
                         Text("language.setting.title")
                             .font(.body)
@@ -243,68 +196,95 @@ struct SettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(width: 150)
-                    .controlSize(.small)
+                    .controlSize(.regular)
+                    .fixedSize()
                 }
-                .padding(DesignSystem.Spacing.standard)
+                .padding(DesignSystem.Spacing.small)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
-    // MARK: - Mihomo Host App Section
+    // MARK: - Mihomo Settings
 
-    private var mihomoHostAppSection: some View {
-        GroupBox {
-            HStack(spacing: DesignSystem.Spacing.standard) {
-                Image(systemName: mihomoViewModel.config.hasAssociatedApp ? "checkmark.circle.fill" : "circle.dashed")
-                    .foregroundStyle(mihomoViewModel.config.hasAssociatedApp ? .green : .secondary)
+    @ViewBuilder
+    private var mihomoSettingsSection: some View {
+        switch settingsViewModel.mihomo {
+        case .success(let draft):
+            mihomoSettingsFields(config: Binding(get: { draft }, set: { settingsViewModel.mihomo = .success($0) }))
+        case .failure(let error):
+            GroupBox {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                    Text(error.localizedDescription).foregroundStyle(.red).textSelection(.enabled)
+                    Button("重试") {
+                        settingsViewModel.retryConfigurationLoad()
+                        mihomoViewModel.loadConfig()
+                        mihomoViewModel.refreshStatus()
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(DesignSystem.Spacing.small)
+            }
+        }
+    }
 
-                VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
-                    Text(
-                        mihomoViewModel.config.hasAssociatedApp
-                            ? mihomoViewModel.config.appDisplayName
-                            : L10n.string("未关联应用")
-                    )
-                        .font(.body)
-                        .fontWeight(.medium)
-                    Text(
-                        mihomoViewModel.config.hasAssociatedApp
-                            ? mihomoViewModel.config.appBundleIdentifier
-                            : L10n.string("选择正在使用的 Clash/Mihomo 客户端")
-                    )
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    private func mihomoSettingsFields(config: Binding<MihomoConfig>) -> some View {
+        return GroupBox {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                    Text("Mihomo 应用路径")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ClearableSettingsField(placeholder: "输入 Mihomo 应用路径", text: config.appBundlePath)
                 }
 
-                Spacer()
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                    Text("内核文件路径")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ClearableSettingsField(placeholder: "输入内核文件路径", text: config.kernelPath)
+                }
 
-                HStack(spacing: DesignSystem.Spacing.small) {
-                    if mihomoViewModel.config.hasAssociatedApp {
-                        Button("取消关联") {
-                            mihomoViewModel.clearHostApp()
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                    HStack(spacing: DesignSystem.Spacing.small) {
+                        Text("GitHub Releases URL")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Button {
+                            if let url = URL(string: config.wrappedValue.githubReleasesURL),
+                               url.scheme == "https" || url.scheme == "http" {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            Label("访问", systemImage: "arrow.up.forward.square")
+                                .font(.caption2)
                         }
-                        .buttonStyle(.glass)
-                        .disabled(mihomoViewModel.isSelectingHostApp)
+                        .buttonStyle(.link)
                     }
+                    ClearableSettingsField(placeholder: "输入 GitHub Releases URL", text: config.githubReleasesURL)
+                }
 
-                    Button(
-                        mihomoViewModel.config.hasAssociatedApp
-                            ? L10n.string("更换应用…")
-                            : L10n.string("选择应用…")
-                    ) {
-                        mihomoViewModel.selectHostApp()
-                    }
-                    .buttonStyle(.glassProminent)
-                    .disabled(mihomoViewModel.isSelectingHostApp)
+                VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                    Text("内核文件名模板")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ClearableSettingsField(placeholder: "例如：mihomo-darwin-arm64-alpha-smart", text: config.kernelFilenameTemplate)
                 }
             }
-            .padding(DesignSystem.Spacing.standard)
-        } label: {
-            SettingsSectionHeader(
-                title: "Mihomo 关联应用",
-                description: "内核替换功能依赖的宿主应用"
-            )
+            .padding(DesignSystem.Spacing.small)
+            .disabled(mihomoViewModel.isLoading || mihomoViewModel.isDownloading)
+        }
+    }
+
+    private func saveSettings() {
+        do {
+            try settingsViewModel.save()
+            mihomoViewModel.loadConfig()
+            mihomoViewModel.refreshStatus()
+            Toast.success(L10n.string("配置已保存"))
+        } catch {
+            Toast.error(error.localizedDescription)
         }
     }
 
@@ -336,6 +316,7 @@ struct SettingsView: View {
                         }
                     }
                     .buttonStyle(.glass)
+                    .controlSize(.regular)
                     .disabled(isImporting || isExporting)
                 }
 
@@ -364,10 +345,11 @@ struct SettingsView: View {
                         }
                     }
                     .buttonStyle(.glassProminent)
+                    .controlSize(.regular)
                     .disabled(isImporting || isExporting)
                 }
             }
-            .padding(DesignSystem.Spacing.standard)
+            .padding(DesignSystem.Spacing.small)
         }
     }
 
@@ -422,21 +404,19 @@ struct SettingsView: View {
     }
 
     private func applyImportedData(_ data: KairosExportData) {
-        // 应用应用控制场景
-        SceneStorage.saveScenes(data.appControlScenes)
+        do {
+            try SettingsImportService.apply(data)
+        } catch {
+            Toast.error(error.localizedDescription)
+            return
+        }
 
-        // 应用 DNS 控制场景
-        DNSSceneStorage.shared.saveScenes(data.dnsControlScenes)
-
-        // 应用 API Keys
-        data.apiKeys.apply(to: apiKeyManager)
-
-        // 应用 Mihomo 配置
-        MihomoConfigService().saveConfig(data.mihomoConfig)
         mihomoViewModel.loadConfig()
         mihomoViewModel.refreshStatus()
+        settingsViewModel.reload()
 
-        // 刷新 NetworkMonitor 中的场景
+        // A successful import can recover a startup blocked by unreadable scene files.
+        networkMonitor.startMonitoring(scenes: data.appControlScenes, dnsScenes: data.dnsControlScenes)
         networkMonitor.updateScenes(data.appControlScenes)
         networkMonitor.updateDNSScenes(data.dnsControlScenes)
 
@@ -456,7 +436,8 @@ struct SettingsView: View {
     // MARK: - API Key Settings Section
 
     private var apiKeySettingsSection: some View {
-        GroupBox {
+        @Bindable var settings = settingsViewModel
+        return GroupBox {
             VStack(alignment: .leading, spacing: 16) {
                 // 有免费 API 的数据源（配置后使用付费版）
                 VStack(alignment: .leading, spacing: 12) {
@@ -469,7 +450,7 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "IPinfo",
                         placeholder: "Token",
-                        value: $apiKeyManager.ipinfoToken,
+                        value: $settings.apiKeys.ipinfoToken,
                         helpURL: "https://ipinfo.io/signup"
                     )
 
@@ -477,7 +458,7 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "ipapi.is",
                         placeholder: "API Key",
-                        value: $apiKeyManager.ipapiKey,
+                        value: $settings.apiKeys.ipapiKey,
                         helpURL: "https://ipapi.is/"
                     )
 
@@ -485,7 +466,7 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "DB-IP",
                         placeholder: "API Key",
-                        value: $apiKeyManager.dbipKey,
+                        value: $settings.apiKeys.dbipKey,
                         helpURL: "https://db-ip.com/api/"
                     )
 
@@ -493,7 +474,7 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "IPWHOIS",
                         placeholder: "API Key",
-                        value: $apiKeyManager.ipwhoisKey,
+                        value: $settings.apiKeys.ipwhoisKey,
                         helpURL: "https://ipwhois.io/documentation"
                     )
                 }
@@ -511,7 +492,7 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "AbuseIPDB",
                         placeholder: "API Key",
-                        value: $apiKeyManager.abuseipdbKey,
+                        value: $settings.apiKeys.abuseipdbKey,
                         helpURL: "https://www.abuseipdb.com/api"
                     )
 
@@ -519,7 +500,7 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "IP2Location",
                         placeholder: "API Key",
-                        value: $apiKeyManager.ip2locationKey,
+                        value: $settings.apiKeys.ip2locationKey,
                         helpURL: "https://www.ip2location.io/"
                     )
 
@@ -527,34 +508,65 @@ struct SettingsView: View {
                     APIKeyInputRow(
                         label: "ipregistry",
                         placeholder: "API Key",
-                        value: $apiKeyManager.ipregistryKey,
+                        value: $settings.apiKeys.ipregistryKey,
                         helpURL: "https://ipregistry.co/"
                     )
                 }
 
+
+            }
+            .padding(DesignSystem.Spacing.small)
+        }
+    }
+
+    private var loggingSection: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.medium) {
+                HStack(alignment: .center, spacing: DesignSystem.Spacing.standard) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
+                        Text("日志等级")
+                        Text("仅记录所选等级及以上的日志，修改后立即生效。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Picker("日志等级", selection: $logSettings.minimumLevel) {
+                        ForEach(LogLevel.allCases, id: \.self) { level in
+                            Text(level.displayName.trimmingCharacters(in: .whitespaces)).tag(level)
+                        }
+                    }
+                    .labelsHidden()
+                    .controlSize(.regular)
+                    .fixedSize()
+                }
+
                 Divider()
 
-                HStack(spacing: DesignSystem.Spacing.small) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: DesignSystem.Spacing.small) {
+                        Text("当前日志文件（打开文件夹后将选中此文件，可使用文本编辑器查看）")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(LogStore.shared.logFileURL.lastPathComponent)
+                            .font(.body.monospaced())
+                            .textSelection(.enabled)
+                    }
+
                     Spacer()
 
-                    Button("清除全部") {
-                        apiKeyManager.clearAllAPIKeys()
+                    Button("打开日志文件", systemImage: "folder") {
+                        let url = LogStore.shared.logFileURL
+                        if FileManager.default.fileExists(atPath: url.path) {
+                            NSWorkspace.shared.activateFileViewerSelecting([url])
+                        } else if !NSWorkspace.shared.open(url.deletingLastPathComponent()) {
+                            Toast.error(L10n.string("无法打开日志文件夹"))
+                        }
                     }
                     .buttonStyle(.glass)
-                    .disabled(!apiKeyManager.hasAnyAPIKey)
-
-                    Button("保存配置") {
-                        apiKeyManager.saveAPIKeys()
-                    }
-                    .buttonStyle(.glassProminent)
+                    .fixedSize()
                 }
             }
-            .padding(DesignSystem.Spacing.standard)
-        } label: {
-            SettingsSectionHeader(
-                title: "IP 质量数据源",
-                description: "配置第三方数据源凭据；未配置时使用免费版或跳过付费源"
-            )
+            .padding(DesignSystem.Spacing.small)
         }
     }
 
@@ -568,24 +580,26 @@ struct SettingsView: View {
                         Divider()
                     }
 
-                    HStack(spacing: DesignSystem.Spacing.medium) {
+                    HStack(alignment: .center, spacing: DesignSystem.Spacing.medium) {
                         Image(systemName: permission.isGranted ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
                             .foregroundStyle(Color(permission.statusColor))
                             .font(.system(size: 14))
 
                         VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
-                            Text(permission.type.displayName)
-                                .font(.system(size: 14, weight: .medium))
+                            HStack(alignment: .firstTextBaseline, spacing: DesignSystem.Spacing.small) {
+                                Text(permission.type.displayName)
+                                    .font(.system(size: 14, weight: .medium))
+                                Text(permission.statusText)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(permission.statusColor))
+                                    .fixedSize()
+                            }
                             Text(permission.isGranted ? permission.type.description : permission.type.guideText)
                                 .font(.caption)
                                 .foregroundStyle(permission.isGranted ? Color.secondary : Color.orange)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-
-                        Spacer()
-
-                        Text(permission.statusText)
-                            .font(.caption)
-                            .foregroundStyle(Color(permission.statusColor))
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                         switch permission.type {
                         case .accessibility:
@@ -594,7 +608,8 @@ struct SettingsView: View {
                                     permissionManager.openAccessibilitySettings()
                                 }
                                 .buttonStyle(.glassProminent)
-                                .controlSize(.small)
+                                .controlSize(.regular)
+                                .fixedSize()
                             }
                         case .helperTool:
                             HelperActionButton(
@@ -602,28 +617,13 @@ struct SettingsView: View {
                                 networkMonitor: networkMonitor,
                                 isInstalled: permission.isGranted
                             )
+                            .fixedSize()
                         }
                     }
                 }
             }
-            .padding(DesignSystem.Spacing.standard)
+            .padding(DesignSystem.Spacing.small)
         }
-    }
-}
-
-private struct SettingsSectionHeader: View {
-    let title: String
-    let description: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
-            Text(L10n.string(title))
-                .font(.headline)
-            Text(L10n.string(description))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.bottom, DesignSystem.Spacing.extraSmall)
     }
 }
 
@@ -677,7 +677,7 @@ private struct HelperActionButton: View {
                 .buttonStyle(.glassProminent)
             }
         }
-        .controlSize(.small)
+        .controlSize(.regular)
         .disabled(operation != nil)
     }
 
@@ -760,60 +760,77 @@ private struct APIKeyInputRow: View {
     let placeholder: String
     @Binding var value: String
     let helpURL: String
-    @State private var isSecure: Bool = true
+    @State private var isSecure = true
 
     var body: some View {
-        HStack(spacing: 12) {
-            // 标签
-            Text(L10n.string(label))
-                .font(.system(size: 13))
-                .frame(width: 100, alignment: .leading)
+        HStack(spacing: DesignSystem.Spacing.small) {
+            HStack(spacing: DesignSystem.Spacing.extraSmall) {
+                Text(L10n.string(label))
+                    .font(.system(size: 13))
+                    .lineLimit(1)
 
-            // 输入框容器
-            HStack(spacing: 0) {
-                // 输入框
-                Group {
-                    if isSecure {
-                        SecureField(placeholder, text: $value)
-                    } else {
-                        TextField(placeholder, text: $value)
-                    }
-                }
-                .textFieldStyle(.plain)
-                .padding(.leading, 10)
-                .padding(.vertical, 6)
-
-                // 眼睛按钮
                 Button {
-                    isSecure.toggle()
+                    if let url = URL(string: helpURL) {
+                        NSWorkspace.shared.open(url)
+                    }
                 } label: {
-                    Image(systemName: isSecure ? "eye.slash" : "eye")
-                        .foregroundStyle(.secondary)
-                        .font(.system(size: 12))
+                    Image(systemName: "questionmark.circle")
+                        .foregroundStyle(.blue)
+                        .frame(width: 20, height: 20)
                 }
                 .buttonStyle(.plain)
-                .padding(.trailing, 8)
-                .help(isSecure ? L10n.string("显示") : L10n.string("隐藏"))
+                .accessibilityLabel(Text("获取 API Key"))
+                .help("获取 API Key")
             }
-            .background(Color(nsColor: .textBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small))
-            .overlay(
-                RoundedRectangle(cornerRadius: DesignSystem.CornerRadius.small)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
+            .frame(width: 120, alignment: .leading)
 
-            // 帮助链接
+            ClearableSettingsField(placeholder: placeholder, text: $value, isSecure: isSecure)
+                .accessibilityLabel(L10n.string(label))
+
             Button {
-                if let url = URL(string: helpURL) {
-                    NSWorkspace.shared.open(url)
-                }
+                isSecure.toggle()
             } label: {
-                Image(systemName: "questionmark.circle")
-                    .foregroundStyle(.blue)
-                    .font(.system(size: 14))
+                Image(systemName: isSecure ? "eye.slash" : "eye")
+                    .foregroundStyle(.secondary)
+                    .font(.system(size: 12))
+                    .frame(width: DesignSystem.Input.actionHeight, height: DesignSystem.Input.actionHeight)
             }
             .buttonStyle(.plain)
-            .help(L10n.string("获取 API Key"))
+            .accessibilityLabel(isSecure ? Text("显示") : Text("隐藏"))
+            .help(isSecure ? L10n.string("显示") : L10n.string("隐藏"))
+        }
+    }
+}
+
+private struct ClearableSettingsField: View {
+    let placeholder: String
+    @Binding var text: String
+    var isSecure = false
+
+    var body: some View {
+        Group {
+            if isSecure {
+                SecureField(L10n.string(placeholder), text: $text)
+            } else {
+                TextField(L10n.string(placeholder), text: $text)
+            }
+        }
+        .padding(.trailing, DesignSystem.Input.actionHeight)
+        .kairosTextField()
+        .overlay(alignment: .trailing) {
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: DesignSystem.Input.actionHeight, height: DesignSystem.Input.actionHeight)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("清空"))
+                .help("清空")
+                .padding(.trailing, DesignSystem.Spacing.extraSmall)
+            }
         }
     }
 }

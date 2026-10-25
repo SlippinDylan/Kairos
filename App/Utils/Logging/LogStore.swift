@@ -58,7 +58,7 @@ final class LogStore {
     private let batchUpdateThreshold: Int = 10
 
     /// 日志文件路径
-    private let logFileURL: URL
+    let logFileURL: URL
 
     /// 文件写入队列（串行，确保写入顺序）
     private let fileQueue = DispatchQueue(
@@ -258,7 +258,7 @@ struct LogStatistics {
 ///
 /// 此类独立于 MainActor，解决 Swift 6 的并发隔离问题。
 /// 所有文件操作都在指定的串行队列上执行。
-private final class LogFileWriter: @unchecked Sendable {
+final class LogFileWriter: @unchecked Sendable {
     private let fileURL: URL
     private let queue: DispatchQueue
     private let maxFileSize: Int
@@ -293,28 +293,34 @@ private final class LogFileWriter: @unchecked Sendable {
     func write(_ logLine: String, synchronize: Bool) {
         queue.async { [weak self] in
             guard let self,
-                  let handle = self.fileHandle,
                   let data = logLine.data(using: .utf8) else { return }
 
-            self.trimFileIfNeeded(forAppending: data)
-            handle.write(data)
-
-            if synchronize {
-                try? handle.synchronize()
+            do {
+                // Rotation includes this entry and replaces the file handle.
+                let didRotate = try self.trimFileIfNeeded(forAppending: data)
+                guard let handle = self.fileHandle else { return }
+                if !didRotate {
+                    try handle.write(contentsOf: data)
+                }
+                if synchronize {
+                    try handle.synchronize()
+                }
+            } catch {
+                print("❌ 日志文件写入失败: \(error.localizedDescription)")
             }
         }
     }
 
-    private func trimFileIfNeeded(forAppending data: Data) {
-        guard let handle = fileHandle else { return }
+    private func trimFileIfNeeded(forAppending data: Data) throws -> Bool {
+        guard let handle = fileHandle else { return false }
 
-        let currentSize = (try? handle.offset()) ?? 0
+        let currentSize = try handle.offset()
         let incomingSize = UInt64(data.count)
         guard currentSize + incomingSize > UInt64(maxFileSize) else {
-            return
+            return false
         }
 
-        let existingData = (try? Data(contentsOf: fileURL)) ?? Data()
+        let existingData = try Data(contentsOf: fileURL)
         let targetKeepSize = max(maxFileSize - data.count, 0)
         let recentData = existingData.suffix(targetKeepSize)
 
@@ -332,14 +338,13 @@ private final class LogFileWriter: @unchecked Sendable {
             newPayload = trimmedData + data
         }
 
-        do {
-            try newPayload.write(to: fileURL, options: .atomic)
-            try handle.close()
-            fileHandle = try FileHandle(forWritingTo: fileURL)
-            fileHandle?.seekToEndOfFile()
-        } catch {
-            print("❌ 日志文件截断失败: \(error.localizedDescription)")
-        }
+        try newPayload.write(to: fileURL, options: .atomic)
+        try handle.close()
+        fileHandle = nil
+        let replacement = try FileHandle(forWritingTo: fileURL)
+        fileHandle = replacement
+        try replacement.seekToEnd()
+        return true
     }
 
     /// 关闭文件句柄

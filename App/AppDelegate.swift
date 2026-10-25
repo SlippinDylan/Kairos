@@ -6,18 +6,9 @@
 //
 
 import AppKit
+import SwiftUI
 
-/// 应用生命周期委托
-///
-/// 职责：
-/// - 拦截窗口关闭事件，防止应用退出
-/// - 检测应用启动方式（手动启动 vs 开机自启动）
-/// - 管理应用生命周期回调
-/// - **初始化网络监控服务**（应用启动时立即开始监控）
-///
-/// 关键实现：
-/// - applicationShouldTerminateAfterLastWindowClosed 返回 false
-///   确保关闭窗口时应用不退出，只隐藏窗口
+/// Owns app-scoped services and the retained menu-bar interface.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Properties
@@ -25,41 +16,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// App-scoped Sparkle controller. The privileged Helper remains independently managed.
     private let applicationUpdater = ApplicationUpdateController.shared
 
-    /// 网络监控服务（从 KairosApp 传递）
-    private var networkMonitor: NetworkMonitor?
+    /// Shared services live as long as the retained menu-bar interface.
+    private let networkMonitor = NetworkMonitor()
+    private let mihomoViewModel = MihomoViewModel()
+    private let settingsViewModel = SettingsViewModel()
+    private let networkToolsViewModel = NetworkToolsViewModel()
 
     private var statusBarController: StatusBarController?
 
-    // MARK: - Public Methods
-
-    /// 设置网络监控服务
-    ///
-    /// - Parameter monitor: NetworkMonitor 实例
-    ///
-    /// ## 设计说明
-    /// 由于 @NSApplicationDelegateAdaptor 在 @StateObject 之前创建，
-    /// 需要通过此方法将 NetworkMonitor 实例传递给 AppDelegate。
-    ///
-    /// ## 防御性设计
-    /// - 可以安全地多次调用（幂等性）
-    /// - 只在首次调用时启动监控
-    func setNetworkMonitor(_ monitor: NetworkMonitor) {
-        // 防止重复初始化
-        guard self.networkMonitor == nil else {
-            AppLogger.debug("NetworkMonitor 已设置，跳过重复初始化")
-            return
-        }
-
-        self.networkMonitor = monitor
-
-        // 立即启动监控（确保在应用启动时就开始监控）
+    private func startNetworkMonitoring() {
         Task { @MainActor in
-            let scenes = SceneStorage.loadScenes()
-            let dnsScenes = DNSSceneStorage.shared.loadScenes()
-
-            AppLogger.info("从存储加载场景: 网络场景=\(scenes.count), DNS场景=\(dnsScenes.count)")
-
-            monitor.startMonitoring(scenes: scenes, dnsScenes: dnsScenes)
+            do {
+                let scenes = try SceneStorage.loadScenes()
+                let dnsScenes = try DNSSceneStorage.shared.loadScenes()
+                networkMonitor.startMonitoring(scenes: scenes, dnsScenes: dnsScenes)
+            } catch {
+                AppLogger.error("加载场景失败，网络自动化未启动", error: error)
+                Toast.error(error.localizedDescription)
+            }
         }
     }
 
@@ -71,14 +45,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppLogger.info("应用启动完成")
         NSApp.setActivationPolicy(.accessory)
-        statusBarController = StatusBarController(
+        let statusBarController = StatusBarController(
             onShowTab: { tab in
-                WindowCoordinator.shared.showMainWindow(tab: tab)
+                if let tab {
+                    WindowCoordinator.shared.showMainWindow(tab: tab)
+                } else {
+                    WindowCoordinator.shared.toggleMainWindow()
+                }
             },
+            onHide: { WindowCoordinator.shared.hideMainWindow() },
             onQuit: { [weak self] in
                 self?.requestExplicitQuit()
             }
         )
+        self.statusBarController = statusBarController
+        let content = ContentView()
+            .environment(networkMonitor)
+            .environment(mihomoViewModel)
+            .environment(settingsViewModel)
+            .environment(networkToolsViewModel)
+            .environment(WindowCoordinator.shared)
+        WindowCoordinator.shared.configurePopover(
+            contentViewController: PopoverContentViewController(rootView: content),
+            anchor: statusBarController.button
+        )
+        startNetworkMonitoring()
         _ = applicationUpdater
         DNSManager.shared.validateHelperIfNeeded()
 
@@ -97,14 +88,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // 检测是否为开机自启动
         if wasLaunchedAsLoginItem() {
-            AppLogger.info("应用通过开机自启动启动，不显示主窗口")
-            // ✅ 开机自启动 → 不显示窗口
+            AppLogger.info("应用通过开机自启动启动，保持菜单栏界面收起")
+            // Login launch starts services without opening the interface.
             WindowCoordinator.shared.requestHide()
         } else {
-            AppLogger.info("应用手动启动，请求显示主窗口")
-            // The request is retained until ContentView registers SwiftUI's openWindow action.
+            AppLogger.info("应用手动启动，展开菜单栏界面")
+            // The popover and its retained content are ready before this request.
             WindowCoordinator.shared.requestShow(tab: 0)
         }
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        WindowCoordinator.shared.showMainWindow()
+        return false
     }
 
     /// 最后一个窗口关闭时是否退出应用

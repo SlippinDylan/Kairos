@@ -25,14 +25,6 @@ struct OverviewCard<Content: View>: View {
     }
 }
 
-struct OverviewMetricDivider: View {
-    var body: some View {
-        Divider()
-            .frame(height: 48)
-            .padding(.horizontal, DesignSystem.Spacing.standard)
-    }
-}
-
 struct OverviewMetric: View {
     let title: String
     let value: String
@@ -40,22 +32,26 @@ struct OverviewMetric: View {
     var valueColor: Color = .primary
 
     var body: some View {
-        HStack(spacing: DesignSystem.Spacing.medium) {
-            iconView
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: DesignSystem.Spacing.extraSmall) {
+                iconView
+                    .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: DesignSystem.Spacing.extraSmall) {
                 Text(L10n.string(title))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-
-                Text(value)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(valueColor)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
                     .truncationMode(.middle)
-                    .textSelection(.enabled)
+                    .help(L10n.string(title))
             }
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+
+            Text(value)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(valueColor)
+                .lineLimit(2)
+                .truncationMode(.middle)
+                .textSelection(.enabled)
+                .help(value)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -65,13 +61,13 @@ struct OverviewMetric: View {
         switch icon {
         case .symbol(let name, let tint):
             Image(systemName: name)
-                .font(.system(size: 24))
+                .font(.system(size: 11))
                 .foregroundStyle(tint)
         case .application(let image):
             Image(nsImage: image)
                 .resizable()
                 .interpolation(.high)
-                .frame(width: 24, height: 24)
+                .frame(width: 12, height: 12)
         }
     }
 }

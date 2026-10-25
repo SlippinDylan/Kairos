@@ -75,6 +75,9 @@ struct WindowCoordinatorTests {
         expect(WindowCoordinator.constrainedSize(requested: CGSize(width: 704, height: 720), visibleFrame: screen) == CGSize(width: 576, height: 476), "small screens cap both dimensions including arrow space")
         expect(WindowCoordinator.constrainedSize(requested: CGSize(width: 540, height: 136), visibleFrame: screen) == CGSize(width: 540, height: 136), "compact content keeps its requested size")
         expect(WindowCoordinator.constrainedSize(requested: CGSize(width: 704, height: 632), visibleFrame: nil) == CGSize(width: 704, height: 632), "unattached previews keep deterministic sizing")
+        expect(WindowCoordinator.detailHeightLimit(visibleFrame: screen, chromeHeight: 0) == 300, "detail pages use 60 percent of the visible screen")
+        expect(WindowCoordinator.detailHeightLimit(visibleFrame: screen, chromeHeight: 13) == 287, "native arrow chrome is included in the detail height limit")
+        expect(WindowCoordinator.detailHeightLimit(visibleFrame: CGRect(x: 0, y: 0, width: 1600, height: 1000), chromeHeight: 0) == 600, "detail height follows the current display instead of the default page height")
         expect(app.activationPolicy() == .prohibited, "presentation does not change the activation policy")
         print("WindowCoordinator: \(checks) checks passed")
     }

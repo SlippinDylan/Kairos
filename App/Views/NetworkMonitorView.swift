@@ -45,7 +45,10 @@ struct NetworkMonitorView: View {
                 SceneConfigSheet(
                     scene: $editingAppScene,
                     isEditing: editingAppScene != nil,
-                    onCancel: { showingAppSceneSheet = false },
+                    onCancel: {
+                        showingAppSceneSheet = false
+                        windowCoordinator.resetContentSize()
+                    },
                     onSave: { newScene in
                         var updated = appScenes
                         if let index = updated.firstIndex(where: { $0.id == newScene.id }) {
@@ -59,7 +62,10 @@ struct NetworkMonitorView: View {
             } else if showingDNSSceneSheet {
                 DNSSceneConfigSheet(
                     scene: editingDNSScene,
-                    onCancel: { showingDNSSceneSheet = false },
+                    onCancel: {
+                        showingDNSSceneSheet = false
+                        windowCoordinator.resetContentSize()
+                    },
                     onSave: { newScene in
                         var updated = dnsScenes
                         if let index = updated.firstIndex(where: { $0.id == newScene.id }) {

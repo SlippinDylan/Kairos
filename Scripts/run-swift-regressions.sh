@@ -41,7 +41,7 @@ run_test() {
     IPQuery) sources=(App/Utils/L10n.swift App/Utils/GeoUtils.swift App/Utils/NetworkValidator.swift App/Utils/URLRequest+Extensions.swift App/Models/IPQueryModels.swift App/Services/APIKeyManager.swift App/Services/IPAPIRateLimit.swift App/Services/IPQueryService.swift App/Models/IPQualityModels.swift App/Services/IPDataSourceService.swift App/Services/IPDataSourceService+Parsers.swift) ;;
     IPDataSourceAggregation) sources=(App/Models/IPQualityModels.swift App/Services/APIKeyManager.swift App/Services/IPAPIRateLimit.swift App/Services/IPDataSourceService.swift App/Services/IPDataSourceService+Parsers.swift App/UseCases/IPQuality/MultiSourceAggregationUseCase.swift) ;;
     PopoverContentLayout) sources=(App/Coordinators/WindowCoordinator.swift App/Coordinators/PopoverContentViewController.swift) ;;
-    NetworkToolSheetSizing) sources=(App/Views/Components/NetworkTools/NetworkToolSheet.swift App/Views/Components/SheetHeader.swift App/Views/Components/NetworkTools/DNSProgressBackdrop.swift App/Views/Components/ActionTextField.swift App/Extensions/View+TextInput.swift) ;;
+    NetworkToolSheetSizing) sources=(App/Views/Components/PopoverDetailPage.swift App/Extensions/View+ScrollView.swift App/Views/Components/NetworkTools/NetworkToolSheet.swift App/Views/Components/SheetHeader.swift App/Views/Components/NetworkTools/DNSProgressBackdrop.swift App/Views/Components/ActionTextField.swift App/Extensions/View+TextInput.swift) ;;
     SheetOutsideDismissal) sources=(App/Extensions/View+SheetDismissal.swift) ;;
     *) printf 'Unknown regression check: %s\n' "$name" >&2; return 1 ;;
   esac
@@ -54,6 +54,10 @@ run_test() {
   xcrun swiftc "${compiler_flags[@]}" -target arm64-apple-macos26.0 -parse-as-library \
     "${sources[@]}" "Scripts/Tests/${name}Tests.swift" -o "build/Tests/${name}Tests"
   "build/Tests/${name}Tests"
+  if [[ "$name" == "NetworkToolSheetSizing" ]]; then
+    # Process-local preference override; do not change the user's scrollbar setting.
+    "build/Tests/${name}Tests" -AppleShowScrollBars Always
+  fi
 }
 
 mkdir -p build/Tests

@@ -80,12 +80,11 @@ struct NetworkToolsView: View {
     private func toolDetail(_ tool: NetworkTool) -> some View {
         NetworkToolSheet(
             title: tool.title,
-            hostWindowSize: CGSize(width: toolContentWidth, height: DesignSystem.Window.minimumHeight),
+            width: toolContentWidth,
             preventsClosing: preventsClosing(tool),
             fitsContent: tool == .ipQuery || tool == .dnsTest || tool == .ipQuality,
-            padsContent: tool != .ipQuality,
-            balancesHeader: balancesHeader(for: tool),
-            maximumContentHeight: windowCoordinator.maximumContentHeight,
+            padsContent: tool != .ipQuality && tool != .ipQuery,
+            maximumContentHeight: windowCoordinator.maximumDetailHeight,
             progress: progress(for: tool),
             onCancel: cancellation(for: tool),
             onClose: {
@@ -97,6 +96,10 @@ struct NetworkToolsView: View {
                 windowCoordinator.setContentSize(size)
             }
         ) {
+            if tool == .ipQuery {
+                IPQueryToolInput()
+            }
+        } content: {
             switch tool {
             case .dnsCleanup:
                 DNSCleanupToolDetail(viewModel: maintenance)
@@ -109,19 +112,6 @@ struct NetworkToolsView: View {
             case .ipQuality:
                 IPQualityNetworkToolCard()
             }
-        }
-    }
-
-    private func balancesHeader(for tool: NetworkTool) -> Bool {
-        switch tool {
-        case .ipQuery:
-            ipQuery.result == nil
-        case .dnsTest:
-            dnsTest.state != .result
-        case .ipQuality:
-            ipQuality.isLoading || ipQuality.result == nil
-        case .dnsCleanup, .kernel:
-            false
         }
     }
 

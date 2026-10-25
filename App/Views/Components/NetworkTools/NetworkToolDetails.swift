@@ -35,36 +35,52 @@ struct DNSCleanupToolDetail: View {
     }
 }
 
+struct IPQueryToolInput: View {
+    @State private var viewModel = IPQueryViewModel.shared
+
+    private var hasDetails: Bool { viewModel.result != nil || viewModel.errorMessage != nil }
+
+    var body: some View {
+        ActionTextField(
+            placeholder: "输入 IP 地址",
+            text: $viewModel.ipAddress,
+            actionTitle: "查询",
+            loadingTitle: "查询中...",
+            isLoading: viewModel.isLoading,
+            isActionDisabled: viewModel.isLoading || viewModel.ipAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            onClear: viewModel.reset,
+            action: {
+                Task { await viewModel.queryIP(viewModel.ipAddress) }
+            }
+        )
+        .onChange(of: viewModel.ipAddress) { _, _ in
+            if !viewModel.isLoading { viewModel.reset() }
+        }
+        .padding(.horizontal, DesignSystem.Spacing.standard * 2)
+        .padding(.top, 22)
+        .padding(.bottom, hasDetails ? DesignSystem.Spacing.standard : 22)
+    }
+}
+
 struct IPQueryToolDetail: View {
     @State private var viewModel = IPQueryViewModel.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ActionTextField(
-                placeholder: "输入 IP 地址",
-                text: $viewModel.ipAddress,
-                actionTitle: "查询",
-                loadingTitle: "查询中...",
-                isLoading: viewModel.isLoading,
-                isActionDisabled: viewModel.isLoading || viewModel.ipAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                onClear: viewModel.reset,
-                action: {
-                    Task { await viewModel.queryIP(viewModel.ipAddress) }
+        if viewModel.result != nil || viewModel.errorMessage != nil {
+            VStack(alignment: .leading, spacing: DesignSystem.Spacing.standard) {
+                if let error = viewModel.errorMessage {
+                    Text(error)
+                        .foregroundStyle(.red)
+                        .textSelection(.enabled)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
-            )
-            .onChange(of: viewModel.ipAddress) { _, _ in
-                if !viewModel.isLoading { viewModel.reset() }
+                if let result = viewModel.result {
+                    IPQueryResultContent(result: result)
+                }
             }
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .foregroundStyle(.red)
-                    .textSelection(.enabled)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-            if let result = viewModel.result {
-                IPQueryResultContent(result: result)
-            }
+            .padding(.horizontal, DesignSystem.Spacing.standard)
+            .padding(.bottom, 22)
         }
     }
 }

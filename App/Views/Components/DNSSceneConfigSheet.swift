@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct DNSSceneConfigSheet: View {
+    @Environment(WindowCoordinator.self) private var windowCoordinator
 
     @State private var hasLoadedScene = false
     @State private var sceneName = ""
@@ -30,7 +31,11 @@ struct DNSSceneConfigSheet: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        PopoverDetailPage(
+            width: min(DesignSystem.Window.width, windowCoordinator.maximumContentWidth ?? DesignSystem.Window.width),
+            maximumHeight: windowCoordinator.maximumDetailHeight,
+            onSizeChange: windowCoordinator.setContentSize
+        ) {
             SheetHeader(
                 title: isEditing ? L10n.string("编辑场景") : L10n.string("添加场景"),
                 action: .save,
@@ -38,90 +43,87 @@ struct DNSSceneConfigSheet: View {
                 onBack: onCancel,
                 onAction: saveScene
             )
+        } content: {
+            VStack(alignment: .leading, spacing: 20) {
+                // Section 1: 场景名称
+                DNSFormSection(title: "场景名称") {
+                    TextField("输入场景名称", text: $sceneName)
+                        .kairosTextField()
+                }
 
-            // 配置表单（使用 VStack 替代 Form，避免嵌套滚动冲突）
-            KairosScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Section 1: 场景名称
-                    DNSFormSection(title: "场景名称") {
-                        TextField("输入场景名称", text: $sceneName)
-                            .kairosTextField()
-                    }
-
-                    // Section 2: 路由器配置
-                    DNSFormSection(title: "路由器配置") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            // 路由器 IP
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("路由器 IP", text: $routerIP)
-                                    .kairosTextField(isInvalid: showRouterIPError)
-                                    .onChange(of: routerIP) { _, _ in
-                                        showRouterIPError = false
-                                    }
-
-                                if showRouterIPError {
-                                    Text("IP 地址格式不正确")
-                                        .font(.caption)
-                                        .foregroundStyle(.red)
+                // Section 2: 路由器配置
+                DNSFormSection(title: "路由器配置") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // 路由器 IP
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("路由器 IP", text: $routerIP)
+                                .kairosTextField(isInvalid: showRouterIPError)
+                                .onChange(of: routerIP) { _, _ in
+                                    showRouterIPError = false
                                 }
-                            }
 
-                            // MAC 地址
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("MAC 地址", text: $routerMAC)
-                                    .kairosTextField(isInvalid: showRouterMACError)
-                                    .onChange(of: routerMAC) { _, _ in
-                                        showRouterMACError = false
-                                    }
-
-                                if showRouterMACError {
-                                    Text("MAC 地址格式不正确")
-                                        .font(.caption)
-                                        .foregroundStyle(.red)
-                                }
+                            if showRouterIPError {
+                                Text("IP 地址格式不正确")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
                             }
                         }
-                    }
 
-                    // Section 3: DNS 配置
-                    DNSFormSection(title: "DNS 配置") {
-                        VStack(alignment: .leading, spacing: 12) {
-                            // 主 DNS
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("主 DNS", text: $primaryDNS)
-                                    .kairosTextField(isInvalid: showPrimaryDNSError)
-                                    .onChange(of: primaryDNS) { _, _ in
-                                        showPrimaryDNSError = false
-                                    }
-
-                                if showPrimaryDNSError {
-                                    Text("DNS 地址格式不正确")
-                                        .font(.caption)
-                                        .foregroundStyle(.red)
+                        // MAC 地址
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("MAC 地址", text: $routerMAC)
+                                .kairosTextField(isInvalid: showRouterMACError)
+                                .onChange(of: routerMAC) { _, _ in
+                                    showRouterMACError = false
                                 }
-                            }
 
-                            // 备用 DNS
-                            VStack(alignment: .leading, spacing: 4) {
-                                TextField("备用 DNS（可选）", text: $secondaryDNS)
-                                    .kairosTextField(isInvalid: showSecondaryDNSError)
-                                    .onChange(of: secondaryDNS) { _, _ in
-                                        showSecondaryDNSError = false
-                                    }
-
-                                if showSecondaryDNSError {
-                                    Text("DNS 地址格式不正确")
-                                        .font(.caption)
-                                        .foregroundStyle(.red)
-                                }
+                            if showRouterMACError {
+                                Text("MAC 地址格式不正确")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
                             }
                         }
                     }
                 }
-                .padding()
+
+                // Section 3: DNS 配置
+                DNSFormSection(title: "DNS 配置") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        // 主 DNS
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("主 DNS", text: $primaryDNS)
+                                .kairosTextField(isInvalid: showPrimaryDNSError)
+                                .onChange(of: primaryDNS) { _, _ in
+                                    showPrimaryDNSError = false
+                                }
+
+                            if showPrimaryDNSError {
+                                Text("DNS 地址格式不正确")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+
+                        // 备用 DNS
+                        VStack(alignment: .leading, spacing: 4) {
+                            TextField("备用 DNS（可选）", text: $secondaryDNS)
+                                .kairosTextField(isInvalid: showSecondaryDNSError)
+                                .onChange(of: secondaryDNS) { _, _ in
+                                    showSecondaryDNSError = false
+                                }
+
+                            if showSecondaryDNSError {
+                                Text("DNS 地址格式不正确")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+                        }
+                    }
+                }
             }
+            .padding(.horizontal, DesignSystem.Spacing.standard)
+            .padding(.top, DesignSystem.Spacing.standard)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             guard !hasLoadedScene else { return }
             hasLoadedScene = true

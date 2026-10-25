@@ -57,12 +57,13 @@ struct KairosScrollView<Content: View>: View {
                     maxWidth: showsVerticalScroller ? .infinity : nil,
                     maxHeight: showsHorizontalScroller ? .infinity : nil
                 )
-        }
-        .background {
-            OverlayScrollerConfigurator(
-                showsVerticalScroller: showsVerticalScroller,
-                showsHorizontalScroller: showsHorizontalScroller
-            )
+                .background {
+                    // The reader must live in the document subtree to find its enclosing NSScrollView.
+                    OverlayScrollerConfigurator(
+                        showsVerticalScroller: showsVerticalScroller,
+                        showsHorizontalScroller: showsHorizontalScroller
+                    )
+                }
         }
     }
 }
@@ -71,29 +72,49 @@ private struct OverlayScrollerConfigurator: NSViewRepresentable {
     let showsVerticalScroller: Bool
     let showsHorizontalScroller: Bool
 
-    func makeNSView(context: Context) -> NSView {
-        let view = NSView()
-        configureEnclosingScrollView(from: view)
-        return view
+    func makeNSView(context: Context) -> OverlayScrollerConfigurationView {
+        OverlayScrollerConfigurationView(
+            showsVerticalScroller: showsVerticalScroller,
+            showsHorizontalScroller: showsHorizontalScroller
+        )
     }
 
-    func updateNSView(_ nsView: NSView, context: Context) {
-        configureEnclosingScrollView(from: nsView)
+    func updateNSView(_ view: OverlayScrollerConfigurationView, context: Context) {
+        view.showsVerticalScroller = showsVerticalScroller
+        view.showsHorizontalScroller = showsHorizontalScroller
+        view.configureScrollView()
+    }
+}
+
+private final class OverlayScrollerConfigurationView: NSView {
+    var showsVerticalScroller: Bool
+    var showsHorizontalScroller: Bool
+
+    init(showsVerticalScroller: Bool, showsHorizontalScroller: Bool) {
+        self.showsVerticalScroller = showsVerticalScroller
+        self.showsHorizontalScroller = showsHorizontalScroller
+        super.init(frame: .zero)
     }
 
-    private func configureEnclosingScrollView(from view: NSView) {
-        DispatchQueue.main.async {
-            guard let scrollView = view.enclosingScrollView else { return }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { nil }
 
-            scrollView.scrollerStyle = .overlay
-            scrollView.autohidesScrollers = true
-            scrollView.hasVerticalScroller = showsVerticalScroller
-            scrollView.hasHorizontalScroller = showsHorizontalScroller
-            scrollView.drawsBackground = false
-            scrollView.borderType = .noBorder
-            scrollView.verticalScrollElasticity = .automatic
-            scrollView.horizontalScrollElasticity = .automatic
-            scrollView.usesPredominantAxisScrolling = false
-        }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        // Attachment, not creation, establishes the native scroll-view ancestry.
+        configureScrollView()
+    }
+
+    func configureScrollView() {
+        guard let scrollView = enclosingScrollView else { return }
+        scrollView.scrollerStyle = .overlay
+        scrollView.autohidesScrollers = true
+        scrollView.hasVerticalScroller = showsVerticalScroller
+        scrollView.hasHorizontalScroller = showsHorizontalScroller
+        scrollView.drawsBackground = false
+        scrollView.borderType = .noBorder
+        scrollView.verticalScrollElasticity = .automatic
+        scrollView.horizontalScrollElasticity = .automatic
+        scrollView.usesPredominantAxisScrolling = false
     }
 }

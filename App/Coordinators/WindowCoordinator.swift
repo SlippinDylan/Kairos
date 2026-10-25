@@ -21,6 +21,7 @@ final class WindowCoordinator: NSObject, NSPopoverDelegate {
     private(set) var contentHeight = DesignSystem.Window.minimumHeight
     private(set) var maximumContentWidth: CGFloat?
     private(set) var maximumContentHeight = DesignSystem.Window.minimumHeight
+    private(set) var maximumDetailHeight = DesignSystem.Window.minimumHeight * 0.6
 
     @ObservationIgnored private let popover: NSPopover
     @ObservationIgnored private weak var anchor: NSView?
@@ -129,6 +130,11 @@ final class WindowCoordinator: NSObject, NSPopoverDelegate {
                       height: min(requested.height, max(1, visibleFrame.height - 24)))
     }
 
+    static func detailHeightLimit(visibleFrame: CGRect?, chromeHeight: CGFloat) -> CGFloat {
+        let screenHeight = visibleFrame?.height ?? DesignSystem.Window.minimumHeight
+        return max(1, screenHeight * 0.6 - chromeHeight)
+    }
+
     private func updateContentSize() {
         let visibleFrame = anchor?.window?.screen?.visibleFrame
         let chrome = nativeChromeSize
@@ -136,6 +142,8 @@ final class WindowCoordinator: NSObject, NSPopoverDelegate {
         if maximumContentWidth != maximumWidth { maximumContentWidth = maximumWidth }
         let maximumHeight = visibleFrame.map { max(1, $0.height - 24 - chrome.height) } ?? DesignSystem.Window.minimumHeight
         if maximumContentHeight != maximumHeight { maximumContentHeight = maximumHeight }
+        let detailHeight = Self.detailHeightLimit(visibleFrame: visibleFrame, chromeHeight: chrome.height)
+        if maximumDetailHeight != detailHeight { maximumDetailHeight = detailHeight }
         let size = constrainedContentSize(CGSize(width: requestedWidth, height: requestedHeight))
         let nativeSize = CGSize(width: size.width + chrome.width, height: size.height + chrome.height)
         if contentWidth != size.width { contentWidth = size.width }

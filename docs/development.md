@@ -103,7 +103,7 @@ bash Scripts/run-swift-regressions.sh PopoverContentLayout
 bash Scripts/run-swift-regressions.sh SettingsViewModel
 ```
 
-工具详情尺寸的独立 Swift 回归检查使用屏幕外的 hosting view，覆盖紧凑输入、错误撑高、固定边距、结果宽度、返回导航及可用高度不足时滚动；不创建 sheet，不发出网络请求：
+工具详情尺寸的独立 Swift 回归检查使用屏幕外的 hosting view，覆盖紧凑输入、错误撑高、固定边距、结果宽度、固定 IP 输入框、屏幕高度限制，以及贴页面右侧且不占内容宽度的原生滚动条。同时以测试进程参数模拟系统“始终显示滚动条”，不修改用户设置；不创建 sheet，不发出网络请求：
 
 ```bash
 bash Scripts/run-swift-regressions.sh NetworkToolSheetSizing

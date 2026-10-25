@@ -24,10 +24,9 @@ import Network
 /// ## 使用方式
 /// ```swift
 /// let service = DNSBenchmarkService()
-/// for await progress in service.testDNS(server: "223.5.5.5", domains: sites) {
-///     print(progress.description)
+/// for await event in service.testDNS(server: "223.5.5.5", domains: sites) {
+///     // Handle progress updates and the completed results for this run.
 /// }
-/// let results = await service.getResults()
 /// ```
 actor DNSBenchmarkService {
     // MARK: - Constants
@@ -41,149 +40,69 @@ actor DNSBenchmarkService {
     /// 单次 DNS 查询超时时间（秒）
     nonisolated private static let queryTimeout: TimeInterval = 3.0
 
-    // MARK: - Properties
-
-    /// 测试结果存储
-    private var results: [DNSTestResult] = []
-
-    /// 取消标志
-    private var isCancelled = false
-
-    // MARK: - Initialization
-
-    /// 初始化 DNS 测试服务
-    init() {
-        // 无状态服务，无需初始化
+    enum Event: Sendable {
+        case progress(DNSTestProgress)
+        case completed([DNSTestResult])
     }
 
-    // MARK: - Cancellation
-
-    /// 取消当前测试
-    func cancel() {
-        isCancelled = true
-        AppLogger.info("DNSBenchmarkService: 收到取消信号")
-    }
-
-    /// 重置取消状态
-    private func resetCancellation() {
-        isCancelled = false
-    }
-
-    /// 检查是否已取消
-    private func checkCancelled() -> Bool {
-        isCancelled
-    }
-
-    // MARK: - Public Methods
-
-    /// 测试 DNS 服务器性能
-    ///
-    /// ## 实现说明
-    /// - 完全复刻 `test_dns.sh` 的逻辑
-    /// - 对每个域名执行 10 轮测试
-    /// - 每轮间隔 0.5 秒
-    /// - 计算 Average/Max/Min
-    /// - 提供进度流式更新
-    ///
-    /// ## 错误处理
-    /// - 单次查询失败 → 跳过该轮，继续下一轮
-    /// - 超时保护 → 单次查询最多等待 3 秒
-    /// - 解析失败 → 跳过该轮，记录失败次数
-    ///
-    /// - Parameters:
-    ///   - server: DNS 服务器地址（如 "223.5.5.5"）
-    ///   - domains: 要测试的域名列表
-    /// - Returns: 进度流（AsyncStream），每次更新都会发送进度信息
-    nonisolated func testDNS(server: String, domains: [String]) -> AsyncStream<DNSTestProgress> {
+    // Each stream owns its producer and results; cancelling one run cannot affect another.
+    nonisolated func testDNS(server: String, domains: [String]) -> AsyncStream<Event> {
         AsyncStream { continuation in
-            Task {
-                // 重置取消状态
-                await self.resetCancellation()
-
-                // 清空上次的结果
-                await self.clearResults()
-
-                let totalDomains = domains.count
+            let producer = Task {
+                defer { continuation.finish() }
+                var results: [DNSTestResult] = []
 
                 for (index, domain) in domains.enumerated() {
-                    // ✅ 检查任务是否被取消（检查内部标志和Task状态）
-                    let cancelled = await self.checkCancelled()
-                    guard !Task.isCancelled && !cancelled else {
-                        AppLogger.info("DNS 测试已被取消，停止执行")
-                        continuation.finish()
-                        return
-                    }
-
                     var totalTime = 0
                     var maxTime = 0
                     var minTime = Int.max
                     var successCount = 0
 
-                    // 对当前域名执行 10 轮测试
                     for round in 1...Self.testRounds {
-                        // ✅ 每轮都检查是否被取消（检查内部标志和Task状态）
-                        let cancelled = await self.checkCancelled()
-                        guard !Task.isCancelled && !cancelled else {
-                            AppLogger.info("DNS 测试已被取消，停止执行")
-                            continuation.finish()
-                            return
-                        }
-
-                        // 发送进度更新
-                        let progress = DNSTestProgress(
+                        guard !Task.isCancelled else { return }
+                        continuation.yield(.progress(DNSTestProgress(
                             currentDomain: domain,
                             currentRound: round,
                             completedDomains: index,
-                            totalDomains: totalDomains
-                        )
-                        continuation.yield(progress)
+                            totalDomains: domains.count
+                        )))
 
-                        // 执行指定 DNS 服务器的 UDP 查询
-                        if let queryTime = await Self.executeDNSQuery(server: server, domain: domain) {
+                        let queryTime = await Self.executeDNSQuery(server: server, domain: domain)
+                        guard !Task.isCancelled else { return }
+                        if let queryTime {
                             totalTime += queryTime
                             maxTime = max(maxTime, queryTime)
                             minTime = min(minTime, queryTime)
                             successCount += 1
-
                             AppLogger.debug("[\(domain)] Round \(round): \(queryTime) ms")
                         } else {
                             AppLogger.warning("[\(domain)] Round \(round): Failed")
                         }
 
-                        // 间隔 0.5 秒（复刻 bash 脚本的 sleep 0.5）
                         if round < Self.testRounds {
-                            try? await Task.sleep(nanoseconds: UInt64(Self.intervalSeconds * 1_000_000_000))
+                            do {
+                                try await Task.sleep(nanoseconds: UInt64(Self.intervalSeconds * 1_000_000_000))
+                            } catch {
+                                return
+                            }
                         }
                     }
 
-                    // 计算平均时间
-                    let averageTime = successCount > 0 ? Double(totalTime) / Double(successCount) : 0.0
-
-                    // 创建测试结果
-                    let result = DNSTestResult(
+                    results.append(DNSTestResult(
                         domain: domain,
-                        averageTime: averageTime,
+                        averageTime: successCount > 0 ? Double(totalTime) / Double(successCount) : 0,
                         maxTime: maxTime,
                         minTime: minTime == Int.max ? 0 : minTime,
                         successCount: successCount,
                         totalCount: Self.testRounds
-                    )
-
-                    await self.addResult(result)
-
-                    AppLogger.info("✅ [\(domain)] 平均: \(String(format: "%.2f", averageTime)) ms, 最高: \(maxTime) ms, 最低: \(minTime) ms, 成功率: \(successCount)/\(Self.testRounds)")
+                    ))
                 }
 
-                continuation.finish()
+                guard !Task.isCancelled else { return }
+                continuation.yield(.completed(results))
             }
+            continuation.onTermination = { _ in producer.cancel() }
         }
-    }
-
-    /// 获取测试结果
-    ///
-    /// - Returns: 测试结果列表
-    func getResults() -> [DNSTestResult] {
-        results
     }
 
     // MARK: - Private Methods - DNS Query Execution
@@ -427,17 +346,4 @@ actor DNSBenchmarkService {
         data.append(UInt8(value & 0xFF))
     }
 
-    // MARK: - Private Methods - Result Management
-
-    /// 清空测试结果
-    private func clearResults() {
-        results = []
-    }
-
-    /// 添加测试结果
-    ///
-    /// - Parameter result: 测试结果
-    private func addResult(_ result: DNSTestResult) {
-        results.append(result)
-    }
 }

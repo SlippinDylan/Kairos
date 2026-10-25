@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Domain Models
 
 /// DNS 测试结果
-struct DNSTestResult: Identifiable, Equatable {
+struct DNSTestResult: Identifiable, Equatable, Sendable {
     let id = UUID()
     let domain: String
     let averageTime: Double  // 平均耗时（毫秒）
@@ -32,7 +32,7 @@ struct DNSTestResult: Identifiable, Equatable {
 }
 
 /// DNS 测试进度
-struct DNSTestProgress {
+struct DNSTestProgress: Sendable {
     let currentDomain: String   // 当前测试的域名
     let currentRound: Int       // 当前轮次（1-10）
     let completedDomains: Int   // 已完成的域名数
@@ -42,7 +42,7 @@ struct DNSTestProgress {
     var overallProgress: Double {
         guard totalDomains > 0 else { return 0.0 }
         let domainProgress = Double(completedDomains) / Double(totalDomains)
-        let roundProgress = Double(currentRound) / 10.0 / Double(totalDomains)
+        let roundProgress = Double(currentRound - 1) / 10.0 / Double(totalDomains)
         return domainProgress + roundProgress
     }
 

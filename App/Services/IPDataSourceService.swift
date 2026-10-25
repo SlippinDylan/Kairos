@@ -17,7 +17,7 @@ import Foundation
 /// ## 数据源列表
 /// ### 有免费 API（配置 Key 后使用付费版）
 /// 1. IPinfo - 免费 widget API / 付费官方 API
-/// 2. ipapi.is - 免费 1000/天 / 付费无限制
+/// 2. ipapi.is - 匿名精简数据 / 配置 Key 后完整数据（额度由账户决定）
 /// 3. DB-IP - 免费基础数据 / 付费完整数据
 /// 4. IPWHOIS - 免费 10k/月 / 付费无限制
 ///
@@ -74,6 +74,9 @@ final class IPDataSourceService: Sendable {
         let error: Error?
         let skipped: Bool
         let usedPaidAPI: Bool  // 是否使用了付费 API
+        // Runtime-only classification; localized comparison text remains presentation data.
+        var classification: IPType? = nil
+        var basicInfo: BasicInfo? = nil
 
         var isSuccess: Bool { error == nil && !skipped }
 
@@ -84,16 +87,30 @@ final class IPDataSourceService: Sendable {
         }
     }
 
+    // Provider-owned facts travel with the existing response, without extra lookups or persistence.
+    struct BasicInfo: Sendable {
+        var asn: String?
+        var organization: String?
+        var city: String?
+        var country: String?
+        var countryCode: String?
+        var latitude: Double?
+        var longitude: Double?
+        var timezone: String?
+    }
+
     // MARK: - Properties
 
     private let session: URLSession
+    private let ipapiRateLimit: IPAPIRateLimit
     private let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     private let timeout: TimeInterval = 15.0
 
     // MARK: - Initialization
 
-    init(session: URLSession = .shared) {
+    init(session: URLSession = .shared, ipapiRateLimit: IPAPIRateLimit = .shared) {
         self.session = session
+        self.ipapiRateLimit = ipapiRateLimit
     }
 
     // MARK: - Request Helpers
@@ -199,95 +216,59 @@ final class IPDataSourceService: Sendable {
 
     // MARK: - IPinfo
 
-    /// 获取 IPinfo 数据
-    /// - 优先使用 widget API（数据更全，包含 privacy、asn.type 等）
-    /// - widget 失败时，如果有 Token 则用 Token API 作为 fallback
+    // Use the configured endpoint once; do not hide its failure behind another API.
     private func fetchIPinfo(ip: String, token: String?) async -> DataSourceResult {
-        // 优先尝试 widget API（数据更全）
-        let widgetURL = "https://ipinfo.io/widget/demo/\(ip)"
-
-        if let url = URL(string: widgetURL) {
-            do {
-                let request = createRequest(url: url, referer: "https://ipinfo.io/")
-                let (data, response) = try await session.data(for: request)
-
-                if let httpResponse = response as? HTTPURLResponse,
-                   (200...299).contains(httpResponse.statusCode),
-                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                    AppLogger.debug("✅ [IPinfo] 数据获取成功 (Widget API)")
-                    AppLogger.debug("📦 [IPinfo] 原始数据: \(json)")
-                    return parseIPinfo(json: json, usedPaidAPI: false)
-                }
-            } catch {
-                AppLogger.debug("⚠️ [IPinfo] Widget API 失败: \(error.localizedDescription)")
+        let usesToken = token != nil
+        do {
+            var components = URLComponents(string: usesToken ? "https://ipinfo.io/\(ip)" : "https://ipinfo.io/widget/demo/\(ip)")
+            if let token {
+                components?.queryItems = [URLQueryItem(name: "token", value: token)]
             }
+            guard let url = components?.url else { throw URLError(.badURL) }
+            let request = createRequest(url: url, referer: usesToken ? nil : "https://ipinfo.io/")
+            let (data, response) = try await session.data(for: request)
+            guard let response = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+            guard (200...299).contains(response.statusCode) else {
+                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "HTTP \(response.statusCode)"])
+            }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw URLError(.cannotParseResponse)
+            }
+            return parseIPinfo(json: json, usedPaidAPI: usesToken)
+        } catch {
+            AppLogger.warning("[IPinfo] \(error.localizedDescription)")
+            return DataSourceResult(source: .ipinfo, ipType: nil, riskScore: nil, riskFactors: nil,
+                                    error: error, skipped: false, usedPaidAPI: usesToken)
         }
-
-        // Widget 失败，尝试 Token API（如果有配置）
-        if let token = token {
-            let tokenURL = "https://ipinfo.io/\(ip)?token=\(token)"
-
-            guard let url = URL(string: tokenURL) else {
-                return DataSourceResult(source: .ipinfo, ipType: nil, riskScore: nil, riskFactors: nil,
-                                        error: URLError(.badURL), skipped: false, usedPaidAPI: true)
-            }
-
-            do {
-                let request = createRequest(url: url)
-                let (data, response) = try await session.data(for: request)
-
-                guard let httpResponse = response as? HTTPURLResponse,
-                      (200...299).contains(httpResponse.statusCode) else {
-                    throw URLError(.badServerResponse)
-                }
-
-                guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                    throw URLError(.cannotParseResponse)
-                }
-
-                AppLogger.debug("✅ [IPinfo] 数据获取成功 (Token API)")
-                AppLogger.debug("📦 [IPinfo] 原始数据: \(json)")
-                return parseIPinfo(json: json, usedPaidAPI: true)
-
-            } catch {
-                AppLogger.warning("⚠️ [IPinfo] Token API 失败: \(error.localizedDescription)")
-                return DataSourceResult(source: .ipinfo, ipType: nil, riskScore: nil, riskFactors: nil,
-                                        error: error, skipped: false, usedPaidAPI: true)
-            }
-        }
-
-        // 都失败了
-        AppLogger.warning("⚠️ [IPinfo] 数据获取失败")
-        return DataSourceResult(source: .ipinfo, ipType: nil, riskScore: nil, riskFactors: nil,
-                                error: URLError(.badServerResponse), skipped: false, usedPaidAPI: false)
     }
 
     // MARK: - ipapi.is
 
     /// 获取 ipapi.is 数据
-    /// - 有 API Key: 使用付费 API (无限制)
-    /// - 无 API Key: 使用免费 API (1000/天)
+    /// Keyed requests return full data; the account determines the quota.
+    /// Anonymous requests return ownership/location only, with a shared daily limit.
     private func fetchIPAPI(ip: String, apiKey: String?) async -> DataSourceResult {
         let usedPaidAPI = apiKey != nil
-        var urlString = "https://api.ipapi.is/?q=\(ip)"
-
-        if let apiKey = apiKey {
-            urlString += "&key=\(apiKey)"
-        }
-
-        guard let url = URL(string: urlString) else {
+        var components = URLComponents(string: "https://api.ipapi.is/")
+        var queryItems = [URLQueryItem(name: "q", value: ip)]
+        if let apiKey { queryItems.append(URLQueryItem(name: "key", value: apiKey)) }
+        components?.queryItems = queryItems
+        guard let url = components?.url else {
             return DataSourceResult(source: .ipapi, ipType: nil, riskScore: nil, riskFactors: nil,
                                     error: URLError(.badURL), skipped: false, usedPaidAPI: usedPaidAPI)
         }
 
         do {
+            try await ipapiRateLimit.check(apiKey: apiKey)
             let request = createRequest(url: url)
             let (data, response) = try await session.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                  (200...299).contains(httpResponse.statusCode) else {
+            guard let httpResponse = response as? HTTPURLResponse else {
                 throw URLError(.badServerResponse)
             }
+            if httpResponse.statusCode == 429 {
+                throw await ipapiRateLimit.record(response: httpResponse, apiKey: apiKey)
+            }
+            guard (200...299).contains(httpResponse.statusCode) else { throw URLError(.badServerResponse) }
 
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 throw URLError(.cannotParseResponse)
@@ -353,21 +334,17 @@ final class IPDataSourceService: Sendable {
 
     // MARK: - IPWHOIS
 
-    /// 获取 IPWHOIS 数据
-    /// - 有 API Key: 使用付费 API (无限制)
-    /// - 无 API Key: 使用免费 API (10k/月)
+    /// Uses the official Pro endpoint when a key is configured, otherwise the free endpoint.
     private func fetchIPWHOIS(ip: String, apiKey: String?) async -> DataSourceResult {
         let usedPaidAPI = apiKey != nil
-        let urlString: String
-
-        if let apiKey = apiKey {
-            urlString = "https://ipwhois.io/json/\(ip)?key=\(apiKey)"
-        } else {
-            // 免费 API 使用 ipwho.is 端点
-            urlString = "https://ipwho.is/\(ip)"
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = usedPaidAPI ? "ipwhois.pro" : "ipwho.is"
+        components.path = "/\(ip)"
+        if let apiKey {
+            components.queryItems = [URLQueryItem(name: "key", value: apiKey)]
         }
-
-        guard let url = URL(string: urlString) else {
+        guard let url = components.url else {
             return DataSourceResult(source: .ipwhois, ipType: nil, riskScore: nil, riskFactors: nil,
                                     error: URLError(.badURL), skipped: false, usedPaidAPI: usedPaidAPI)
         }

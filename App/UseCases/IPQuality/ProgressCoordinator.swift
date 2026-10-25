@@ -31,22 +31,7 @@ final class ProgressCoordinator {
 
     // MARK: - Public Methods
 
-    /// 平滑更新进度到目标值（异步版本，不阻塞主线程）
-    ///
-    /// - Parameters:
-    ///   - target: 目标进度值 (0.0-1.0)
-    ///   - duration: 动画时长（秒），默认 0.3 秒
-    ///   - curve: 动画曲线，默认使用 easeInOut
-    ///
-    /// ## 实现说明
-    /// - 使用 Task.detached 将动画调度到下一个 RunLoop 周期
-    /// - 避免在 async 上下文中同步调用 withAnimation 导致的死锁
-    /// - 确保动画在主线程的下一帧执行
-    ///
-    /// ## 性能优势
-    /// - ✅ 零死锁风险（异步调度）
-    /// - ✅ GPU 加速动画
-    /// - ✅ 自动适配屏幕刷新率（60Hz/120Hz）
+    // Apply progress in the owning run, without a detached write surviving cancellation.
     func smoothUpdateProgress(
         to target: Double,
         duration: TimeInterval = 0.3,
@@ -55,11 +40,8 @@ final class ProgressCoordinator {
         // 边界检查：确保进度值在合法范围内
         let clampedTarget = min(max(target, 0.0), 1.0)
 
-        // ✅ 使用 Task 异步调度，避免阻塞当前线程
-        Task { @MainActor in
-            withAnimation(curve.speed(1.0 / duration)) {
-                progress = clampedTarget
-            }
+        withAnimation(curve.speed(1.0 / duration)) {
+            progress = clampedTarget
         }
     }
 

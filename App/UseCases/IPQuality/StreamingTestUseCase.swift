@@ -22,19 +22,25 @@ import Foundation
 class StreamingTestUseCase {
     private let session: URLSession
     private let userAgent: String
+    private let dnsCheck: @Sendable (String) async throws -> DNSChecker.UnlockType
 
     /// 默认失败状态
     private static let failedStatus = StreamingStatus(available: false, region: nil, unlockType: nil)
 
-    init(session: URLSession, userAgent: String) {
+    init(
+        session: URLSession,
+        userAgent: String,
+        dnsCheck: @escaping @Sendable (String) async throws -> DNSChecker.UnlockType = { try await DNSChecker.checkDomain($0) }
+    ) {
         self.session = session
         self.userAgent = userAgent
+        self.dnsCheck = dnsCheck
     }
 
     // MARK: - Public API
 
-    func testTikTok(ip: String) async -> StreamingStatus {
-        await testService(
+    func testTikTok(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "TikTok",
             domain: "tiktok.com",
             testURL: "https://www.tiktok.com/",
@@ -42,16 +48,16 @@ class StreamingTestUseCase {
         )
     }
 
-    func testDisney(ip: String) async -> StreamingStatus {
-        await testService(
+    func testDisney(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "Disney+",
             domain: "disneyplus.com",
             testURL: "https://www.disneyplus.com/"
         )
     }
 
-    func testNetflix(ip: String) async -> StreamingStatus {
-        await testService(
+    func testNetflix(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "Netflix",
             domain: "netflix.com",
             testURL: "https://www.netflix.com/title/81280792",
@@ -59,32 +65,32 @@ class StreamingTestUseCase {
         )
     }
 
-    func testYouTube(ip: String) async -> StreamingStatus {
-        await testService(
+    func testYouTube(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "YouTube",
             domain: "youtube.com",
             testURL: "https://www.youtube.com/premium"
         )
     }
 
-    func testAmazonPrime(ip: String) async -> StreamingStatus {
-        await testService(
+    func testAmazonPrime(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "Amazon Prime",
             domain: "primevideo.com",
             testURL: "https://www.primevideo.com/"
         )
     }
 
-    func testSpotify(ip: String) async -> StreamingStatus {
-        await testService(
+    func testSpotify(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "Spotify",
             domain: "spotify.com",
             testURL: "https://www.spotify.com/"
         )
     }
 
-    func testChatGPT(ip: String) async -> StreamingStatus {
-        await testService(
+    func testChatGPT(ip: String) async throws -> StreamingStatus {
+        try await testService(
             name: "ChatGPT",
             domain: "openai.com",
             testURL: "https://chat.openai.com/",
@@ -113,13 +119,13 @@ class StreamingTestUseCase {
         testURL: String,
         regionPattern: Regex<(Substring, Substring)>? = nil,
         blockedKeywords: [String]? = nil
-    ) async -> StreamingStatus {
+    ) async throws -> StreamingStatus {
         // 1. DNS 检查
-        let unlockType = await DNSChecker.checkDomain(domain)
+        let unlockType = try await dnsCheck(domain)
 
         // 2. 创建请求
         guard let url = URL(string: testURL) else {
-            return Self.failedStatus
+            throw URLError(.badURL)
         }
 
         let request = URLRequest(url: url).withStandardHeaders(userAgent: userAgent)
@@ -129,7 +135,11 @@ class StreamingTestUseCase {
             let (data, response) = try await session.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
-                return Self.failedStatus
+                throw URLError(.badServerResponse)
+            }
+
+            if httpResponse.statusCode == 429 || (500...599).contains(httpResponse.statusCode) {
+                throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode)"])
             }
 
             // 4. 检查状态码
@@ -159,11 +169,13 @@ class StreamingTestUseCase {
             } else if httpResponse.statusCode == 403 {
                 return Self.failedStatus
             }
+            throw URLError(.badServerResponse, userInfo: [NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode)"])
         } catch {
+            try Task.checkCancellation()
             AppLogger.error("❌ [\(name)] 网络请求失败: \(error.localizedDescription)")
+            throw error
         }
 
-        return Self.failedStatus
     }
 
     // MARK: - Helper Methods

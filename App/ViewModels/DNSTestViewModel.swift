@@ -61,6 +61,7 @@ final class DNSTestViewModel {
 
     /// 开始测试
     func startTest() {
+        guard state != .testing else { return }
         let server = dnsServer.trimmingCharacters(in: .whitespaces)
 
         guard !server.isEmpty else {
@@ -78,13 +79,22 @@ final class DNSTestViewModel {
         // 启动测试任务并保存引用
         testTask = Task {
             // 监听进度更新
-            for await progress in benchmarkService.testDNS(server: server, domains: defaultTestSites) {
+            for await event in benchmarkService.testDNS(server: server, domains: defaultTestSites) {
                 // 检查任务是否被取消
                 if Task.isCancelled {
                     AppLogger.info("DNS 测试已取消")
                     return
                 }
-                currentProgress = progress
+                switch event {
+                case .progress(let progress):
+                    currentProgress = progress
+                case .completed(let completedResults):
+                    results = completedResults
+                    testTask = nil
+                    state = .result
+                    AppLogger.info("✅ DNS 测试完成，共测试 \(results.count) 个域名")
+                    return
+                }
             }
 
             // 检查任务是否被取消
@@ -93,13 +103,7 @@ final class DNSTestViewModel {
                 return
             }
 
-            // 测试完成，获取结果
-            results = await benchmarkService.getResults()
-
-            // 切换到结果状态
-            state = .result
-
-            AppLogger.info("✅ DNS 测试完成，共测试 \(results.count) 个域名")
+            testTask = nil
         }
     }
 
@@ -108,11 +112,6 @@ final class DNSTestViewModel {
         // 先取消Task
         testTask?.cancel()
         testTask = nil
-
-        // 通知service取消
-        Task {
-            await benchmarkService.cancel()
-        }
 
         // 重置UI状态
         state = .input
@@ -123,6 +122,8 @@ final class DNSTestViewModel {
 
     /// 重置测试（返回输入状态）
     func resetTest() {
+        testTask?.cancel()
+        testTask = nil
         state = .input
         currentProgress = nil
         results = []
@@ -131,15 +132,16 @@ final class DNSTestViewModel {
     // MARK: - Computed Properties
 
     /// 计算所有网站的平均统计值
-    var overallStatistics: (averageTime: Double, minTime: Int, maxTime: Int, successRate: Double)? {
+    var overallStatistics: (averageTime: Double?, minTime: Int?, maxTime: Int?, successRate: Double)? {
         guard !results.isEmpty else { return nil }
 
-        let totalAverage = results.map { $0.averageTime }.reduce(0, +) / Double(results.count)
-        let globalMin = results.map { $0.minTime }.min() ?? 0
-        let globalMax = results.map { $0.maxTime }.max() ?? 0
-
+        let successfulResults = results.filter { $0.successCount > 0 }
         let totalSuccesses = results.map { $0.successCount }.reduce(0, +)
         let totalAttempts = results.map { $0.totalCount }.reduce(0, +)
+        let totalTime = successfulResults.reduce(0.0) { $0 + $1.averageTime * Double($1.successCount) }
+        let totalAverage = totalSuccesses > 0 ? totalTime / Double(totalSuccesses) : nil
+        let globalMin = successfulResults.map { $0.minTime }.min()
+        let globalMax = successfulResults.map { $0.maxTime }.max()
         let overallSuccessRate = totalAttempts > 0 ? Double(totalSuccesses) / Double(totalAttempts) : 0.0
 
         return (totalAverage, globalMin, globalMax, overallSuccessRate)

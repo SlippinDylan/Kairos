@@ -61,7 +61,10 @@ extension IPDataSourceService {
         )
 
         return DataSourceResult(source: .ipinfo, ipType: ipType, riskScore: nil,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI,
+                                classification: classifyIPType((dataDict["asn"] as? [String: Any])?["type"] as? String)
+                                    ?? classifyIPType((dataDict["company"] as? [String: Any])?["type"] as? String),
+                                basicInfo: ipinfoBasicInfo(dataDict))
     }
 
     // MARK: - ipapi.is
@@ -78,10 +81,11 @@ extension IPDataSourceService {
             companyType: usageType
         )
 
+        let vpn = ipapiVPNFlag(json["is_vpn"])
         // 提取风险评分
         var riskScore: DataSourceRiskScore?
         if let isDatacenter = json["is_datacenter"] as? Bool,
-           let isVPN = json["is_vpn"] as? Bool,
+           let isVPN = vpn,
            let isProxy = json["is_proxy"] as? Bool,
            let isTor = json["is_tor"] as? Bool {
             // 根据风险因子计算评分
@@ -90,6 +94,7 @@ extension IPDataSourceService {
             if isVPN { score += 25 }
             if isProxy { score += 25 }
             if isTor { score += 40 }
+            score = min(score, 100)
 
             let level: String
             if score == 0 {
@@ -112,14 +117,16 @@ extension IPDataSourceService {
             region: countryCode,
             isProxy: json["is_proxy"] as? Bool,
             isTor: json["is_tor"] as? Bool,
-            isVPN: json["is_vpn"] as? Bool,
+            isVPN: vpn,
             isDatacenter: json["is_datacenter"] as? Bool,
             isAbuser: json["is_abuser"] as? Bool,
             isBot: nil
         )
 
         return DataSourceResult(source: .ipapi, ipType: ipType, riskScore: riskScore,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI,
+                                classification: classifyIPType(usageTypeRaw),
+                                basicInfo: ipapiBasicInfo(json))
     }
 
     // MARK: - DB-IP
@@ -135,22 +142,16 @@ extension IPDataSourceService {
         if usedPaidAPI {
             // 付费 API 可能有威胁等级
             if let threatLevel = json["threatLevel"] as? String {
-                let level: String
-                var score = 0
-
                 switch threatLevel.lowercased() {
                 case "high":
-                    level = L10n.string("高风险")
-                    score = 80
+                    riskScore = DataSourceRiskScore(source: "DB-IP", score: 80, level: L10n.string("高风险"))
                 case "medium":
-                    level = L10n.string("中风险")
-                    score = 50
+                    riskScore = DataSourceRiskScore(source: "DB-IP", score: 50, level: L10n.string("中风险"))
+                case "low":
+                    riskScore = DataSourceRiskScore(source: "DB-IP", score: 10, level: L10n.string("低风险"))
                 default:
-                    level = L10n.string("低风险")
-                    score = 10
+                    break
                 }
-
-                riskScore = DataSourceRiskScore(source: "DB-IP", score: score, level: level)
             }
 
             // 付费 API 的代理检测
@@ -181,7 +182,9 @@ extension IPDataSourceService {
         }
 
         return DataSourceResult(source: .dbip, ipType: nil, riskScore: riskScore,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI,
+                                basicInfo: BasicInfo(city: json["city"] as? String,
+                                    country: json["countryName"] as? String, countryCode: countryCode))
     }
 
     // MARK: - IPWHOIS
@@ -202,7 +205,14 @@ extension IPDataSourceService {
         )
 
         return DataSourceResult(source: .ipwhois, ipType: nil, riskScore: nil,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: usedPaidAPI,
+                                basicInfo: BasicInfo(
+                                    asn: formattedASN((json["connection"] as? [String: Any])?["asn"]),
+                                    organization: (json["connection"] as? [String: Any])?["org"] as? String,
+                                    city: json["city"] as? String, country: json["country"] as? String,
+                                    countryCode: countryCode, latitude: json["latitude"] as? Double,
+                                    longitude: json["longitude"] as? Double,
+                                    timezone: (json["timezone"] as? [String: Any])?["id"] as? String))
     }
 
     // MARK: - AbuseIPDB
@@ -244,12 +254,14 @@ extension IPDataSourceService {
             isTor: isTor,
             isVPN: nil,
             isDatacenter: nil,
-            isAbuser: (json["abuseConfidenceScore"] as? Int ?? 0) > 25,
+            isAbuser: (json["abuseConfidenceScore"] as? Int).map { $0 > 25 },
             isBot: nil
         )
 
         return DataSourceResult(source: .abuseipdb, ipType: ipType, riskScore: riskScore,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: true)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: true,
+                                classification: classifyIPType(usageTypeRaw),
+                                basicInfo: BasicInfo(organization: json["isp"] as? String, countryCode: countryCode))
     }
 
     // MARK: - IP2Location
@@ -267,7 +279,7 @@ extension IPDataSourceService {
 
         // 提取风险评分（基于代理检测）
         // is_proxy 可能是 Bool 或 Int (0/1)
-        var isProxy = false
+        var isProxy: Bool?
         if let proxyBool = json["is_proxy"] as? Bool {
             isProxy = proxyBool
         } else if let proxyInt = json["is_proxy"] as? Int {
@@ -275,10 +287,9 @@ extension IPDataSourceService {
         }
 
         var riskScore: DataSourceRiskScore?
-        if isProxy {
-            riskScore = DataSourceRiskScore(source: "IP2Location", score: 70, level: L10n.string("高风险"))
-        } else {
-            riskScore = DataSourceRiskScore(source: "IP2Location", score: 10, level: L10n.string("低风险"))
+        if let isProxy {
+            riskScore = DataSourceRiskScore(source: "IP2Location", score: isProxy ? 70 : 10,
+                level: L10n.string(isProxy ? "高风险" : "低风险"))
         }
 
         // 提取风险因子
@@ -290,13 +301,19 @@ extension IPDataSourceService {
             isProxy: isProxy,
             isTor: nil,
             isVPN: nil,
-            isDatacenter: usageTypeRaw?.uppercased().contains("DCH") == true,
+            isDatacenter: usageTypeRaw.map { $0.uppercased().components(separatedBy: "/").contains("DCH") },
             isAbuser: nil,
             isBot: nil
         )
 
         return DataSourceResult(source: .ip2location, ipType: ipType, riskScore: riskScore,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: true)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: true,
+                                classification: classifyIPType(usageTypeRaw?.components(separatedBy: "/").first),
+                                basicInfo: BasicInfo(asn: formattedASN(json["asn"]),
+                                    organization: json["as"] as? String,
+                                    city: json["city_name"] as? String, country: json["country_name"] as? String,
+                                    countryCode: countryCode, latitude: json["latitude"] as? Double,
+                                    longitude: json["longitude"] as? Double, timezone: json["time_zone"] as? String))
     }
 
     // MARK: - ipregistry
@@ -339,7 +356,77 @@ extension IPDataSourceService {
         )
 
         return DataSourceResult(source: .ipregistry, ipType: ipType, riskScore: nil,
-                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: true)
+                                riskFactors: riskFactors, error: nil, skipped: false, usedPaidAPI: true,
+                                classification: classifyIPType(usageTypeRaw) ?? classifyIPType(companyTypeRaw),
+                                basicInfo: BasicInfo(asn: formattedASN(connection?["asn"]),
+                                    organization: connection?["organization"] as? String,
+                                    city: location?["city"] as? String, country: countryDict?["name"] as? String,
+                                    countryCode: countryCode, latitude: location?["latitude"] as? Double,
+                                    longitude: location?["longitude"] as? Double,
+                                    timezone: (json["time_zone"] as? [String: Any])?["id"] as? String))
+    }
+
+    private func formattedASN(_ raw: Any?) -> String? {
+        if let value = raw as? Int { return "AS\(value)" }
+        guard let value = raw as? String, !value.isEmpty else { return nil }
+        return value.uppercased().hasPrefix("AS") ? value : "AS\(value)"
+    }
+
+    private func ipinfoBasicInfo(_ json: [String: Any]) -> BasicInfo {
+        let asn = json["asn"] as? [String: Any]
+        let company = json["company"] as? [String: Any]
+        let org = (json["org"] as? String)?.split(separator: " ", maxSplits: 1).map(String.init)
+        let location = (json["loc"] as? String)?.split(separator: ",").compactMap { Double($0) }
+        return BasicInfo(
+            asn: formattedASN(asn?["asn"]) ?? org?.first.flatMap { $0.hasPrefix("AS") ? $0 : nil },
+            organization: company?["name"] as? String ?? asn?["name"] as? String
+                ?? org.flatMap { $0.count == 2 ? $0[1] : nil },
+            city: json["city"] as? String, country: json["country_name"] as? String,
+            countryCode: json["country"] as? String ?? json["country_code"] as? String,
+            latitude: location.flatMap { $0.count == 2 ? $0[0] : nil },
+            longitude: location.flatMap { $0.count == 2 ? $0[1] : nil },
+            timezone: json["timezone"] as? String)
+    }
+
+    private func ipapiBasicInfo(_ json: [String: Any]) -> BasicInfo {
+        if json["docs"] is String {
+            return BasicInfo(asn: json["asn"] as? String, organization: json["company"] as? String,
+                city: json["city"] as? String, country: json["country"] as? String,
+                latitude: json["lat"] as? Double, longitude: json["lon"] as? Double,
+                timezone: json["timezone"] as? String)
+        }
+        let location = json["location"] as? [String: Any]
+        return BasicInfo(asn: formattedASN((json["asn"] as? [String: Any])?["asn"]),
+            organization: (json["company"] as? [String: Any])?["name"] as? String,
+            city: location?["city"] as? String, country: location?["country"] as? String,
+            countryCode: location?["country_code"] as? String,
+            latitude: location?["latitude"] as? Double, longitude: location?["longitude"] as? Double,
+            timezone: location?["timezone"] as? String)
+    }
+
+    // ipapi.is defines this field using JavaScript truthiness, including structured records.
+    private func ipapiVPNFlag(_ value: Any?) -> Bool? {
+        guard let value, !(value is NSNull) else { return nil }
+        if let number = value as? NSNumber {
+            let numberValue = number.doubleValue
+            return numberValue != 0 && !numberValue.isNaN
+        }
+        if let string = value as? String { return !string.isEmpty }
+        return true
+    }
+
+    private func classifyIPType(_ value: String?) -> IPType? {
+        guard let value else { return nil }
+        switch value.lowercased() {
+        case "isp", "fixed line isp": return .isp
+        case "hosting", "dch", "data center/web hosting/transit": return .hosting
+        case "business", "com", "commercial": return .business
+        case "education", "edu", "university/college/school": return .education
+        case "government", "gov": return .government
+        case "cdn", "content delivery network": return .cdn
+        case "mobile", "mob", "mobile isp": return .mobile
+        default: return nil
+        }
     }
 
     // MARK: - Type Mapping Helpers

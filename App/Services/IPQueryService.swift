@@ -8,15 +8,28 @@
 import Foundation
 
 /// IP查询服务
-class IPQueryService {
+@MainActor
+final class IPQueryService {
     private let session: URLSession
+    private let apiKeyManager: APIKeyManager
+    private let ipapiRateLimit: IPAPIRateLimit
     private let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-    init() {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 10
-        config.timeoutIntervalForResource = 30
-        self.session = URLSession(configuration: config)
+    convenience init() {
+        self.init(apiKeyManager: .shared)
+    }
+
+    init(session: URLSession? = nil, apiKeyManager: APIKeyManager, ipapiRateLimit: IPAPIRateLimit = .shared) {
+        self.apiKeyManager = apiKeyManager
+        self.ipapiRateLimit = ipapiRateLimit
+        if let session {
+            self.session = session
+        } else {
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 10
+            config.timeoutIntervalForResource = 30
+            self.session = URLSession(configuration: config)
+        }
     }
 
     // MARK: - Public API
@@ -37,25 +50,35 @@ class IPQueryService {
         let apiResponse = try await fetchFromIPAPI(ip: ip)
 
         // 转换为查询结果
-        return convertToQueryResult(from: apiResponse)
+        return try convertToQueryResult(from: apiResponse)
     }
 
     // MARK: - Private Methods
 
     /// 从ipapi.is获取数据
-    private func fetchFromIPAPI(ip: String) async throws -> IPAPIDetailResponse {
-        let urlString = "https://api.ipapi.is/?q=\(ip)"
-        guard let url = URL(string: urlString) else {
+    private func fetchFromIPAPI(ip: String) async throws -> IPAPIQueryResponse {
+        var components = URLComponents(string: "https://api.ipapi.is/")
+        var queryItems = [URLQueryItem(name: "q", value: ip)]
+        let key = apiKeyManager.ipapiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !key.isEmpty {
+            queryItems.append(URLQueryItem(name: "key", value: key))
+        }
+        components?.queryItems = queryItems
+        guard let url = components?.url else {
             throw IPQueryError.invalidURL
         }
 
         let request = URLRequest(url: url).withStandardHeaders(userAgent: userAgent)
-
+        try await ipapiRateLimit.check(apiKey: key)
         let (data, response) = try await session.data(for: request)
 
         // 检查HTTP状态码
         guard let httpResponse = response as? HTTPURLResponse else {
             throw IPQueryError.invalidResponse
+        }
+
+        if httpResponse.statusCode == 429 {
+            throw await ipapiRateLimit.record(response: httpResponse, apiKey: key)
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
@@ -65,63 +88,50 @@ class IPQueryService {
         // 解析JSON
         let decoder = JSONDecoder()
         do {
-            return try decoder.decode(IPAPIDetailResponse.self, from: data)
+            return try decoder.decode(IPAPIQueryResponse.self, from: data)
         } catch {
             throw IPQueryError.decodingError(error)
         }
     }
 
-    /// 将API响应转换为查询结果
-    private func convertToQueryResult(from response: IPAPIDetailResponse) -> IPQueryResult {
-        // 1. ASN格式化
-        let asn = "AS\(response.asn.asn)"
+    private func convertToQueryResult(from response: IPAPIQueryResponse) throws -> IPQueryResult {
+        guard NetworkValidator.isValidIP(response.ip) else {
+            throw IPQueryError.invalidResponse
+        }
+        let detail = response.location
+        var coordinates: Coordinates?
+        if let latitude = detail.latitude, let longitude = detail.longitude {
+            guard latitude.isFinite, longitude.isFinite,
+                  (-90...90).contains(latitude), (-180...180).contains(longitude) else {
+                throw IPQueryError.invalidResponse
+            }
+            coordinates = Coordinates(latitude: latitude, longitude: longitude)
+        }
 
-        // 2. 坐标转换为度分秒
-        let latitudeDMS = GeoUtils.degreesToDMS(
-            decimal: response.location.latitude,
-            isLatitude: true
-        )
-        let longitudeDMS = GeoUtils.degreesToDMS(
-            decimal: response.location.longitude,
-            isLatitude: false
-        )
-        let coordinates = Coordinates(
-            latitudeDMS: latitudeDMS,
-            longitudeDMS: longitudeDMS
-        )
-
-        // 3. 位置信息
-        let stateTranslated = GeoUtils.translateStateName(response.location.state)
-        let continentName = GeoUtils.continentName(from: response.location.continent)
         let location = LocationInfo(
-            state: stateTranslated,
-            city: response.location.city,
-            zipCode: response.location.zip,
-            countryCode: response.location.countryCode.uppercased(),
-            countryName: response.location.country,
-            continentCode: response.location.continent.uppercased(),
-            continentName: continentName
+            state: detail.state.map { GeoUtils.translateStateName($0) },
+            city: detail.city,
+            zipCode: detail.zip,
+            countryCode: detail.countryCode?.uppercased(),
+            countryName: detail.country,
+            continentCode: detail.continent?.uppercased(),
+            continentName: detail.continent.map { GeoUtils.continentName(from: $0) }
         )
 
-        // 4. 注册地：🇨🇳[CN]China
-        let regCountryCode = response.asn.country.uppercased()
-        let regCountryFlag = GeoUtils.countryFlag(countryCode: regCountryCode)
-        let registrationCountry = "\(regCountryFlag)[\(regCountryCode)]\(response.location.country)"
-
-        // 5. IP类型
-        let ipType = GeoUtils.ipTypeDisplayName(from: response.company.type)
-
+        // ASN registration country is independent of the address's usage location.
+        let registrationCountry = response.registrationCountryCode.map { rawCode in
+            let code = rawCode.uppercased()
+            return "\(GeoUtils.countryFlag(countryCode: code))[\(code)]"
+        }
         return IPQueryResult(
             ip: response.ip,
-            asn: asn,
-            organization: response.company.name,
+            asn: response.asn ?? "—",
+            organization: response.organization ?? "—",
             coordinates: coordinates,
             location: location,
-            registrationCountry: registrationCountry,
-            timezone: response.location.timezone,
-            ipType: ipType,
-            latitude: response.location.latitude,
-            longitude: response.location.longitude
+            registrationCountry: registrationCountry ?? "—",
+            timezone: detail.timezone ?? "—",
+            ipType: response.usageType.map { GeoUtils.ipTypeDisplayName(from: $0) } ?? "—"
         )
     }
 }

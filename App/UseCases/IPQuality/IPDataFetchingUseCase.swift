@@ -67,6 +67,7 @@ class IPDataFetchingUseCase {
         var lastError: Error?
 
         for urlString in apis {
+            try Task.checkCancellation()
             do {
                 guard let url = URL(string: urlString) else {
                     continue
@@ -91,14 +92,15 @@ class IPDataFetchingUseCase {
 
                 // 尝试解析 JSON 格式（ipify API）
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                   let ip = json["ip"] as? String {
+                   let ip = json["ip"] as? String,
+                   NetworkValidator.isValidIP(ip) {
                     AppLogger.info("成功获取IP（JSON 格式）: \(ip)")
                     return ip
                 }
 
                 // 尝试解析纯文本格式（AWS/icanhazip API）
                 if let ipString = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-                   !ipString.isEmpty {
+                   NetworkValidator.isValidIP(ipString) {
                     AppLogger.info("成功获取IP（文本格式）: \(ipString)")
                     return ipString
                 }
@@ -106,6 +108,7 @@ class IPDataFetchingUseCase {
                 AppLogger.warning("无法解析响应数据")
 
             } catch {
+                try Task.checkCancellation()
                 AppLogger.error("API 失败: \(error.localizedDescription)")
                 lastError = error
                 continue

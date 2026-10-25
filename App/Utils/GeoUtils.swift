@@ -78,8 +78,10 @@ enum GeoUtils {
     /// - Returns: 中文类型，如 "数据中心IP", "原生IP"
     static func ipTypeDisplayName(from type: String) -> String {
         switch type.lowercased() {
-        case "hosting", "business":
+        case "hosting":
             return L10n.string("数据中心IP")
+        case "business":
+            return L10n.string("商业")
         case "isp":
             return L10n.string("原生IP")
         case "education":

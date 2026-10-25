@@ -26,6 +26,7 @@ final class IPQualityViewModel {
     var result: IPQualityResult?
     var isLoading = false
     var errorMessage: String?
+    var sourceFailures: [String] = []
     var detectionState: DetectionState = .idle
 
     @ObservationIgnored
@@ -86,7 +87,12 @@ final class IPQualityViewModel {
 
     // MARK: - Main Detection Function
     func startDetection() {
-        detectionTask?.cancel()
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        sourceFailures = []
+        result = nil
+        progressCoordinator.reset()
         detectionTask = Task { @MainActor [weak self] in
             guard let self else { return }
             await self.runDetection()
@@ -95,8 +101,6 @@ final class IPQualityViewModel {
 
     func cancelDetection() {
         detectionTask?.cancel()
-        detectionTask = nil
-        isLoading = false
     }
 
     func resetDetection() {
@@ -104,34 +108,35 @@ final class IPQualityViewModel {
         detectionState = .idle
         result = nil
         errorMessage = nil
+        sourceFailures = []
         progressCoordinator.reset()
     }
 
     private func runDetection() async {
         AppLogger.debug("开始IP质量检测")
-        isLoading = true
-        errorMessage = nil
-        result = nil
-        progressCoordinator.reset()
+        // Keep the run exclusive until cancellation has unwound all awaited work.
+        defer {
+            isLoading = false
+            detectionTask = nil
+        }
 
         do {
+            try Task.checkCancellation()
             let detectionResult = try await ipDetectionUseCase.executeDetection()
-            guard !Task.isCancelled else {
-                AppLogger.info("IP质量检测已取消")
-                isLoading = false
-                detectionTask = nil
-                return
-            }
+            try Task.checkCancellation()
             result = detectionResult
+            sourceFailures = ipDetectionUseCase.sourceFailures
             AppLogger.info("IP质量检测完成")
         } catch is CancellationError {
             AppLogger.info("IP质量检测已取消")
         } catch {
+            guard !Task.isCancelled else {
+                AppLogger.info("IP质量检测已取消")
+                return
+            }
+            sourceFailures = ipDetectionUseCase.sourceFailures
             errorMessage = L10n.format("检测失败: %@", error.localizedDescription)
             AppLogger.error("IP质量检测失败: \(error.localizedDescription)")
         }
-
-        isLoading = false
-        detectionTask = nil
     }
 }

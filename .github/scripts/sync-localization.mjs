@@ -5,6 +5,47 @@ import { fileURLToPath } from 'node:url';
 const CATALOG_PATH = 'App/Localizable.xcstrings';
 
 const translations = [
+  ["无法读取 Mihomo 配置：%@", "Cannot read Mihomo configuration: %@", "无法读取 Mihomo 配置：%@", "無法讀取 Mihomo 設定：%@"],
+  ["Mihomo 配置读取失败", "Could Not Read Mihomo Configuration", "Mihomo 配置读取失败", "Mihomo 設定讀取失敗"],
+  ["找不到应用：%@", "Application not found: %@", "找不到应用：%@", "找不到應用程式：%@"],
+  ["存在多个同名应用，请使用应用路径或 Bundle ID：%@", "Multiple applications share this name. Use an application path or bundle ID: %@", "存在多个同名应用，请使用应用路径或 Bundle ID：%@", "有多個同名應用程式，請使用應用程式路徑或 Bundle ID：%@"],
+  ["无法读取应用身份：%@", "Cannot read application identity: %@", "无法读取应用身份：%@", "無法讀取應用程式識別資訊：%@"],
+  ["应用拒绝退出：%@", "The application refused to quit: %@", "应用拒绝退出：%@", "應用程式拒絕結束：%@"],
+  ["等待应用退出超时：%@", "Timed out waiting for the application to quit: %@", "等待应用退出超时：%@", "等待應用程式結束逾時：%@"],
+  ["无法读取场景文件 %@：%@", "Cannot read scene file %@: %@", "无法读取场景文件 %@：%@", "無法讀取場景檔案 %@：%@"],
+  ["无法保存场景文件 %@：%@", "Cannot save scene file %@: %@", "无法保存场景文件 %@：%@", "無法儲存場景檔案 %@：%@"],
+  ["重试", "Retry", "重试", "重試"],
+  ["不支持的配置文件版本：%lld", "Unsupported settings file version: %lld", "不支持的配置文件版本：%lld", "不支援的設定檔案版本：%lld"],
+  ["该文件不是 Kairos 配置文件", "This is not a Kairos settings file", "该文件不是 Kairos 配置文件", "此檔案不是 Kairos 設定檔案"],
+  ["配置文件含重复场景 ID：%@", "The settings file contains duplicate scene IDs: %@", "配置文件含重复场景 ID：%@", "設定檔案含重複場景 ID：%@"],
+  ["配置文件缺少字段：%@", "The settings file is missing a field: %@", "配置文件缺少字段：%@", "設定檔案缺少欄位：%@"],
+  ["配置文件字段无效：%@", "Invalid settings file field: %@", "配置文件字段无效：%@", "設定檔案欄位無效：%@"],
+  ["导入失败：%@；恢复原配置也失败：%@", "Import failed: %@; restoring the previous settings also failed: %@", "导入失败：%@；恢复原配置也失败：%@", "匯入失敗：%@；還原原設定也失敗：%@"],
+  ["ipapi.is 请求额度已受限，请在 %@ 后重试。", "ipapi.is request quota reached. Try again after %@.", "ipapi.is 请求额度已受限，请在 %@ 后重试。", "ipapi.is 請求額度已受限，請在 %@ 後重試。"],
+  ["ipapi.is 返回 HTTP 429，但 Retry-After 缺失或无效，无法确定恢复时间。请检查账户额度或更换 API Key。", "ipapi.is returned HTTP 429 without a valid Retry-After header. The recovery time is unknown. Check your account quota or use a different API key.", "ipapi.is 返回 HTTP 429，但 Retry-After 缺失或无效，无法确定恢复时间。请检查账户额度或更换 API Key。", "ipapi.is 回傳 HTTP 429，但 Retry-After 缺少或無效，無法確定恢復時間。請檢查帳戶額度或更換 API Key。"],
+  ['所有 IP 质量数据源均请求失败，请检查网络或数据源配置后重试。', 'All IP quality data sources failed. Check your network or data source settings and try again.', '所有 IP 质量数据源均请求失败，请检查网络或数据源配置后重试。', '所有 IP 品質資料來源均請求失敗，請檢查網路或資料來源設定後重試。'],
+  ['未获取评分', 'Score Unavailable', '未获取评分', '未取得評分'],
+  ['无有效结果', 'No Valid Results', '无有效结果', '無有效結果'],
+  ['第 %lld/%lld 个域名 · 第 %lld/10 轮', 'Domain %lld/%lld · Round %lld/10', '第 %lld/%lld 个域名 · 第 %lld/10 轮', '第 %lld/%lld 個網域 · 第 %lld/10 輪'],
+  ["备份 Mihomo 内核", "Back Up Mihomo Kernel", "备份 Mihomo 内核", "備份 Mihomo 核心"],
+  ["恢复 Mihomo 内核", "Restore Mihomo Kernel", "恢复 Mihomo 内核", "復原 Mihomo 核心"],
+  ["替换 Mihomo 内核", "Replace Mihomo Kernel", "替换 Mihomo 内核", "替換 Mihomo 核心"],
+  ["%@ 运行中", "%@ is running", "%@ 运行中", "%@ 執行中"],
+  ["%@ 未运行", "%@ is not running", "%@ 未运行", "%@ 未執行"],
+  ["未检测到 %@", "%@ not found", "未检测到 %@", "未偵測到 %@"],
+  ["系统维护", "System Maintenance", "系统维护", "系統維護"],
+  ["网络检测", "Network Diagnostics", "网络检测", "網路檢測"],
+  ["DNS 清理", "DNS Cleanup", "DNS 清理", "DNS 清理"],
+  ["清理网络缓存", "Clear network caches", "清理网络缓存", "清理網路快取"],
+  ["查询 IP 信息", "Look up IP details", "查询 IP 信息", "查詢 IP 資訊"],
+  ["测试解析速度", "Test resolver speed", "测试解析速度", "測試解析速度"],
+  ["检测当前网络", "Check this network", "检测当前网络", "檢測目前網路"],
+  ["刷新内核状态", "Refresh Kernel Status", "刷新内核状态", "重新整理核心狀態"],
+  ["浏览器清理范围为 Chrome 和 Firefox，并包含系统缓存清理。", "Browser cleanup covers Chrome and Firefox. System caches are also cleared.", "浏览器清理范围为 Chrome 和 Firefox，并包含系统缓存清理。", "瀏覽器清理範圍為 Chrome 和 Firefox，並包含系統快取清理。"],
+  ["处理中", "Processing", "处理中", "處理中"],
+  ["备份文件", "Backup File", "备份文件", "備份檔案"],
+  ["请前往设置的服务组配置内核文件路径", "Configure the kernel file path under Services in Settings", "请前往设置的服务组配置内核文件路径", "請前往設定的服務群組設定核心檔案路徑"],
+  ["操作前会请求退出关联应用，完成后可重新启动应用", "You will be asked to quit the linked app before proceeding. You can relaunch it afterward.", "操作前会请求退出关联应用，完成后可重新启动应用", "操作前會要求結束關聯 App，完成後可重新啟動 App"],
   ['language.follow_system', 'Follow System', '跟随系统', '跟隨系統'],
   ['language.setting.title', 'App Language', '应用语言', 'App 語言'],
   ['language.setting.description', 'Choose the language used by Kairos', '选择 Kairos 使用的界面语言', '選擇 Kairos 使用的介面語言'],
@@ -23,6 +64,9 @@ const translations = [
   ['DNS 测试结果', 'DNS Test Results', 'DNS 测试结果', 'DNS 測試結果'],
   ['IP 质量检测结果', 'IP Quality Results', 'IP 质量检测结果', 'IP 品質檢測結果'],
   ['查看结果', 'View Results', '查看结果', '查看結果'],
+  ['添加', 'Add', '添加', '新增'],
+  ['已匹配', 'Matched', '已匹配', '已符合'],
+  ['未匹配', 'Not Matched', '未匹配', '未符合'],
   ['网络控制', 'Network Control', '网络控制', '網路控制'],
   ['网络工具', 'Network Tools', '网络工具', '網路工具'],
   ['设置', 'Settings', '设置', '設定'],
@@ -55,6 +99,9 @@ const translations = [
   ['支持免费访问', 'Free Access Available', '支持免费访问', '支援免費存取'],
   ['付费数据源', 'Paid Data Sources', '付费数据源', '付費資料來源'],
   ['清除全部', 'Clear All', '清除全部', '全部清除'],
+  ['Mihomo 应用路径', 'Mihomo App Path', 'Mihomo 应用路径', 'Mihomo App 路徑'],
+  ['输入 Mihomo 应用路径', 'Enter the Mihomo app path', '输入 Mihomo 应用路径', '輸入 Mihomo App 路徑'],
+  ['输入内核文件路径', 'Enter the kernel file path', '输入内核文件路径', '輸入核心檔案路徑'],
   ['保存配置', 'Save Configuration', '保存配置', '儲存設定'],
   ['权限', 'Permissions', '权限', '權限'],
   ['Kairos 所需的系统权限', 'System permissions required by Kairos', 'Kairos 所需的系统权限', 'Kairos 所需的系統權限'],
@@ -82,6 +129,7 @@ const translations = [
   ['保存', 'Save', '保存', '儲存'],
   ['删除', 'Delete', '删除', '刪除'],
   ['DNS控制', 'DNS Control', 'DNS控制', 'DNS 控制'],
+  ['目标 DNS', 'Target DNS', '目标 DNS', '目標 DNS'],
   ['主 DNS', 'Primary DNS', '主 DNS', '主要 DNS'],
   ['备用 DNS（可选）', 'Secondary DNS (Optional)', '备用 DNS（可选）', '備用 DNS（選填）'],
   ['例如: 223.5.5.5', 'Example: 223.5.5.5', '例如: 223.5.5.5', '例如：223.5.5.5'],
@@ -106,6 +154,11 @@ const translations = [
   ['IP 查询', 'IP Lookup', 'IP 查询', 'IP 查詢'],
   ['输入 IP 地址', 'Enter an IP address', '输入 IP 地址', '輸入 IP 位址'],
   ['查询中...', 'Looking Up…', '查询中...', '查詢中…'],
+  ['查询', 'Look Up', '查询', '查詢'],
+  ['编辑', 'Edit', '编辑', '編輯'],
+  ['重新测试', 'Test Again', '重新测试', '重新測試'],
+  ['取消测试', 'Cancel Test', '取消测试', '取消測試'],
+  ['%@ · %lld%%', '%@ · %lld%%', '%@ · %lld%%', '%@ · %lld%%'],
   ['查询结果', 'Lookup Result', '查询结果', '查詢結果'],
   ['自治系统号', 'ASN', '自治系统号', '自治系統編號'],
   ['IP类型', 'IP Type', 'IP类型', 'IP 類型'],
@@ -180,6 +233,11 @@ const translations = [
   ['内核替换成功', 'Kernel Replaced', '内核替换成功', '核心已替換'],
   ['内核恢复成功', 'Kernel Restored', '内核恢复成功', '核心已復原'],
   ['请先在下方配置内核文件路径', 'Choose a kernel file path below first', '请先在下方配置内核文件路径', '請先在下方設定核心檔案路徑'],
+  ['日志等级', 'Log Level', '日志等级', '日誌等級'],
+  ['仅记录所选等级及以上的日志，修改后立即生效。', 'Records the selected level and higher. Changes apply immediately.', '仅记录所选等级及以上的日志，修改后立即生效。', '僅記錄所選等級及以上的日誌，修改後立即生效。'],
+  ['当前日志文件（打开文件夹后将选中此文件，可使用文本编辑器查看）', 'Current Log File (revealed in Finder; view it in a text editor)', '当前日志文件（打开文件夹后将选中此文件，可使用文本编辑器查看）', '目前日誌檔案（開啟資料夾後會選取此檔案，可使用文字編輯器檢視）'],
+  ['打开日志文件', 'Open Log File', '打开日志文件', '開啟日誌檔案'],
+  ['无法打开日志文件夹', 'Unable to open the logs folder', '无法打开日志文件夹', '無法開啟日誌資料夾'],
   ['日志', 'Logs', '日志', '日誌'],
   ['应用运行时产生的日志将在此显示', 'Logs generated while the app runs appear here', '应用运行时产生的日志将在此显示', 'App 執行時產生的日誌會顯示在此'],
   ['暂无日志', 'No Logs', '暂无日志', '暫無日誌'],
@@ -442,6 +500,9 @@ const stateTranslations = [
   ['Wyoming', '怀俄明州', '懷俄明州'],
 ].map(([key, zhHans, zhHant]) => [key, key, zhHans, zhHant]);
 
+// Runtime string keys need not expose ambiguous or invalid Swift identifiers.
+const runtimeOnlyKeys = new Set(['-', '%lld%%', '%lld', 'DNS 控制', 'DNS控制', 'IP 类型', 'IP类型', '• 清除 ARP 缓存', '清除 ARP 缓存']);
+
 export function renderCatalog() {
   const entries = [...translations, ...stateTranslations];
   const keys = entries.map(([key]) => key);
@@ -449,6 +510,8 @@ export function renderCatalog() {
     throw new Error('Localization keys must be unique.');
   }
   const strings = Object.fromEntries(entries.map(([key, en, zhHans, zhHant]) => [key, {
+    extractionState: 'manual',
+    ...(runtimeOnlyKeys.has(key) ? { generatesSymbol: false } : {}),
     localizations: {
       en: { stringUnit: { state: 'translated', value: en } },
       'zh-Hans': { stringUnit: { state: 'translated', value: zhHans } },
@@ -458,13 +521,35 @@ export function renderCatalog() {
   return `${JSON.stringify({ sourceLanguage: 'en', strings, version: '1.0' }, null, 2)}\n`;
 }
 
+export function validateCatalog(source) {
+  const actual = JSON.parse(source);
+  const expected = JSON.parse(renderCatalog());
+  if (actual?.sourceLanguage !== expected.sourceLanguage || !actual.strings || typeof actual.strings !== 'object') {
+    throw new Error(`${CATALOG_PATH} must be an English-source string catalog.`);
+  }
+  // Xcode owns extraction metadata and formatting; this script owns keys and translations.
+  for (const key of Object.keys(actual.strings)) {
+    if (key !== '' && !Object.hasOwn(expected.strings, key)) {
+      throw new Error(`Add translations for the extracted key: ${JSON.stringify(key)}`);
+    }
+  }
+  for (const [key, entry] of Object.entries(expected.strings)) {
+    if (entry.generatesSymbol === false && actual.strings[key]?.generatesSymbol !== false) {
+      throw new Error(`Disable Swift symbol generation for the runtime key: ${JSON.stringify(key)}`);
+    }
+    for (const [language, translation] of Object.entries(entry.localizations)) {
+      const unit = actual.strings[key]?.localizations?.[language]?.stringUnit;
+      if (unit?.state !== 'translated' || unit.value !== translation.stringUnit.value) {
+        throw new Error(`Missing or outdated ${language} translation for ${JSON.stringify(key)}. Run: node .github/scripts/sync-localization.mjs`);
+      }
+    }
+  }
+}
+
 export async function syncCatalog({ check = false } = {}) {
   const expected = renderCatalog();
   if (check) {
-    const actual = await readFile(CATALOG_PATH, 'utf8').catch(() => '');
-    if (actual !== expected) {
-      throw new Error(`${CATALOG_PATH} is out of date. Run: node .github/scripts/sync-localization.mjs`);
-    }
+    validateCatalog(await readFile(CATALOG_PATH, 'utf8'));
     return;
   }
   await writeFile(CATALOG_PATH, expected, 'utf8');

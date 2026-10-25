@@ -44,6 +44,7 @@ jobs:
       - name: Validate automation
         run: |
           bash -n Scripts/create-dmg.sh
+          bash -n Scripts/run-swift-regressions.sh
           Scripts/create-dmg.sh --help >/dev/null
           node .github/scripts/release-manifest.mjs validate
           node .github/scripts/sync-localization.mjs --check
@@ -70,6 +71,9 @@ jobs:
         run: |
           xcodebuild -version
           node --version
+
+      - name: Run offline Swift regressions
+        run: bash Scripts/run-swift-regressions.sh
 
       - name: Build unsigned app and Helper
         run: |

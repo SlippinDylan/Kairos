@@ -43,6 +43,7 @@ final class MihomoFileService {
     /// - Parameter kernelPath: 内核文件路径
     func getKernelStatus(kernelPath: String) -> KernelStatus {
         AppLogger.debug("获取内核状态")
+        let kernelPath = expandedFilePath(kernelPath)
         let backupPath = kernelPath.isEmpty ? "" : kernelPath + ".bak"
 
         let kernelExists = !kernelPath.isEmpty && fileManager.fileExists(atPath: kernelPath)
@@ -279,7 +280,7 @@ final class MihomoFileService {
             throw MihomoError.kernelPathNotConfigured
         }
 
-        let expandedPath = NSString(string: path).expandingTildeInPath
+        let expandedPath = expandedFilePath(path)
         guard NSString(string: expandedPath).isAbsolutePath else {
             throw MihomoError.invalidFilePath
         }
@@ -310,7 +311,7 @@ final class MihomoFileService {
     }
 
     private func validatedRegularFileURL(_ path: String) throws -> URL {
-        let expandedPath = NSString(string: path).expandingTildeInPath
+        let expandedPath = expandedFilePath(path)
         guard NSString(string: expandedPath).isAbsolutePath else {
             throw MihomoError.invalidFilePath
         }
@@ -328,6 +329,10 @@ final class MihomoFileService {
             throw MihomoError.invalidFilePath
         }
         return resolvedURL
+    }
+
+    private func expandedFilePath(_ path: String) -> String {
+        NSString(string: path).expandingTildeInPath
     }
 
     private func uniqueStagingURL(for destinationURL: URL) -> URL {

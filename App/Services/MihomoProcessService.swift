@@ -16,41 +16,15 @@ import AppKit
 /// 关联的应用）。若两者均为空（尚未关联应用），则视为"无法判断运行状态"，
 /// 直接放行，不阻塞内核操作。
 class MihomoProcessService {
-    private final class TerminationWaitState: @unchecked Sendable {
-        private let lock = NSLock()
-        private let notificationCenter: NotificationCenter
-        nonisolated(unsafe) private var hasFinished = false
-        nonisolated(unsafe) var observer: NSObjectProtocol?
-        nonisolated(unsafe) var continuation: CheckedContinuation<Void, Error>?
+    private let runningApplications: () -> [NSRunningApplication]
+    private let notificationCenter: NotificationCenter
 
-        init(notificationCenter: NotificationCenter) {
-            self.notificationCenter = notificationCenter
-        }
-
-        nonisolated func finish(_ result: Result<Void, Error>) {
-            lock.lock()
-            guard !hasFinished else {
-                lock.unlock()
-                return
-            }
-            hasFinished = true
-            let observerToRemove = observer
-            observer = nil
-            let continuationToResume = continuation
-            continuation = nil
-            lock.unlock()
-
-            if let observerToRemove {
-                notificationCenter.removeObserver(observerToRemove)
-            }
-
-            switch result {
-            case .success:
-                continuationToResume?.resume()
-            case .failure(let error):
-                continuationToResume?.resume(throwing: error)
-            }
-        }
+    init(
+        runningApplications: @escaping () -> [NSRunningApplication] = { NSWorkspace.shared.runningApplications },
+        notificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter
+    ) {
+        self.runningApplications = runningApplications
+        self.notificationCenter = notificationCenter
     }
 
     // MARK: - 进程检测
@@ -66,7 +40,7 @@ class MihomoProcessService {
         }
 
         AppLogger.debug("检查关联应用运行状态: \(displayName)")
-        let isRunning = findRunningHostApp(bundleIdentifier: bundleIdentifier, displayName: displayName) != nil
+        let isRunning = !findRunningHostApps(bundleIdentifier: bundleIdentifier, displayName: displayName).isEmpty
 
         if isRunning {
             AppLogger.info("关联应用正在运行: \(displayName)")
@@ -88,7 +62,7 @@ class MihomoProcessService {
     ///   - bundleIdentifier: 关联应用的 Bundle Identifier
     ///   - displayName: 关联应用的显示名称
     /// - Returns: 用户选择的操作（退出或取消）
-    func requestQuitHostApp(bundleIdentifier: String, displayName: String) async -> Bool {
+    func requestQuitHostApp(bundleIdentifier: String, displayName: String) async throws -> Bool {
         AppLogger.info("弹出对话框请求退出关联应用: \(displayName)")
 
         let alert = NSAlert()
@@ -110,7 +84,7 @@ class MihomoProcessService {
         if response == .alertFirstButtonReturn {
             // 用户选择退出
             AppLogger.info("用户选择退出关联应用: \(displayName)")
-            quitHostApp(bundleIdentifier: bundleIdentifier, displayName: displayName)
+            try quitHostApps(bundleIdentifier: bundleIdentifier, displayName: displayName)
             return true
         } else {
             // 用户取消
@@ -119,16 +93,12 @@ class MihomoProcessService {
         }
     }
 
-    /// 退出关联应用
-    private func quitHostApp(bundleIdentifier: String, displayName: String) {
-        AppLogger.info("尝试退出关联应用: \(displayName)")
-
-        if let app = findRunningHostApp(bundleIdentifier: bundleIdentifier, displayName: displayName) {
-            AppLogger.debug("找到关联应用进程，正在终止")
-            app.terminate()
-            AppLogger.info("已发送退出信号: \(displayName)")
-        } else {
-            AppLogger.warning("未找到正在运行的关联应用进程: \(displayName)")
+    // A successful request is not termination; the wait below must confirm every instance exits.
+    func quitHostApps(bundleIdentifier: String, displayName: String) throws {
+        for app in findRunningHostApps(bundleIdentifier: bundleIdentifier, displayName: displayName) {
+            guard app.terminate() || app.isTerminated else {
+                throw MihomoError.hostAppIsRunning(displayName)
+            }
         }
     }
 
@@ -145,18 +115,15 @@ class MihomoProcessService {
         displayName: String,
         maxWaitTime: TimeInterval = 10.0
     ) async throws {
-        guard let runningApp = findRunningHostApp(bundleIdentifier: bundleIdentifier, displayName: displayName) else {
+        guard !findRunningHostApps(bundleIdentifier: bundleIdentifier, displayName: displayName).isEmpty else {
             return
         }
-
-        let processIdentifier = runningApp.processIdentifier
 
         try await withThrowingTaskGroup(of: Void.self) { group in
             group.addTask {
                 try await self.awaitTerminationNotification(
                     bundleIdentifier: bundleIdentifier,
-                    displayName: displayName,
-                    processIdentifier: processIdentifier
+                    displayName: displayName
                 )
             }
 
@@ -177,31 +144,30 @@ class MihomoProcessService {
 
     private func awaitTerminationNotification(
         bundleIdentifier: String,
-        displayName: String,
-        processIdentifier: pid_t
+        displayName: String
     ) async throws {
-        let workspaceNotificationCenter = NSWorkspace.shared.notificationCenter
-        let waitState = TerminationWaitState(notificationCenter: workspaceNotificationCenter)
+        let workspaceNotificationCenter = notificationCenter
+        let waitState = MihomoTerminationWaitState(notificationCenter: workspaceNotificationCenter)
 
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                waitState.continuation = continuation
+                waitState.registerContinuation(continuation)
 
-                waitState.observer = workspaceNotificationCenter.addObserver(
+                let observer = workspaceNotificationCenter.addObserver(
                     forName: NSWorkspace.didTerminateApplicationNotification,
                     object: nil,
                     queue: .main
-                ) { notification in
-                    guard let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-                          app.processIdentifier == processIdentifier else {
+                ) { _ in
+                    guard self.findRunningHostApps(bundleIdentifier: bundleIdentifier, displayName: displayName).isEmpty else {
                         return
                     }
 
                     AppLogger.info("检测到关联应用已退出: \(displayName)")
                     waitState.finish(.success(()))
                 }
+                waitState.registerObserver(observer)
 
-                if self.findRunningHostApp(bundleIdentifier: bundleIdentifier, displayName: displayName, processIdentifier: processIdentifier) == nil {
+                if self.findRunningHostApps(bundleIdentifier: bundleIdentifier, displayName: displayName).isEmpty {
                     waitState.finish(.success(()))
                 }
             }
@@ -212,28 +178,28 @@ class MihomoProcessService {
 
     // MARK: - Private Helpers
 
-    private func findRunningHostApp(
+    private func findRunningHostApps(
+        bundleIdentifier: String,
+        displayName: String
+    ) -> [NSRunningApplication] {
+        runningApplications().filter { app in
+            !app.isTerminated && Self.matchesHostApp(
+                bundleIdentifier: bundleIdentifier,
+                displayName: displayName,
+                runningBundleIdentifier: app.bundleIdentifier,
+                runningDisplayName: app.localizedName
+            )
+        }
+    }
+
+    static func matchesHostApp(
         bundleIdentifier: String,
         displayName: String,
-        processIdentifier: pid_t? = nil
-    ) -> NSRunningApplication? {
-        guard !bundleIdentifier.isEmpty || !displayName.isEmpty else {
-            return nil
-        }
-
-        return NSWorkspace.shared.runningApplications.first { app in
-            let matchesTarget = (!bundleIdentifier.isEmpty && app.bundleIdentifier == bundleIdentifier) ||
-                (!displayName.isEmpty && app.localizedName == displayName)
-
-            guard matchesTarget else {
-                return false
-            }
-
-            if let processIdentifier {
-                return app.processIdentifier == processIdentifier
-            }
-
-            return true
-        }
+        runningBundleIdentifier: String?,
+        runningDisplayName: String?
+    ) -> Bool {
+        bundleIdentifier.isEmpty
+            ? (!displayName.isEmpty && runningDisplayName == displayName)
+            : runningBundleIdentifier == bundleIdentifier
     }
 }

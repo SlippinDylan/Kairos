@@ -20,10 +20,10 @@ import Foundation
 /// ```swift
 /// let service = MihomoDownloadService()
 /// let kernelPath = try await service.downloadLatestKernel(
-///     filenameTemplate: "mihomo-darwin-arm64-alpha-smart",
-///     targetFilename: "mihomo"
+///     releasesURL: "https://github.com/vernesong/mihomo/releases",
+///     filenameTemplate: "mihomo-darwin-arm64-alpha-smart"
 /// ) { progress in
-///     print("下载进度: \(progress * 100)%")
+///     print(progress.map { "\($0 * 100)%" } ?? "Unknown download size")
 /// }
 /// ```
 final class MihomoDownloadService: NSObject {
@@ -31,7 +31,7 @@ final class MihomoDownloadService: NSObject {
     // MARK: - Types
 
     /// 下载进度回调
-    typealias ProgressHandler = @Sendable (Double) -> Void
+    typealias ProgressHandler = @Sendable (Double?) -> Void
 
     /// 下载状态
     enum DownloadState: Sendable {
@@ -61,13 +61,11 @@ final class MihomoDownloadService: NSObject {
     /// GitHub Release 模型
     struct GitHubRelease: Codable, Sendable {
         let tagName: String
-        let name: String
         let prerelease: Bool
         let assets: [GitHubAsset]
 
         enum CodingKeys: String, CodingKey {
             case tagName = "tag_name"
-            case name
             case prerelease
             case assets
         }
@@ -98,19 +96,16 @@ final class MihomoDownloadService: NSObject {
     /// 2. 查找匹配的 asset（根据文件名模板）
     /// 3. 下载 .gz 文件
     /// 4. 解压到临时目录
-    /// 5. 重命名为目标文件名
     ///
     /// - Parameters:
     ///   - releasesURL: GitHub Releases 页面 URL（例如：https://github.com/vernesong/mihomo/releases）
     ///   - filenameTemplate: 内核文件名模板（例如：mihomo-darwin-arm64-alpha-smart）
-    ///   - targetFilename: 目标文件名（通常取自当前配置的内核文件路径）
-    ///   - progressHandler: 下载进度回调（0.0 ~ 1.0）
+    ///   - progressHandler: Actual byte progress, or nil when the total size is unknown.
     /// - Returns: 下载并解压后的内核文件路径
     /// - Throws: MihomoDownloadError
     func downloadLatestKernel(
         releasesURL: String,
         filenameTemplate: String,
-        targetFilename: String,
         progressHandler: ProgressHandler? = nil
     ) async throws -> String {
         AppLogger.info("开始下载最新 Mihomo 内核")
@@ -143,11 +138,9 @@ final class MihomoDownloadService: NSObject {
         let decompressedPath = try decompressGzip(at: downloadedPath)
         AppLogger.info("文件解压完成: \(decompressedPath)")
 
-        // 7. 重命名为目标文件名
-        let finalPath = try renameFile(from: decompressedPath, to: targetFilename)
-        AppLogger.info("内核文件准备完成: \(finalPath)")
-
-        return finalPath
+        // Installation copies this source to the configured destination; no rename is needed.
+        AppLogger.info("内核文件准备完成: \(decompressedPath)")
+        return decompressedPath
     }
 
     /// 清理临时文件
@@ -338,10 +331,17 @@ final class MihomoDownloadService: NSObject {
         // 增加并发连接数以提升速度（虽然单个下载可能效果有限，但有助于绕过限制）
         config.httpMaximumConnectionsPerHost = 8
         
-        let session = URLSession(configuration: config, delegate: nil, delegateQueue: nil)
-        
-        // 使用 URLSession.shared.download 提升效率，减少内存占用
-        let (tempURL, response) = try await session.download(from: url)
+        let progressDelegate = MihomoDownloadProgressDelegate { progress in
+            progressHandler?(progress)
+        }
+        let session = URLSession(configuration: config)
+        defer {
+            progressDelegate.finish()
+            session.finishTasksAndInvalidate()
+        }
+        // Each retry gets a new delegate and starts without assuming the server's content length.
+        progressDelegate.start()
+        let (tempURL, response) = try await session.download(from: url, delegate: progressDelegate)
 
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -357,7 +357,7 @@ final class MihomoDownloadService: NSObject {
         }
         try FileManager.default.moveItem(at: tempURL, to: destinationPath)
 
-        progressHandler?(1.0)
+        progressDelegate.complete()
         AppLogger.debug("下载并移动完成: \(destinationPath.lastPathComponent)")
 
         return destinationPath.path
@@ -417,21 +417,6 @@ final class MihomoDownloadService: NSObject {
         AppLogger.debug("解压完成: \(outputURL.path)")
 
         return outputURL.path
-    }
-
-    /// 重命名文件
-    private func renameFile(from sourcePath: String, to targetFilename: String) throws -> String {
-        let sourceURL = URL(fileURLWithPath: sourcePath)
-        let targetURL = tempDirectory.appendingPathComponent(targetFilename)
-
-        // 如果目标文件已存在，先删除
-        if FileManager.default.fileExists(atPath: targetURL.path) {
-            try FileManager.default.removeItem(at: targetURL)
-        }
-
-        try FileManager.default.moveItem(at: sourceURL, to: targetURL)
-
-        return targetURL.path
     }
 
     /// 格式化文件大小

@@ -146,63 +146,33 @@ class DNSHelper: NSObject, DNSHelperProtocol {
             return
         }
 
-        // 获取所有网络服务
-        guard let services = SCNetworkServiceCopyAll(prefs) as? [SCNetworkService] else {
-            reply(false, "无法获取网络服务")
+        let service: SCNetworkService
+        do {
+            service = try DNSServiceResolver.service(forBSDName: interface, in: prefs)
+        } catch {
+            reply(false, error.localizedDescription)
+            return
+        }
+        guard let dnsProtocol = SCNetworkServiceCopyProtocol(service, kSCNetworkProtocolTypeDNS) else {
+            reply(false, "网络服务不支持 DNS 配置：\(interface)")
             return
         }
 
-        // 查找匹配接口的服务
-        // 注意：interface 参数可能是"Wi-Fi"或"en0"，需要匹配 BSD 名称
-        for service in services {
-            guard let serviceInterface = SCNetworkServiceGetInterface(service),
-                  let bsdName = SCNetworkInterfaceGetBSDName(serviceInterface) as String? else {
-                continue
-            }
-
-            // 匹配接口名称（支持 "en0" 或 "Wi-Fi" 形式）
-            let serviceName = SCNetworkServiceGetName(service) as String?
-            let matchByBSD = (bsdName == interface)
-            let matchByName = (serviceName == interface)
-
-            guard matchByBSD || matchByName else {
-                continue
-            }
-
-            // 获取 DNS 协议
-            guard let dnsProtocol = SCNetworkServiceCopyProtocol(service, kSCNetworkProtocolTypeDNS) else {
-                continue
-            }
-
-            // 构建 DNS 配置
-            var dnsServers = [primaryDNS]
-            if let secondary = secondaryDNS, !secondary.isEmpty {
-                dnsServers.append(secondary)
-            }
-
-            let dnsConfig: [String: Any] = [
-                kSCPropNetDNSServerAddresses as String: dnsServers
-            ]
-
-            // 应用配置
-            if SCNetworkProtocolSetConfiguration(dnsProtocol, dnsConfig as CFDictionary) {
-                // 提交并应用更改
-                if SCPreferencesCommitChanges(prefs) && SCPreferencesApplyChanges(prefs) {
-                    // 设置成功后刷新 DNS 缓存
-                    flushDNSCache { _ in }
-                    reply(true, nil)
-                    return
-                } else {
-                    reply(false, "无法应用 DNS 配置更改")
-                    return
-                }
-            } else {
-                reply(false, "无法设置 DNS 协议配置")
-                return
-            }
+        var dnsServers = [primaryDNS]
+        if let secondary = secondaryDNS, !secondary.isEmpty {
+            dnsServers.append(secondary)
         }
-
-        reply(false, "未找到匹配的网络服务：\(interface)")
+        let dnsConfig: [String: Any] = [kSCPropNetDNSServerAddresses as String: dnsServers]
+        guard SCNetworkProtocolSetConfiguration(dnsProtocol, dnsConfig as CFDictionary) else {
+            reply(false, "无法设置 DNS 协议配置")
+            return
+        }
+        guard SCPreferencesCommitChanges(prefs) && SCPreferencesApplyChanges(prefs) else {
+            reply(false, "无法应用 DNS 配置更改")
+            return
+        }
+        flushDNSCache { _ in }
+        reply(true, nil)
     }
 
     /// 清除 DNS 配置（原生 API 实现）
@@ -216,50 +186,30 @@ class DNSHelper: NSObject, DNSHelperProtocol {
             return
         }
 
-        guard let services = SCNetworkServiceCopyAll(prefs) as? [SCNetworkService] else {
-            reply(false, "无法获取网络服务")
+        let service: SCNetworkService
+        do {
+            service = try DNSServiceResolver.service(forBSDName: interface, in: prefs)
+        } catch {
+            reply(false, error.localizedDescription)
+            return
+        }
+        guard let dnsProtocol = SCNetworkServiceCopyProtocol(service, kSCNetworkProtocolTypeDNS) else {
+            reply(false, "网络服务不支持 DNS 配置：\(interface)")
             return
         }
 
-        for service in services {
-            guard let serviceInterface = SCNetworkServiceGetInterface(service),
-                  let bsdName = SCNetworkInterfaceGetBSDName(serviceInterface) as String? else {
-                continue
-            }
-
-            let serviceName = SCNetworkServiceGetName(service) as String?
-            let matchByBSD = (bsdName == interface)
-            let matchByName = (serviceName == interface)
-
-            guard matchByBSD || matchByName else {
-                continue
-            }
-
-            guard let dnsProtocol = SCNetworkServiceCopyProtocol(service, kSCNetworkProtocolTypeDNS) else {
-                continue
-            }
-
-            // 设置空的 DNS 服务器列表（恢复为 DHCP 自动获取）
-            let emptyConfig: [String: Any] = [
-                kSCPropNetDNSServerAddresses as String: []
-            ]
-
-            if SCNetworkProtocolSetConfiguration(dnsProtocol, emptyConfig as CFDictionary) {
-                if SCPreferencesCommitChanges(prefs) && SCPreferencesApplyChanges(prefs) {
-                    flushDNSCache { _ in }
-                    reply(true, nil)
-                    return
-                } else {
-                    reply(false, "无法应用 DNS 配置更改")
-                    return
-                }
-            } else {
-                reply(false, "无法清除 DNS 协议配置")
-                return
-            }
+        // An empty server list restores automatic DNS configuration.
+        let emptyConfig: [String: Any] = [kSCPropNetDNSServerAddresses as String: []]
+        guard SCNetworkProtocolSetConfiguration(dnsProtocol, emptyConfig as CFDictionary) else {
+            reply(false, "无法清除 DNS 协议配置")
+            return
         }
-
-        reply(false, "未找到匹配的网络服务：\(interface)")
+        guard SCPreferencesCommitChanges(prefs) && SCPreferencesApplyChanges(prefs) else {
+            reply(false, "无法应用 DNS 配置更改")
+            return
+        }
+        flushDNSCache { _ in }
+        reply(true, nil)
     }
 
     /// 获取 DNS 配置（原生 API 实现）

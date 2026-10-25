@@ -26,6 +26,7 @@ final class DNSManager {
     private let helperIdentifier = "studio.slippindylan.BrewKit.Kairos.helper"
     private let daemonPlistName = "studio.slippindylan.BrewKit.Kairos.helper.plist"
     private var helperConnection: NSXPCConnection?
+    private var dnsConfigurationStore: SCDynamicStore?
     private var isValidatingHelper = false
     private var hasAttemptedAutomaticRepair = false
 
@@ -49,6 +50,34 @@ final class DNSManager {
 
     private init() {
         checkHelperStatus()
+        startObservingDNSConfiguration()
+    }
+
+    private func startObservingDNSConfiguration() {
+        guard let store = SCDynamicStoreCreate(nil, "Kairos.DNS" as CFString, { _, _, _ in
+            Task { @MainActor in
+                DNSManager.shared.refreshCurrentDNS()
+            }
+        }, nil) else {
+            reportDNSConfigurationError()
+            return
+        }
+        guard SCDynamicStoreSetNotificationKeys(
+            store,
+            ["State:/Network/Global/DNS"] as CFArray,
+            ["State:/Network/Service/[^/]+/DNS", "Setup:/Network/Service/[^/]+/DNS"] as CFArray
+        ), SCDynamicStoreSetDispatchQueue(store, .main) else {
+            reportDNSConfigurationError()
+            return
+        }
+        dnsConfigurationStore = store
+        refreshCurrentDNS()
+    }
+
+    private func reportDNSConfigurationError() {
+        let message = String(cString: SCErrorString(SCError()))
+        AppLogger.error("DNS configuration update failed: \(message)")
+        ToastManager.shared.show(message, type: .error)
     }
 
     // MARK: - Helper Service
@@ -612,21 +641,27 @@ final class DNSManager {
     func getCurrentDNS(interface: String, completion: @escaping ([String]) -> Void) {
         AppLogger.debug("获取当前 DNS 配置 - 接口: \(interface)")
 
-        guard let store = SCDynamicStoreCreate(nil, "Kairos" as CFString, nil, nil),
-              let dictionary = SCDynamicStoreCopyValue(
-                store,
-                "State:/Network/Global/DNS" as CFString
-              ) as? [String: Any],
-              let servers = dictionary["ServerAddresses"] as? [String] else {
-            currentPrimaryDNS = "-"
-            currentSecondaryDNS = "-"
-            completion([])
-            return
-        }
+        completion(refreshCurrentDNS())
+    }
 
-        currentPrimaryDNS = servers.first ?? "-"
-        currentSecondaryDNS = servers.count > 1 ? servers[1] : "-"
-        completion(servers)
+    @discardableResult
+    private func refreshCurrentDNS() -> [String] {
+        guard let store = dnsConfigurationStore else { return [] }
+        let value = SCDynamicStoreCopyValue(store, "State:/Network/Global/DNS" as CFString)
+        if value == nil && SCError() != kSCStatusNoKey {
+            reportDNSConfigurationError()
+            return []
+        }
+        do {
+            let servers = try DNSResolverConfiguration(value: value).servers
+            currentPrimaryDNS = servers.first ?? "-"
+            currentSecondaryDNS = servers.count > 1 ? servers[1] : "-"
+            return servers
+        } catch {
+            AppLogger.error("Invalid system DNS configuration", error: error)
+            ToastManager.shared.show(error.localizedDescription, type: .error)
+            return []
+        }
     }
 
     func flushDNSCache() {

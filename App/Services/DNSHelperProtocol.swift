@@ -12,7 +12,7 @@ import Foundation
 protocol DNSHelperProtocol {
     /// 设置 DNS 服务器
     /// - Parameters:
-    ///   - interface: 网络接口名称（如 "Wi-Fi", "Thunderbolt Ethernet Slot 2"）
+    ///   - interface: BSD interface name (e.g. "en0") in the current network location.
     ///   - primaryDNS: 主 DNS 服务器地址
     ///   - secondaryDNS: 备用 DNS 服务器地址（可选）
     ///   - reply: 回调，返回是否成功和错误信息
@@ -20,7 +20,7 @@ protocol DNSHelperProtocol {
 
     /// 清除 DNS 配置（恢复自动获取）
     /// - Parameters:
-    ///   - interface: 网络接口名称
+    ///   - interface: BSD interface name in the current network location.
     ///   - reply: 回调，返回是否成功和错误信息
     func clearDNS(interface: String, reply: @escaping (Bool, String?) -> Void)
 

@@ -48,18 +48,19 @@ final class NetworkMonitor {
 
     private var pathMonitor: NWPathMonitor?
     private var networkUpdateTask: Task<Void, Never>?
+    private var isRefreshingNetworkInfo = false
     private var helperStatusObserver: NSObjectProtocol?
     private var scenes: [NetworkScene] = []
     private var dnsScenes: [DNSScene] = []
-    private var currentMatchedDNSScene: DNSScene?
+    private(set) var currentMatchedDNSScene: DNSScene?
+    private var dnsApplicationState = DNSSceneApplicationState()
+    private var appControlState = AppControlState()
+    private var sceneMatchRevision: UInt64 = 0
     private var sceneMatchTask: Task<Void, Never>?
     private var sceneMatchRetryTask: Task<Void, Never>?
     private var hasPendingSceneMatch = false
     private var pendingSceneMatchTriggeredByNetworkChange = false
     private var pendingAppsToLaunch: Set<String> = []
-    private var appLaunchRetryCounts: [String: Int] = [:]
-
-    private static let maxAppLaunchAttempts = 3
 
     /// 上次通知的匹配场景 ID 集合（用于去重通知）
     ///
@@ -101,6 +102,13 @@ final class NetworkMonitor {
         self.sceneMatchingEngine = sceneMatchingEngine
         self.dnsSceneMatchingEngine = dnsSceneMatchingEngine
         self.appControlService = appControlService ?? AppControlService(permissionManager: PermissionManager.shared)
+        self.appControlService.onDelayedTermination = { [weak self] application in
+            guard let self else { return }
+            self.appControlState.recordQuit(.terminated(application))
+            if self.pathMonitor != nil {
+                self.requestSceneMatch(triggeredByNetworkChange: false)
+            }
+        }
 
         AppLogger.debug("NetworkMonitor 实例已创建（未启动监听）")
     }
@@ -205,18 +213,20 @@ final class NetworkMonitor {
         pathMonitor = nil
         networkUpdateTask?.cancel()
         networkUpdateTask = nil
+        isRefreshingNetworkInfo = false
+        sceneMatchRevision += 1
+        _ = dnsApplicationState.update(nil)
+        currentMatchedDNSScene = nil
         if let helperStatusObserver {
             NotificationCenter.default.removeObserver(helperStatusObserver)
             self.helperStatusObserver = nil
         }
-        sceneMatchTask?.cancel()
-        sceneMatchTask = nil
+        // A sent launch/quit request cannot be withdrawn; retain its receipt, then stop the stale plan.
         sceneMatchRetryTask?.cancel()
         sceneMatchRetryTask = nil
         hasPendingSceneMatch = false
         pendingSceneMatchTriggeredByNetworkChange = false
         pendingAppsToLaunch.removeAll()
-        appLaunchRetryCounts.removeAll()
 
         AppLogger.info("✅ 网络监控已停止")
     }
@@ -248,6 +258,12 @@ final class NetworkMonitor {
 
     private func scheduleNetworkInfoUpdate() {
         guard pathMonitor != nil else { return }
+        isRefreshingNetworkInfo = true
+        sceneMatchRevision += 1
+        _ = dnsApplicationState.update(nil)
+        currentMatchedDNSScene = nil
+        sceneMatchRetryTask?.cancel()
+        sceneMatchRetryTask = nil
         // A slow XPC reply from the previous network must not overwrite a newer refresh.
         networkUpdateTask?.cancel()
         networkUpdateTask = Task {
@@ -286,6 +302,7 @@ final class NetworkMonitor {
             self.currentRouterIP = updatedIP
             self.currentRouterMAC = updatedMAC
             self.activeNetworks = networks
+            self.isRefreshingNetworkInfo = false
             self.updateDisplayInfo()
             AppLogger.info("网络信息已更新: \(self.currentNetworkType), 路由器=\(updatedIP), MAC=\(updatedMAC)")
             self.requestSceneMatch(triggeredByNetworkChange: true)
@@ -311,13 +328,14 @@ final class NetworkMonitor {
     // MARK: - Private Methods - Scene Matching
 
     private func requestSceneMatch(triggeredByNetworkChange: Bool) {
+        sceneMatchRevision += 1
         sceneMatchRetryTask?.cancel()
         sceneMatchRetryTask = nil
         hasPendingSceneMatch = true
         pendingSceneMatchTriggeredByNetworkChange =
             pendingSceneMatchTriggeredByNetworkChange || triggeredByNetworkChange
 
-        guard sceneMatchTask == nil else { return }
+        guard sceneMatchTask == nil, !isRefreshingNetworkInfo else { return }
 
         sceneMatchTask = Task { [weak self] in
             await self?.processPendingSceneMatches()
@@ -325,7 +343,7 @@ final class NetworkMonitor {
     }
 
     private func processPendingSceneMatches() async {
-        while hasPendingSceneMatch && !Task.isCancelled {
+        while hasPendingSceneMatch && !Task.isCancelled && !isRefreshingNetworkInfo {
             hasPendingSceneMatch = false
             let triggeredByNetworkChange = pendingSceneMatchTriggeredByNetworkChange
             pendingSceneMatchTriggeredByNetworkChange = false
@@ -340,7 +358,7 @@ final class NetworkMonitor {
     }
 
     private func scheduleAppLaunchRetryIfNeeded() {
-        guard !pendingAppsToLaunch.isEmpty, !Task.isCancelled else { return }
+        guard !pendingAppsToLaunch.isEmpty, !Task.isCancelled, !isRefreshingNetworkInfo else { return }
 
         sceneMatchRetryTask = Task { [weak self] in
             do {
@@ -368,77 +386,92 @@ final class NetworkMonitor {
     ///
     /// - Parameter triggeredByNetworkChange: 是否由网络变化触发（决定通知策略）
     private func checkAndHandleSceneMatch(triggeredByNetworkChange: Bool) async {
-        // ✅ 使用 SceneMatchingEngine 匹配场景
-        let result = sceneMatchingEngine.matchScenes(
+        let revision = sceneMatchRevision
+        let newMatches = sceneMatchingEngine.matchScenes(
             routerIP: currentRouterIP,
             routerMAC: currentRouterMAC,
-            availableScenes: scenes,
-            previousMatches: matchedScenes
+            availableScenes: scenes
         )
-        let controlledApps = Set(result.matchedScenes.flatMap(\.controlApps))
-        pendingAppsToLaunch.subtract(controlledApps)
-        for appName in controlledApps {
-            appLaunchRetryCounts.removeValue(forKey: appName)
+        matchedScenes = newMatches
+        let controlled: [String: AppControlApplication]
+        do {
+            var resolved: [String: AppControlApplication] = [:]
+            for reference in Set(newMatches.flatMap(\.controlApps)).sorted() {
+                let application = try appControlService.resolve(reference)
+                resolved[application.bundleIdentifier] = application
+            }
+            controlled = resolved
+        } catch {
+            // Unknown identity must not be mistaken for an app that is no longer controlled.
+            AppLogger.error("无法解析场景应用，已停止本次控制", error: error)
+            pendingAppsToLaunch.removeAll()
+            Toast.error(error.localizedDescription)
+            return
         }
-        for appName in result.appsToLaunch where !pendingAppsToLaunch.contains(appName) {
-            appLaunchRetryCounts[appName] = 0
-        }
-        let appsToLaunch = Set(result.appsToLaunch)
-            .union(pendingAppsToLaunch)
-            .sorted()
+        let controlledIDs = Set(controlled.keys)
+        pendingAppsToLaunch.subtract(controlledIDs)
+        appControlState.resetRestorationAttempts(controlledIDs: controlledIDs)
 
-        // 收集应用控制结果
         var quitSuccessApps: [String] = []
         var quitFailedApps: [String] = []
         var launchSuccessApps: [String] = []
         var launchFailedApps: [String] = []
 
-        // ✅ 使用 AppControlService 退出应用
-        for appName in result.appsToQuit {
-            guard !Task.isCancelled else { return }
-
-            let controlResult = appControlService.quit(appName)
-            if controlResult.success {
-                quitSuccessApps.append(appName)
-            } else {
-                quitFailedApps.append(appName)
+        for application in controlled.values.sorted(by: { $0.bundleIdentifier < $1.bundleIdentifier }) {
+            guard !Task.isCancelled, revision == sceneMatchRevision else { return }
+            do {
+                let outcome = try await appControlService.quit(application) {
+                    revision == self.sceneMatchRevision && !self.isRefreshingNetworkInfo
+                }
+                appControlState.recordQuit(outcome)
+                switch outcome {
+                case .alreadyStopped:
+                    break
+                case .terminated:
+                    quitSuccessApps.append(application.name)
+                case .partiallyTerminated(_, let error):
+                    if !(error is CancellationError) {
+                        quitFailedApps.append(application.name)
+                        AppLogger.error("部分应用进程退出失败: \(application.name)", error: error)
+                        Toast.error(error.localizedDescription)
+                    }
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                quitFailedApps.append(application.name)
+                AppLogger.error("退出应用失败: \(application.name)", error: error)
+                Toast.error(error.localizedDescription)
             }
+            guard !Task.isCancelled, revision == sceneMatchRevision else { return }
         }
 
-        // ✅ 使用 AppControlService 启动应用
-        for appName in appsToLaunch {
-            guard !Task.isCancelled else { return }
-
-            if result.isFallback {
-                AppLogger.info("🚀 [Fallback] 启动应用: \(appName)")
-            }
-            let controlResult = await appControlService.launch(appName)
-            guard !Task.isCancelled else { return }
-
-            if controlResult.success {
-                launchSuccessApps.append(appName)
-                pendingAppsToLaunch.remove(appName)
-                appLaunchRetryCounts.removeValue(forKey: appName)
-            } else {
-                launchFailedApps.append(appName)
-                let attempts = (appLaunchRetryCounts[appName] ?? 0) + 1
-                if attempts < Self.maxAppLaunchAttempts {
-                    appLaunchRetryCounts[appName] = attempts
-                    pendingAppsToLaunch.insert(appName)
+        for application in appControlState.applicationsToRestore(controlledIDs: controlledIDs) {
+            guard !Task.isCancelled, revision == sceneMatchRevision else { return }
+            let identifier = application.bundleIdentifier
+            do {
+                try await appControlService.launch(application)
+                // Record the real effect even if a newer scene arrived while awaiting launch.
+                appControlState.recordRestoration(application)
+                launchSuccessApps.append(application.name)
+                pendingAppsToLaunch.remove(identifier)
+            } catch is CancellationError {
+                return
+            } catch {
+                launchFailedApps.append(application.name)
+                AppLogger.error("恢复应用失败: \(application.name)", error: error)
+                Toast.error(error.localizedDescription)
+                if appControlState.recordRestorationFailure(application) {
+                    pendingAppsToLaunch.insert(identifier)
                 } else {
-                    appLaunchRetryCounts.removeValue(forKey: appName)
-                    pendingAppsToLaunch.remove(appName)
-                    AppLogger.warning("启动应用 \(appName) 已连续失败 \(attempts) 次，停止自动重试")
+                    pendingAppsToLaunch.remove(identifier)
                 }
             }
+            guard !Task.isCancelled, revision == sceneMatchRevision else { return }
         }
 
-        // 更新匹配的场景列表
-        matchedScenes = result.matchedScenes
-
-        // 📣 发送用户通知（带变化检测）
         sendAppControlNotification(
-            matchedScenes: result.matchedScenes,
+            matchedScenes: newMatches,
             quitSuccess: quitSuccessApps,
             quitFailed: quitFailedApps,
             launchSuccess: launchSuccessApps,
@@ -550,125 +583,64 @@ final class NetworkMonitor {
 
     // MARK: - Private Methods - DNS Scene Matching
 
-    /// 检查并处理 DNS 场景匹配
     private func checkAndHandleDNSSceneMatch() {
-        // ✅ 使用 DNSSceneMatchingEngine 匹配场景
-        let result = dnsSceneMatchingEngine.matchDNSScene(
+        guard pathMonitor != nil, !isRefreshingNetworkInfo else { return }
+        currentMatchedDNSScene = dnsSceneMatchingEngine.matchDNSScene(
             routerIP: currentRouterIP,
             routerMAC: currentRouterMAC,
-            availableScenes: dnsScenes,
-            previousMatch: currentMatchedDNSScene
+            availableScenes: dnsScenes
         )
 
-        // 根据操作类型执行相应的 DNS 配置
-        switch result.action {
-        case .none:
-            // 无需操作
-            break
-
-        case .apply(let scene):
-            // 应用 DNS 配置
-            applyDNSConfiguration(scene)
-            currentMatchedDNSScene = scene
-
-        case .clear:
-            // 清除 DNS 配置
-            clearDNSConfiguration()
-            currentMatchedDNSScene = nil
-        }
-    }
-
-    /// 应用 DNS 配置
-    ///
-    /// - Parameter scene: DNS 场景
-    private func applyDNSConfiguration(_ scene: DNSScene) {
-        AppLogger.info("🌐 开始应用 DNS 场景: \(scene.name)")
-        AppLogger.info("DNS 配置: 主DNS=\(scene.primaryDNS), 备DNS=\(scene.secondaryDNS.isEmpty ? "无" : scene.secondaryDNS)")
-
-        guard !activeNetworks.isEmpty else {
-            AppLogger.warning("⚠️ 没有活跃的网络接口，跳过 DNS 配置")
-            return
-        }
-
-        // 使用 DispatchGroup 协调多个异步操作
-        let group = DispatchGroup()
-        var successCount = 0
-        let totalCount = activeNetworks.count
-
-        AppLogger.debug("开始为 \(totalCount) 个网络接口配置 DNS: \(activeNetworks.map { $0.displayName }.joined(separator: ", "))")
-
-        // 为所有活动网络接口设置 DNS
-        for network in activeNetworks {
-            let interface = network.displayName
-
-            group.enter()
-            DNSManager.shared.setDNS(
-                interface: interface,
+        let configuration = currentMatchedDNSScene.flatMap { scene in
+            activeNetworks.isEmpty ? nil : DNSSceneApplicationState.Configuration(
+                routerIP: currentRouterIP,
+                routerMAC: currentRouterMAC.lowercased(),
                 primaryDNS: scene.primaryDNS,
-                secondaryDNS: scene.secondaryDNS.isEmpty ? nil : scene.secondaryDNS
-            ) { success, error in
-                if success {
-                    successCount += 1
-                    AppLogger.info("✅ DNS 已应用到 \(interface)")
-                } else {
-                    AppLogger.error("❌ DNS 应用失败 (\(interface)): \(error ?? "未知错误")")
-                }
-                group.leave()
-            }
+                secondaryDNS: scene.secondaryDNS,
+                interfaces: Array(Set(activeNetworks.map(\.interface))).sorted()
+            )
         }
-
-        // 所有接口配置完成后刷新缓存
-        group.notify(queue: .main) {
-            if successCount > 0 {
-                AppLogger.debug("🔄 开始刷新 DNS 缓存...")
-                DNSManager.shared.flushDNSCache()
-                AppLogger.info("✅ DNS 缓存已刷新 (\(successCount)/\(totalCount) 个接口配置成功)")
-            } else {
-                AppLogger.error("⚠️ 所有接口 DNS 配置失败，跳过缓存刷新")
-            }
+        if let pending = dnsApplicationState.update(configuration) {
+            applyDNSConfiguration(pending)
         }
     }
 
-    /// 清除 DNS 配置
-    private func clearDNSConfiguration() {
-        AppLogger.info("🌐 开始清除 DNS 配置，恢复自动获取")
-
-        guard !activeNetworks.isEmpty else {
-            AppLogger.warning("⚠️ 没有活跃的网络接口，跳过 DNS 清除")
-            return
-        }
-
-        // 使用 DispatchGroup 协调多个异步操作
-        let group = DispatchGroup()
-        var successCount = 0
-        let totalCount = activeNetworks.count
-
-        AppLogger.debug("开始为 \(totalCount) 个网络接口清除 DNS: \(activeNetworks.map { $0.displayName }.joined(separator: ", "))")
-
-        // 为所有活动网络接口清除 DNS
-        for network in activeNetworks {
-            let interface = network.displayName
-
-            group.enter()
-            DNSManager.shared.clearDNS(interface: interface) { success, error in
-                if success {
-                    successCount += 1
-                    AppLogger.info("✅ DNS 已清除 (\(interface))")
-                } else {
-                    AppLogger.error("❌ DNS 清除失败 (\(interface)): \(error ?? "未知错误")")
+    private func applyDNSConfiguration(_ configuration: DNSSceneApplicationState.Configuration) {
+        let revision = dnsApplicationState.revision
+        Task { @MainActor in
+            var failures: [String] = []
+            var successCount = 0
+            for interface in configuration.interfaces {
+                guard dnsApplicationState.canContinue(configuration, revision: revision) else { break }
+                let result: (Bool, String?) = await withCheckedContinuation { continuation in
+                    DNSManager.shared.setDNS(
+                        interface: interface,
+                        primaryDNS: configuration.primaryDNS,
+                        secondaryDNS: configuration.secondaryDNS.isEmpty ? nil : configuration.secondaryDNS
+                    ) { success, error in
+                        continuation.resume(returning: (success, error))
+                    }
                 }
-                group.leave()
+                if result.0 {
+                    successCount += 1
+                } else {
+                    failures.append("\(interface): \(result.1 ?? L10n.string("无法应用 DNS 配置更改"))")
+                }
             }
-        }
-
-        // 所有接口清除完成后刷新缓存
-        group.notify(queue: .main) {
-            if successCount > 0 {
-                AppLogger.debug("🔄 开始刷新 DNS 缓存...")
-                DNSManager.shared.flushDNSCache()
-                AppLogger.info("✅ DNS 缓存已刷新 (\(successCount)/\(totalCount) 个接口清除成功)")
-            } else {
-                AppLogger.error("⚠️ 所有接口 DNS 清除失败，跳过缓存刷新")
+            if successCount > 0, dnsApplicationState.canContinue(configuration, revision: revision) {
+                do {
+                    try await DNSManager.shared.flushDNSCacheForMaintenance()
+                } catch {
+                    failures.append(error.localizedDescription)
+                }
+            }
+            if !failures.isEmpty {
+                let message = failures.joined(separator: "\n")
+                AppLogger.error(message)
+                ToastManager.shared.show(message, type: .error)
+            }
+            if let pending = dnsApplicationState.finish(configuration, succeeded: failures.isEmpty && dnsApplicationState.canContinue(configuration, revision: revision)) {
+                applyDNSConfiguration(pending)
             }
         }
     }

@@ -1,256 +1,204 @@
-//
-//  AppControlService.swift
-//  Kairos
-//
-//  Created by SlippinDylan on 2026/01/04.
-//
-
-import Foundation
 import AppKit
+import Foundation
 
-/// 应用控制服务
-///
-/// ## 职责
-/// - 启动应用（通过应用名称或 Bundle ID）
-/// - 退出应用（优雅退出 + 强制退出）
-/// - 检查应用运行状态
-///
-/// ## 设计说明
-/// - **无状态服务**：所有方法都是纯函数，无副作用
-/// - **依赖权限**：退出应用需要辅助功能权限
-/// - **异步等待**：启动应用使用 Swift Concurrency 等待回调（最多5秒）
-/// - **结构化结果**：返回 `AppControlResult`（成功/失败 + 原因）
-///
-/// ## 使用方式
-/// ```swift
-/// let service = AppControlService()
-/// let result = await service.launch("ClashX.Meta")
-/// if result.success {
-///     print("启动成功")
-/// } else {
-///     print("启动失败: \(result.message ?? "未知错误")")
-/// }
-/// ```
 @MainActor
 final class AppControlService {
-    // MARK: - Result Structure
-
-    /// 应用控制结果
-    struct AppControlResult {
-        /// 是否成功
-        let success: Bool
-        /// 失败原因或状态描述
-        let message: String?
-    }
-
-    // MARK: - Dependencies
-
     private let permissionManager: PermissionManager?
+    private let runningApplications: () -> [NSRunningApplication]
+    private let notificationCenter: NotificationCenter
+    private let terminationTimeout: Duration
+    var onDelayedTermination: ((AppControlApplication) -> Void)?
+    private var pendingTerminations = AppControlPendingTerminations()
+    private var delayedTerminationObservation: MihomoTerminationWaitState?
 
-    // MARK: - Initialization
+    convenience init(permissionManager: PermissionManager?) {
+        self.init(permissionManager: permissionManager,
+            runningApplications: { NSWorkspace.shared.runningApplications },
+            notificationCenter: NSWorkspace.shared.notificationCenter)
+    }
 
-    /// 初始化应用控制服务
-    ///
-    /// - Parameter permissionManager: 权限管理器（可选，Preview 环境传入 nil）
-    nonisolated init(permissionManager: PermissionManager?) {
+    init(permissionManager: PermissionManager?, runningApplications: @escaping () -> [NSRunningApplication],
+         notificationCenter: NotificationCenter, terminationTimeout: Duration = .seconds(10)) {
         self.permissionManager = permissionManager
+        self.runningApplications = runningApplications
+        self.notificationCenter = notificationCenter
+        self.terminationTimeout = terminationTimeout
     }
 
-    // MARK: - Public Methods - App Launch
-
-    /// 启动应用
-    ///
-    /// ## 实现说明
-    /// - 检查应用是否已经在运行（通过名称或 Bundle ID 匹配）
-    /// - 如果已运行 → 返回成功（幂等性）
-    /// - 如果未运行 → 查找应用路径并启动
-    /// - 使用 Swift Concurrency 等待启动结果（最多 5 秒）
-    ///
-    /// ## 查找策略（按优先级）
-    /// 1. 通过 Bundle ID 查找（如 "com.west2online.ClashX.Meta"）
-    /// 2. 通过 "com.apple.<appName>" 查找（系统应用）
-    /// 3. 通过应用名称在 /Applications 目录查找
-    /// 4. 通过应用名称在 ~/Applications 目录查找
-    ///
-    /// ## 错误处理
-    /// - 找不到应用 → 返回失败 + "找不到应用"
-    /// - 启动超时 → 返回失败 + 错误信息
-    /// - 已在运行 → 返回成功 + "已在运行"
-    ///
-    /// - Parameter appName: 应用名称或 Bundle ID
-    /// - Returns: 控制结果（成功/失败 + 原因）
-    func launch(_ appName: String) async -> AppControlResult {
-        let runningApps = NSWorkspace.shared.runningApplications
-
-        // 检查应用是否已经在运行
-        let isRunning = runningApps.contains { app in
-            app.localizedName == appName || app.bundleIdentifier?.contains(appName) == true
+    /// Legacy rules contain names, bundle IDs, or paths. Resolve once, then use exact identity.
+    func resolve(_ reference: String) throws -> AppControlApplication {
+        if reference.hasPrefix("/") || reference.hasPrefix("~/") {
+            return try application(at: URL(fileURLWithPath: (reference as NSString).expandingTildeInPath))
         }
-
-        // 如果没有运行，则启动应用
-        if !isRunning {
-            // 尝试查找应用路径
-            if let appURL = findApplicationURL(appName) {
-                AppLogger.debug("找到应用路径: \(appURL.path)")
-                return await withTaskGroup(of: AppControlResult.self) { group in
-                    group.addTask { @MainActor in
-                        await self.openApplication(at: appURL, appName: appName)
-                    }
-
-                    group.addTask {
-                        try? await Task.sleep(for: .seconds(5))
-                        return AppControlResult(success: false, message: L10n.string("启动超时"))
-                    }
-
-                    let result = await group.next() ?? AppControlResult(
-                        success: false,
-                        message: L10n.string("启动失败")
-                    )
-                    group.cancelAll()
-                    return result
-                }
-            } else {
-                let message = L10n.string("找不到应用")
-                AppLogger.warning("找不到应用: \(appName)")
-                return AppControlResult(success: false, message: message)
-            }
-        } else {
-            AppLogger.debug("应用 \(appName) 已在运行，跳过启动")
-            // 应用已运行也视为成功（目标已达成）
-            return AppControlResult(success: true, message: L10n.string("已在运行"))
-        }
-    }
-
-    // MARK: - Private Methods
-
-    /// 查找应用 URL
-    ///
-    /// ## 查找策略（按优先级）
-    /// 1. 通过 Bundle ID 查找
-    /// 2. 通过 "com.apple.<appName>" 查找（系统应用）
-    /// 3. 在 /Applications 目录查找 <appName>.app
-    /// 4. 在 ~/Applications 目录查找 <appName>.app
-    ///
-    /// - Parameter appName: 应用名称或 Bundle ID
-    /// - Returns: 应用 URL，找不到返回 nil
-    private func findApplicationURL(_ appName: String) -> URL? {
         let workspace = NSWorkspace.shared
-
-        // 1. 通过 Bundle ID 查找
-        if let url = workspace.urlForApplication(withBundleIdentifier: appName) {
-            return url
+        if let url = workspace.urlForApplication(withBundleIdentifier: reference) {
+            return try application(at: url)
         }
-
-        // 2. 通过 "com.apple.<appName>" 查找（系统应用）
-        if let url = workspace.urlForApplication(withBundleIdentifier: "com.apple.\(appName)") {
-            return url
-        }
-
-        // 3. 在 /Applications 目录查找
-        let systemAppsPath = "/Applications/\(appName).app"
-        if FileManager.default.fileExists(atPath: systemAppsPath) {
-            return URL(fileURLWithPath: systemAppsPath)
-        }
-
-        // 4. 在 ~/Applications 目录查找
-        let userAppsPath = NSHomeDirectory() + "/Applications/\(appName).app"
-        if FileManager.default.fileExists(atPath: userAppsPath) {
-            return URL(fileURLWithPath: userAppsPath)
-        }
-
-        return nil
+        let filename = reference.hasSuffix(".app") ? reference : reference + ".app"
+        let roots = ["/Applications", NSHomeDirectory() + "/Applications", "/System/Applications", "/System/Applications/Utilities"]
+        var urls = roots.map { URL(fileURLWithPath: $0).appendingPathComponent(filename) }
+            .filter { FileManager.default.fileExists(atPath: $0.path) }
+        urls += runningApplications().filter {
+            $0.localizedName == reference || $0.bundleURL?.lastPathComponent == filename
+        }.compactMap(\.bundleURL)
+        let applications = try urls.map(application(at:))
+        let identities = Set(applications.map(\.bundleIdentifier))
+        guard identities.count <= 1 else { throw AppControlError.ambiguousApplication(reference) }
+        guard let resolved = applications.first else { throw AppControlError.applicationNotFound(reference) }
+        return resolved
     }
 
-    /// 使用 async/await 包装 `NSWorkspace.openApplication` 回调
-    private func openApplication(at appURL: URL, appName: String) async -> AppControlResult {
-        await withCheckedContinuation { continuation in
-            NSWorkspace.shared.openApplication(
-                at: appURL,
-                configuration: NSWorkspace.OpenConfiguration()
-            ) { _, error in
-                if let error = error {
-                    AppLogger.error("启动应用失败: \(appName)", error: error)
-                    continuation.resume(returning: AppControlResult(
-                        success: false,
-                        message: error.localizedDescription
-                    ))
+    private func application(at url: URL) throws -> AppControlApplication {
+        guard url.pathExtension == "app", let bundle = Bundle(url: url),
+              let identifier = bundle.bundleIdentifier, !identifier.isEmpty else {
+            throw AppControlError.invalidApplication(url.path)
+        }
+        return AppControlApplication(bundleIdentifier: identifier, url: url, name: url.deletingPathExtension().lastPathComponent)
+    }
+
+    func launch(_ application: AppControlApplication) async throws {
+        try Task.checkCancellation()
+        guard !runningApplications().contains(where: {
+            application.matches(bundleIdentifier: $0.bundleIdentifier)
+        }) else { return }
+        // NSWorkspace's completion is the launch result; a local timer cannot cancel its request.
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            NSWorkspace.shared.openApplication(at: application.url, configuration: .init()) { app, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if let app, application.matches(bundleIdentifier: app.bundleIdentifier) {
+                    continuation.resume()
                 } else {
-                    AppLogger.info("✅ 成功启动应用: \(appName)")
-                    continuation.resume(returning: AppControlResult(success: true, message: nil))
+                    continuation.resume(throwing: AppControlError.invalidApplication(application.url.path))
                 }
             }
         }
     }
 
-    // MARK: - Public Methods - App Quit
-
-    /// 退出应用
-    ///
-    /// ## 实现说明
-    /// - 检查辅助功能权限（必需）
-    /// - 查找运行中的应用（通过名称或 Bundle ID 匹配）
-    /// - 如果未运行 → 返回成功（幂等性）
-    /// - 如果在运行 → 优雅退出（`terminate()`）
-    ///
-    /// ## 权限要求
-    /// - 必须有辅助功能权限，否则返回失败
-    ///
-    /// ## 错误处理
-    /// - 缺少权限 → 返回失败 + "缺少辅助功能权限"
-    /// - 应用未运行 → 返回成功 + "应用未运行"
-    /// - 退出失败 → 返回失败 + "terminate()返回false"
-    ///
-    /// - Parameter appName: 应用名称或 Bundle ID
-    /// - Returns: 控制结果（成功/失败 + 原因）
-    func quit(_ appName: String) -> AppControlResult {
-        // 检查是否有辅助功能权限（Preview 环境中跳过权限检查）
-        if let manager = permissionManager {
-            guard manager.checkAccessibility() else {
-                let message = L10n.string("缺少辅助功能权限")
-                AppLogger.warning("无法退出应用 \(appName)：\(message)")
-                return AppControlResult(success: false, message: message)
-            }
+    func quit(_ application: AppControlApplication, shouldContinue: () -> Bool) async throws -> AppControlQuitOutcome {
+        try Task.checkCancellation()
+        let running = runningApplications().filter {
+            application.matches(bundleIdentifier: $0.bundleIdentifier) && !$0.isTerminated
         }
-
-        let runningApps = NSWorkspace.shared.runningApplications
-
-        for app in runningApps {
-            // 通过应用名称或 Bundle Identifier 匹配
-            if app.localizedName == appName || app.bundleIdentifier?.contains(appName) == true {
-                AppLogger.info("正在退出应用: \(appName)")
-                // 优雅退出，会自动处理所有子进程和 Helper 进程
-                let success = app.terminate()
-                if !success {
-                    let message = L10n.string("terminate()返回false")
-                    AppLogger.warning("退出应用失败: \(appName) - \(message)")
-                    return AppControlResult(success: false, message: message)
-                } else {
-                    return AppControlResult(success: true, message: nil)
+        guard !running.isEmpty else { return .alreadyStopped }
+        if let permissionManager, !permissionManager.checkAccessibility() {
+            throw AppControlError.permissionDenied
+        }
+        var terminatedApplication: AppControlApplication?
+        for app in running {
+            do {
+                try Task.checkCancellation()
+                guard shouldContinue() else { throw CancellationError() }
+                guard let url = app.bundleURL else { throw AppControlError.invalidApplication(application.bundleIdentifier) }
+                let actualApplication = AppControlApplication(bundleIdentifier: application.bundleIdentifier, url: url, name: application.name)
+                if try await terminateAndWait(app, application: actualApplication) {
+                    // Restore the actual installation that was closed, not another copy found by Launch Services.
+                    terminatedApplication = AppControlApplication(bundleIdentifier: application.bundleIdentifier, url: url, name: application.name)
                 }
+            } catch {
+                if let terminatedApplication { return .partiallyTerminated(terminatedApplication, error) }
+                throw error
             }
         }
-
-        // 循环结束未找到应用，说明应用未运行
-        let message = L10n.string("应用未运行")
-        AppLogger.debug("应用 \(appName) 未在运行")
-        // 应用未运行也视为成功（目标已达成）
-        return AppControlResult(success: true, message: message)
+        return terminatedApplication.map(AppControlQuitOutcome.terminated) ?? .alreadyStopped
     }
 
-    // MARK: - Public Methods - App Status
+    private func terminateAndWait(_ app: NSRunningApplication, application: AppControlApplication) async throws -> Bool {
+        guard !app.isTerminated else { return false }
+        guard app.terminate() else {
+            if app.isTerminated { return false }
+            throw AppControlError.terminationRejected(application.name)
+        }
+        do {
+            try await withThrowingTaskGroup(of: Void.self) { group in
+                group.addTask { @MainActor in
+                    try await self.awaitTermination(app)
+                }
+                let timeout = terminationTimeout
+                group.addTask {
+                    try await Task.sleep(for: timeout)
+                    throw AppControlError.terminationTimeout(application.name)
+                }
+                defer { group.cancelAll() }
+                try await group.next()
+            }
+        } catch {
+            // Preserve a sent request even when the local wait times out or is cancelled.
+            trackDelayedTermination(app, application: application)
+            throw error
+        }
+        return true
+    }
 
-    /// 检查应用是否正在运行
-    ///
-    /// ## 实现说明
-    /// - 遍历所有运行中的应用
-    /// - 通过名称或 Bundle ID 匹配
-    ///
-    /// - Parameter appName: 应用名称或 Bundle ID
-    /// - Returns: true 表示正在运行，false 表示未运行
-    func isRunning(_ appName: String) -> Bool {
-        let runningApps = NSWorkspace.shared.runningApplications
-        return runningApps.contains { app in
-            app.localizedName == appName || app.bundleIdentifier?.contains(appName) == true
+    private func trackDelayedTermination(_ app: NSRunningApplication, application: AppControlApplication) {
+        pendingTerminations.track(application, processIdentifier: app.processIdentifier)
+        if delayedTerminationObservation == nil {
+            let center = notificationCenter
+            let observation = MihomoTerminationWaitState(notificationCenter: center)
+            let observer = center.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] notification in
+                guard let stopped = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+                let processIdentifier = stopped.processIdentifier
+                Task { @MainActor [weak self] in
+                    self?.confirmDelayedTermination(processIdentifier)
+                }
+            }
+            observation.registerObserver(observer)
+            delayedTerminationObservation = observation
+        }
+        // Cover termination between the timed observer's removal and this registration.
+        if app.isTerminated { confirmDelayedTermination(app.processIdentifier) }
+    }
+
+    private func confirmDelayedTermination(_ processIdentifier: Int32) {
+        guard let application = pendingTerminations.confirm(processIdentifier: processIdentifier) else { return }
+        if pendingTerminations.isEmpty {
+            delayedTerminationObservation?.finish(.success(()))
+            delayedTerminationObservation = nil
+        }
+        onDelayedTermination?(application)
+    }
+
+    deinit {
+        delayedTerminationObservation?.finish(.failure(CancellationError()))
+    }
+
+    private func awaitTermination(_ app: NSRunningApplication) async throws {
+        let center = notificationCenter
+        let state = MihomoTerminationWaitState(notificationCenter: center)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                state.registerContinuation(continuation)
+                let observer = center.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { notification in
+                    guard let stopped = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                          stopped.processIdentifier == app.processIdentifier else { return }
+                    state.finish(.success(()))
+                }
+                state.registerObserver(observer)
+                // The app may exit before notification registration.
+                if app.isTerminated { state.finish(.success(())) }
+            }
+        } onCancel: {
+            state.finish(.failure(CancellationError()))
+        }
+    }
+}
+
+enum AppControlError: LocalizedError {
+    case applicationNotFound(String)
+    case ambiguousApplication(String)
+    case invalidApplication(String)
+    case permissionDenied
+    case terminationRejected(String)
+    case terminationTimeout(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .applicationNotFound(let name): L10n.format("找不到应用：%@", name)
+        case .ambiguousApplication(let name): L10n.format("存在多个同名应用，请使用应用路径或 Bundle ID：%@", name)
+        case .invalidApplication(let path): L10n.format("无法读取应用身份：%@", path)
+        case .permissionDenied: L10n.string("缺少辅助功能权限")
+        case .terminationRejected(let name): L10n.format("应用拒绝退出：%@", name)
+        case .terminationTimeout(let name): L10n.format("等待应用退出超时：%@", name)
         }
     }
 }

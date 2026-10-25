@@ -55,7 +55,12 @@ final class SettingsExportService {
         AppLogger.info("📤 开始导出设置")
 
         // 1. 收集当前配置
-        let exportData = collectCurrentSettings()
+        let exportData: KairosExportData
+        do {
+            exportData = try collectCurrentSettings()
+        } catch {
+            return .failure(error: error)
+        }
 
         // 2. 显示保存对话框
         guard let saveURL = await showSavePanel() else {
@@ -113,28 +118,23 @@ final class SettingsExportService {
 
             let importData = try decoder.decode(KairosExportData.self, from: jsonData)
 
-            // 3. 版本兼容性检查
-            if importData.version > KairosExportData.currentVersion {
-                AppLogger.warning("⚠️ 导入文件版本较新: \(importData.version) > \(KairosExportData.currentVersion)")
-            }
-
             AppLogger.info("✅ 设置文件解析成功: \(importData.appControlScenes.count) 个应用场景, \(importData.dnsControlScenes.count) 个 DNS 场景")
             return .success(data: importData)
 
         } catch {
             AppLogger.error("❌ 设置导入失败: \(error.localizedDescription)")
-            return .failure(error: error)
+            return .failure(error: SettingsImportError.reading(error))
         }
     }
 
     // MARK: - Private Methods - Data Collection
 
     /// 收集当前所有配置
-    private func collectCurrentSettings() -> KairosExportData {
-        let appScenes = SceneStorage.loadScenes()
-        let dnsScenes = DNSSceneStorage.shared.loadScenes()
+    private func collectCurrentSettings() throws -> KairosExportData {
+        let appScenes = try SceneStorage.loadScenes()
+        let dnsScenes = try DNSSceneStorage.shared.loadScenes()
         let apiKeys = APIKeyExportData(from: APIKeyManager.shared)
-        let mihomoConfig = MihomoConfigService().loadConfig()
+        let mihomoConfig = try MihomoConfigService().loadConfig()
 
         AppLogger.debug("收集配置: \(appScenes.count) 个应用场景, \(dnsScenes.count) 个 DNS 场景")
 

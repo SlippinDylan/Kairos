@@ -85,13 +85,65 @@ struct KairosExportData: Codable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
+        guard (1...Self.currentVersion).contains(version) else {
+            throw SettingsFileValidationError.unsupportedVersion(version)
+        }
         exportedAt = try container.decode(Date.self, forKey: .exportedAt)
         appName = try container.decode(String.self, forKey: .appName)
+        guard appName == "Kairos" else {
+            throw SettingsFileValidationError.wrongApplication
+        }
         appVersion = try container.decode(String.self, forKey: .appVersion)
-        appControlScenes = try container.decode([NetworkScene].self, forKey: .appControlScenes)
-        dnsControlScenes = try container.decode([DNSScene].self, forKey: .dnsControlScenes)
+        appControlScenes = try Self.normalizeApps(container.decode([NetworkScene].self, forKey: .appControlScenes))
+        dnsControlScenes = try Self.normalizeDNS(container.decode([DNSScene].self, forKey: .dnsControlScenes))
         apiKeys = try container.decode(APIKeyExportData.self, forKey: .apiKeys)
-        mihomoConfig = try container.decodeIfPresent(MihomoConfig.self, forKey: .mihomoConfig) ?? .default
+        if version == 1 {
+            mihomoConfig = try container.decodeIfPresent(MihomoConfig.self, forKey: .mihomoConfig) ?? .default
+        } else {
+            // Local preferences retain their older decoder; v2 exports require a full schema.
+            let config = try container.nestedContainer(keyedBy: MihomoKeys.self, forKey: .mihomoConfig)
+            mihomoConfig = try MihomoConfig(
+                kernelPath: config.decode(String.self, forKey: .kernelPath),
+                appBundlePath: config.decode(String.self, forKey: .appBundlePath),
+                appBundleIdentifier: config.decode(String.self, forKey: .appBundleIdentifier),
+                appDisplayName: config.decode(String.self, forKey: .appDisplayName),
+                githubReleasesURL: config.decode(String.self, forKey: .githubReleasesURL),
+                kernelFilenameTemplate: config.decode(String.self, forKey: .kernelFilenameTemplate)
+            )
+        }
+        guard Set(appControlScenes.map(\.id)).count == appControlScenes.count else {
+            throw SettingsFileValidationError.duplicateIDs("appControlScenes")
+        }
+        guard Set(dnsControlScenes.map(\.id)).count == dnsControlScenes.count else {
+            throw SettingsFileValidationError.duplicateIDs("dnsControlScenes")
+        }
+    }
+
+    func normalizedScenes() throws -> (apps: [NetworkScene], dns: [DNSScene]) {
+        (try Self.normalizeApps(appControlScenes), try Self.normalizeDNS(dnsControlScenes))
+    }
+
+    private static func normalizeApps(_ scenes: [NetworkScene]) throws -> [NetworkScene] {
+        try scenes.enumerated().map { index, scene in
+            do { return try SceneValidation.normalize(scene) }
+            catch let field as SceneValidation.Field {
+                throw SettingsFileValidationError.invalidSceneField("appControlScenes[\(index)].\(field.path)")
+            }
+        }
+    }
+
+    private static func normalizeDNS(_ scenes: [DNSScene]) throws -> [DNSScene] {
+        try scenes.enumerated().map { index, scene in
+            do { return try SceneValidation.normalize(scene) }
+            catch let field as SceneValidation.Field {
+                throw SettingsFileValidationError.invalidSceneField("dnsControlScenes[\(index)].\(field.path)")
+            }
+        }
+    }
+
+    private enum MihomoKeys: String, CodingKey {
+        case kernelPath, appBundlePath, appBundleIdentifier, appDisplayName
+        case githubReleasesURL, kernelFilenameTemplate
     }
 
     // MARK: - Version
@@ -154,5 +206,26 @@ struct APIKeyExportData: Codable {
         manager.ip2locationKey = ip2locationKey
         manager.ipregistryKey = ipregistryKey
         manager.saveAPIKeys()
+    }
+}
+
+
+enum SettingsFileValidationError: LocalizedError {
+    case unsupportedVersion(Int)
+    case wrongApplication
+    case duplicateIDs(String)
+    case invalidSceneField(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unsupportedVersion(let version):
+            L10n.format("不支持的配置文件版本：%lld", version)
+        case .wrongApplication:
+            L10n.string("该文件不是 Kairos 配置文件")
+        case .duplicateIDs(let section):
+            L10n.format("配置文件含重复场景 ID：%@", section)
+        case .invalidSceneField(let field):
+            L10n.format("配置文件字段无效：%@", field)
+        }
     }
 }

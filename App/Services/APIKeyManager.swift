@@ -18,7 +18,7 @@ import Observation
 /// ## 数据源分类
 /// ### 有免费 API（配置 Key 后使用付费版获取更多数据）
 /// - IPinfo: 50k/月免费，付费版数据更全
-/// - ipapi.is: 1000/天免费，付费版无限制
+/// - ipapi.is: 匿名精简数据，配置 Key 后完整数据（额度由账户决定）
 /// - DB-IP: 免费版基础数据，付费版完整数据
 /// - IPWHOIS: 10k/月免费，付费版无限制
 ///
@@ -30,6 +30,7 @@ import Observation
 @Observable
 final class APIKeyManager {
     static let shared = APIKeyManager()
+    private let userDefaults: UserDefaults
 
     // MARK: - API Keys (有免费 API 的数据源)
 
@@ -118,7 +119,8 @@ final class APIKeyManager {
 
     // MARK: - Initialization
 
-    private init() {
+    init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
         loadAPIKeys()
     }
 
@@ -128,13 +130,13 @@ final class APIKeyManager {
     func loadAPIKeys() {
         AppLogger.debug("加载 API Keys")
 
-        ipinfoToken = UserDefaults.standard.string(forKey: Keys.ipinfoToken) ?? ""
-        ipapiKey = UserDefaults.standard.string(forKey: Keys.ipapiKey) ?? ""
-        dbipKey = UserDefaults.standard.string(forKey: Keys.dbipKey) ?? ""
-        ipwhoisKey = UserDefaults.standard.string(forKey: Keys.ipwhoisKey) ?? ""
-        abuseipdbKey = UserDefaults.standard.string(forKey: Keys.abuseipdbKey) ?? ""
-        ip2locationKey = UserDefaults.standard.string(forKey: Keys.ip2locationKey) ?? ""
-        ipregistryKey = UserDefaults.standard.string(forKey: Keys.ipregistryKey) ?? ""
+        ipinfoToken = userDefaults.string(forKey: Keys.ipinfoToken) ?? ""
+        ipapiKey = userDefaults.string(forKey: Keys.ipapiKey) ?? ""
+        dbipKey = userDefaults.string(forKey: Keys.dbipKey) ?? ""
+        ipwhoisKey = userDefaults.string(forKey: Keys.ipwhoisKey) ?? ""
+        abuseipdbKey = userDefaults.string(forKey: Keys.abuseipdbKey) ?? ""
+        ip2locationKey = userDefaults.string(forKey: Keys.ip2locationKey) ?? ""
+        ipregistryKey = userDefaults.string(forKey: Keys.ipregistryKey) ?? ""
 
         AppLogger.info("API Keys 加载完成: \(configuredKeyCount) 个已配置")
     }
@@ -143,13 +145,22 @@ final class APIKeyManager {
     func saveAPIKeys() {
         AppLogger.debug("保存 API Keys")
 
-        UserDefaults.standard.set(ipinfoToken.trimmingCharacters(in: .whitespaces), forKey: Keys.ipinfoToken)
-        UserDefaults.standard.set(ipapiKey.trimmingCharacters(in: .whitespaces), forKey: Keys.ipapiKey)
-        UserDefaults.standard.set(dbipKey.trimmingCharacters(in: .whitespaces), forKey: Keys.dbipKey)
-        UserDefaults.standard.set(ipwhoisKey.trimmingCharacters(in: .whitespaces), forKey: Keys.ipwhoisKey)
-        UserDefaults.standard.set(abuseipdbKey.trimmingCharacters(in: .whitespaces), forKey: Keys.abuseipdbKey)
-        UserDefaults.standard.set(ip2locationKey.trimmingCharacters(in: .whitespaces), forKey: Keys.ip2locationKey)
-        UserDefaults.standard.set(ipregistryKey.trimmingCharacters(in: .whitespaces), forKey: Keys.ipregistryKey)
+        // Persist the same canonical credentials that requests use in this process.
+        ipinfoToken = ipinfoToken.trimmingCharacters(in: .whitespacesAndNewlines)
+        ipapiKey = ipapiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        dbipKey = dbipKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        ipwhoisKey = ipwhoisKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        abuseipdbKey = abuseipdbKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        ip2locationKey = ip2locationKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        ipregistryKey = ipregistryKey.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        userDefaults.set(ipinfoToken, forKey: Keys.ipinfoToken)
+        userDefaults.set(ipapiKey, forKey: Keys.ipapiKey)
+        userDefaults.set(dbipKey, forKey: Keys.dbipKey)
+        userDefaults.set(ipwhoisKey, forKey: Keys.ipwhoisKey)
+        userDefaults.set(abuseipdbKey, forKey: Keys.abuseipdbKey)
+        userDefaults.set(ip2locationKey, forKey: Keys.ip2locationKey)
+        userDefaults.set(ipregistryKey, forKey: Keys.ipregistryKey)
 
         AppLogger.info("API Keys 保存成功: \(configuredKeyCount) 个已配置")
     }

@@ -7,19 +7,25 @@
 
 import Foundation
 
+enum KernelTool: String, CaseIterable, Identifiable {
+    case backup, restore, replace
+
+    var id: String { rawValue }
+}
+
 // MARK: - Mihomo 配置模型
 
 /// Mihomo 配置
 ///
 /// ## 设计说明
-/// 内核路径与关联应用身份均由用户显式选择，不对任何具体的 Clash/Mihomo
+/// 内核路径与关联应用身份均由用户显式配置，不对任何具体的 Clash/Mihomo
 /// 客户端（ClashX.Meta、Clash Verge、clashbar 等）做路径假设。
 struct MihomoConfig: Codable, Equatable {
-    /// 内核文件路径（用户通过文件选择器指定）
+    /// 内核文件路径（用户显式配置）
     var kernelPath: String
     /// 关联应用的 Bundle 路径（如 /Applications/clashbar.app）
     var appBundlePath: String
-    /// 关联应用的 Bundle Identifier（选择应用时自动读取）
+    /// 关联应用的 Bundle Identifier（保存应用路径时自动读取）
     var appBundleIdentifier: String
     /// 关联应用的显示名称（选择应用时自动读取）
     var appDisplayName: String
